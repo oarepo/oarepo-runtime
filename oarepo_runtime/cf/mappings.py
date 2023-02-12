@@ -105,4 +105,4 @@ def get_custom_fields(record_class) -> Iterable[List[BaseCF]]:
     for cfg_name, cfg_value in inspect.getmembers(
         record_class, lambda x: isinstance(x, CustomFieldsMixin)
     ):
-        yield cfg_name, current_app.config[cfg_value.config_key]
+        yield cfg_value._key, current_app.config[cfg_value.config_key]
