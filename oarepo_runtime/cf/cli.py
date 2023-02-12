@@ -10,7 +10,7 @@ def cf():
     """Custom fields commands."""
 
 
-@cf.command(name="prepare", help="Prepare custom fields in indices")
+@cf.command(name="init", help="Prepare custom fields in indices")
 @click.option(
     "-f",
     "--field-name",
@@ -21,5 +21,5 @@ def cf():
     help="A custom field name to create. If not provided, all custom fields will be created.",
 )
 @with_appcontext
-def prepare(field_names):
+def init(field_names):
     prepare_cf_indices(field_names)
