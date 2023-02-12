@@ -2,16 +2,13 @@ import inspect
 from invenio_records_resources.services.custom_fields.mappings import (
     Mapping as InvenioMapping,
 )
-from invenio_records.dictutils import dict_merge
 
 from typing import Iterable, List
 import click
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records.config import RecordServiceConfig
 from invenio_records_resources.services.records.service import RecordService
-from invenio_records.dumpers import SearchDumper
 from invenio_records_resources.services.custom_fields import BaseCF
-from invenio_records_resources.records.dumpers import CustomFieldsDumperExt
 from invenio_records_resources.services.custom_fields.validate import (
     validate_custom_fields,
 )
@@ -20,7 +17,7 @@ from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
 from invenio_search import current_search_client
 
-from oarepo_runtime.cf import CustomFields
+from oarepo_runtime.cf import CustomFieldsMixin
 
 
 class Mapping(InvenioMapping):
@@ -106,6 +103,6 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
 
 def get_custom_fields(record_class) -> Iterable[List[BaseCF]]:
     for cfg_name, cfg_value in inspect.getmembers(
-        record_class, lambda x: isinstance(x, CustomFields)
+        record_class, lambda x: isinstance(x, CustomFieldsMixin)
     ):
         yield cfg_name, current_app.config[cfg_value.config_key]
