@@ -101,6 +101,10 @@ class InternalRelation(RelationBase):
         pid_field = self.pid_field
         if not id_:
             return None
+
+        if not pid_field:
+            return id_[1]
+
         field_or_array = dict_lookup(id_[1], pid_field)
         if not field_or_array:
             return None
