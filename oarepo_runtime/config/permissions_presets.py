@@ -1,5 +1,5 @@
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import SystemProcess, AnyUser
+from invenio_records_permissions.generators import AnyUser, SystemProcess
 from invenio_records_resources.services.files.generators import AnyUserIfFileIsLocal
 
 
@@ -21,6 +21,7 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_update_files = [SystemProcess()]
     can_delete_files = [SystemProcess()]
 
+
 class EveryonePermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
 
@@ -38,4 +39,3 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_read_files = [SystemProcess(), AnyUser()]
     can_update_files = [SystemProcess(), AnyUser()]
     can_delete_files = [SystemProcess(), AnyUser()]
-

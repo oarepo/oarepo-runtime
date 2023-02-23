@@ -1,3 +1,5 @@
+from invenio_db import db
+
 from .base import Relation, RelationResult
 from .lookup import LookupResult
 

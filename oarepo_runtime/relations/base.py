@@ -28,35 +28,34 @@ class RelationResult:
 
             relation_id = self._lookup_id(relation)
 
-            data = self.resolve(relation_id)
-            if not data:
+            resolved_object = self.resolve(relation_id)
+            if not resolved_object:
                 raise InvalidRelationValue(f"Invalid value {relation_id}.")
 
             if self.field.value_check:
-                self._value_check(relation.value, data)
+                transformed_data = {}
+                self._get_dereferenced_value(
+                    transformed_data, resolved_object, relation
+                )
+                self._value_check(relation.value, transformed_data)
 
-    def clean(self, keys=None, attrs=None):
+    def clean(self):
         """Clean the dereferenced attributes inside the record."""
         found: List[LookupResult] = lookup_key(self.record, self.field.key)
         for relation in found:
-            self._clean_one(
-                relation, keys or self.field.keys, attrs or self.field.attrs
-            )
+            self._clean_one(relation)
 
-    def dereference(self, keys=None, attrs=None):
+    def dereference(self):
         """Dereference the relation field object inside the record."""
         found: List[LookupResult] = lookup_key(self.record, self.field.key)
         for relation in found:
-            self._dereference_one(
-                relation, keys or self.field.keys, attrs or self.field.attrs
-            )
+            self._dereference_one(relation)
 
-    def _clean_one(self, relation: LookupResult, keys, attrs):
-        """Remove all but "id" key for a dereferenced related object."""
-        relation_id = self._lookup_id(relation)
-        relation.value.clear()
-        self._store_id(relation, relation_id)
-        return relation
+    def _clean_one(self, relation: LookupResult):
+        """
+        Cleans the relation. The default implementation does nothing - the relation has been
+        validated,
+        """
 
     def _needs_update_relation_value(self, _relation: LookupResult):
         """
@@ -75,38 +74,53 @@ class RelationResult:
         :param resolved_object: the object to which this relation points to
         """
 
-    def _dereference_one(self, relation: LookupResult, keys, attrs):
+    def _dereference_one(self, relation: LookupResult):
         """Dereference a single object into a dict."""
-        data = relation.value
         if not self._needs_update_relation_value(relation):
             return
 
         data = relation.value
         # Get related record
         obj = self.resolve(self._lookup_id(relation))
+        self._get_dereferenced_value(data, obj, relation)
+
+        return data
+
+    def _get_dereferenced_value(self, data, obj, relation):
         # Inject selected key/values from related record into
         # the current record.
 
         # From record dictionary
-        if keys is None:
+        if self.field.keys is None:
             data.update({k: v for k, v in obj.items()})
         else:
             new_obj = {}
-            for k in keys:
+            for k in self.field.keys:
                 try:
-                    val = dict_lookup(obj, k)
+                    key = self._get_dereference_key(k, relation)
+                    target = self._get_dereference_target(k, relation)
+                    val = dict_lookup(obj, key)
                     if val:
-                        dict_set(new_obj, k, val)
+                        dict_set(new_obj, target, val)
                 except KeyError:
                     pass
             data.update(new_obj)
 
         # From record attributes (i.e. system fields)
-        for a in attrs:
+        for a in self.field.attrs:
             data[a] = getattr(obj, a)
 
         self._add_version_info(data, relation, obj)
-        return data
+
+    def _get_dereference_key(self, key, _relation: LookupResult):
+        if isinstance(key, dict):
+            return key["key"]
+        return key
+
+    def _get_dereference_target(self, key, _relation: LookupResult):
+        if isinstance(key, dict):
+            return key["target"]
+        return key
 
     def _value_check(self, value_to_check, object):
         """Checks if the value is present in the object."""
