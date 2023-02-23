@@ -1,14 +1,18 @@
 from invenio_search.engine import dsl
 
+
 class NestedLabeledFacet(dsl.Facet):
     agg_type = "nested"
 
-    def __init__(self, path, nested_facet, label = ''):
+    def __init__(self, path, nested_facet, label=""):
         self._path = path
         self._inner = nested_facet
         self._label = label
         super(NestedLabeledFacet, self).__init__(
-            path=path,  aggs={"inner": nested_facet.get_aggregation(),}
+            path=path,
+            aggs={
+                "inner": nested_facet.get_aggregation(),
+            },
         )
 
     def get_values(self, data, filter_values):
@@ -22,7 +26,7 @@ class NestedLabeledFacet(dsl.Facet):
     def get_labelled_values(self, data, filter_values):
         """Get a labelled version of a bucket."""
         try:
-            out = data['buckets']
+            out = data["buckets"]
         except:
             out = []
-        return {'buckets': out, 'label': str(self._label)}
+        return {"buckets": out, "label": str(self._label)}

@@ -1,21 +1,21 @@
 import inspect
+from typing import Iterable, List
+
+import click
+from flask import current_app
+from invenio_records_resources.proxies import current_service_registry
+from invenio_records_resources.services.custom_fields import BaseCF
 from invenio_records_resources.services.custom_fields.mappings import (
     Mapping as InvenioMapping,
 )
-
-from typing import Iterable, List
-import click
-from invenio_records_resources.proxies import current_service_registry
-from invenio_records_resources.services.records.config import RecordServiceConfig
-from invenio_records_resources.services.records.service import RecordService
-from invenio_records_resources.services.custom_fields import BaseCF
 from invenio_records_resources.services.custom_fields.validate import (
     validate_custom_fields,
 )
-from flask import current_app
+from invenio_records_resources.services.records.config import RecordServiceConfig
+from invenio_records_resources.services.records.service import RecordService
+from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
-from invenio_search import current_search_client
 
 from oarepo_runtime.cf import CustomFieldsMixin
 
