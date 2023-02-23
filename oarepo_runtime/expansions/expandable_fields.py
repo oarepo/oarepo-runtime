@@ -3,8 +3,7 @@ from invenio_records_resources.services.records.results import ExpandableField
 
 
 class ReferencedRecordExpandableField(ExpandableField):
-
-    def __init__(self, field_name, keys, service, pid_field='id'):
+    def __init__(self, field_name, keys, service, pid_field="id"):
         super().__init__(field_name)
         self.keys = keys
         self.pid_field = pid_field
@@ -16,7 +15,6 @@ class ReferencedRecordExpandableField(ExpandableField):
         return dict_lookup(value, self.pid_field), self.service
 
     def pick(self, identity, resolved_rec):
-
         ret = {}
         for key in self.keys:
             dict_set(ret, key, dict_lookup(resolved_rec, key))

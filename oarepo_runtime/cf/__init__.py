@@ -1,6 +1,5 @@
-from invenio_records.systemfields import SystemField, DictField
-import marshmallow as ma
 from flask import current_app
+from invenio_records.systemfields import DictField, SystemField
 
 
 class CustomFieldsMixin:
