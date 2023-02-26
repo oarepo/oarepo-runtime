@@ -18,23 +18,25 @@ class YamlWriter(BaseWriter):
             self._file = target
             self._stream = target
         else:
+            self._stream = None
             if catalogue:
                 self._file = catalogue.directory.joinpath(target)
             else:
                 self._file = target
-            self._stream = open(self._file, "w")
         self._started = False
 
     def write(self, entry: StreamEntry, *args, **kwargs):
         """Writes the input stream entry using a given service."""
-        if self._started:
-            self._stream.write("---\n")
-        else:
+        if not self._started:
             self._started = True
+            if not self._stream:
+                self._stream = open(self._file, "w")
+        else:
+            self._stream.write("---\n")
         yaml.safe_dump(entry.entry, self._stream)
         return entry
 
     def finish(self):
         """Finalizes writing"""
-        if isinstance(self._file, str):
+        if not hasattr(self._file, "read") and self._stream:
             self._stream.close()

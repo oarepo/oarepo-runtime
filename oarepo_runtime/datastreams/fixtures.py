@@ -117,10 +117,12 @@ def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
             catalogue = DataStreamCatalogue(
                 catalogue_path, {fixture_name: fixture_write_config}
             )
-            catalogue_data[fixture_name] = fixture_read_config
             for stream_name in catalogue:
                 datastream: DataStream = catalogue.get_datastream(stream_name)
-                result.add(stream_name, datastream.process())
+                datastream_result = datastream.process()
+                if datastream_result.ok_count:
+                    catalogue_data[fixture_name] = fixture_read_config
+                result.add(stream_name, datastream_result)
 
     with open(catalogue_path, "w") as f:
         yaml.dump(catalogue_data, f)
