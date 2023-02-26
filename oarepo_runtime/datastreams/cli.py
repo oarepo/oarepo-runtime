@@ -11,21 +11,23 @@ def fixtures():
 
 @fixtures.command()
 @click.argument("fixture_dir", required=False)
-def load(fixture_dir=None):
+@click.option("--include", multiple=True)
+@click.option("--exclude", multiple=True)
+def load(fixture_dir=None, include=None, exclude=None):
     """Loads fixtures"""
-
-    load_fixtures(fixture_dir)
+    load_fixtures(fixture_dir, _make_list(include), _make_list(exclude))
 
 
 @fixtures.command()
-@click.option("--skip", multiple=True)
+@click.option("--include", multiple=True)
+@click.option("--exclude", multiple=True)
 @click.argument("fixture_dir", required=True)
-def dump(fixture_dir, skip):
+def dump(fixture_dir, include, exclude):
     """Dump fixtures"""
-    skip = [
-        item.strip()
-        for skip_item in skip
-        for item in skip_item.split(",")
-        if item.strip()
+    dump_fixtures(fixture_dir, _make_list(include), _make_list(exclude))
+
+
+def _make_list(lst):
+    return [
+        item.strip() for lst_item in lst for item in lst_item.split(",") if item.strip()
     ]
-    dump_fixtures(fixture_dir, skip)

@@ -99,7 +99,9 @@ class DataStreamCatalogue:
                 e.entry = entry
                 e.stream_name = stream_name
                 raise e
-        ds = DataStream(readers=readers, transformers=transformers, writers=writers)
+        ds = DataStream(
+            readers=readers, transformers=transformers, writers=writers, log=log
+        )
         return ds
 
     def _get_reader(self, log, entry):

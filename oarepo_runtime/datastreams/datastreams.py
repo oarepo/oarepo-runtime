@@ -2,6 +2,8 @@
 # This package was taken from Invenio vocabularies and modified to be more universal
 #
 import itertools
+import dataclasses
+from typing import List
 
 from .errors import TransformerError, WriterError
 
@@ -16,10 +18,18 @@ class StreamEntry:
         self.errors = errors or []
 
 
+@dataclasses.dataclass
+class DataStreamResult:
+    ok_count: int
+    failed_count: int
+    skipped_count: int
+    failed_entries: List[StreamEntry]
+
+
 class DataStream:
     """Data stream."""
 
-    def __init__(self, readers, writers, transformers=None, *args, **kwargs):
+    def __init__(self, *, readers, writers, transformers=None, log=None, **kwargs):
         """Constructor.
         :param readers: an ordered list of readers.
         :param writers: an ordered list of writers.
@@ -28,31 +38,43 @@ class DataStream:
         self._readers = readers
         self._transformers = transformers
         self._writers = writers
-        self._read = 0
-        self._filtered = 0
-        self._written = 0
+        self._log = log
 
-    def process(self, *args, **kwargs):
+    def process(self, max_failures=100) -> DataStreamResult:
         """Iterates over the entries.
         Uses the reader to get the raw entries and transforms them.
         It will iterate over the `StreamEntry` objects returned by
         the reader, apply the transformations and yield the result of
         writing it.
         """
+        _written, _filtered, _failed = 0, 0, 0
+        failed_entries = []
+
         for stream_entry in self.read():
-            self._read += 1
             if stream_entry.errors:
-                yield stream_entry  # reading errors
-            else:
-                transformed_entry = self.transform(stream_entry)
-                if transformed_entry.errors:
-                    yield transformed_entry
-                elif transformed_entry.filtered:
-                    self._filtered += 1
-                    yield transformed_entry
-                else:
-                    yield self.write(transformed_entry)
-                    self._written += 1
+                if len(failed_entries) < max_failures:
+                    _failed += 1
+                    failed_entries.append(stream_entry)
+                continue
+
+            transformed_entry = self.transform(stream_entry)
+            if transformed_entry.errors:
+                _failed += 1
+                failed_entries.append(transformed_entry)
+                continue
+            if transformed_entry.filtered:
+                _filtered += 1
+                continue
+
+            self.write(transformed_entry)
+            _written += 1
+
+        return DataStreamResult(
+            ok_count=_written,
+            failed_count=_failed,
+            skipped_count=_filtered,
+            failed_entries=failed_entries,
+        )
 
     def read(self):
         """Read the entries."""
@@ -78,6 +100,12 @@ class DataStream:
             try:
                 writer.write(stream_entry)
             except WriterError as err:
+                self._log.error("Error in writer: ", err, repr(stream_entry.entry))
+                stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
+            except Exception as err:
+                self._log.error(
+                    "Unexpected error in writer: ", err, repr(stream_entry.entry)
+                )
                 stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
 
         return stream_entry
