@@ -5,7 +5,7 @@ import yaml
 from flask import current_app
 from werkzeug.utils import import_string
 
-from . import DataStream
+from .datastreams import DataStream
 from .errors import DataStreamCatalogueError
 
 

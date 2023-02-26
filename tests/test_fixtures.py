@@ -16,7 +16,7 @@ def read_yaml(fp):
         return ret
 
 
-def test_pkg_fixtures(db, app, identity):
+def test_pkg_fixtures(db, app, identity, search_clear):
     load_fixtures()
     Records2Record.index.refresh()
     titles = set()
@@ -25,7 +25,7 @@ def test_pkg_fixtures(db, app, identity):
     assert titles == {"pkg record 1", "pkg record 2"}
 
 
-def test_extra_fixtures(db, app, identity):
+def test_extra_fixtures(db, app, identity, search_clear):
     load_fixtures(Path(__file__).parent / "data")
     Records2Record.index.refresh()
     titles = set()
@@ -34,7 +34,7 @@ def test_extra_fixtures(db, app, identity):
     assert titles == {"record 1", "record 2"}
 
 
-def test_load_dump(db, app, identity):
+def test_load_dump(db, app, identity, search_clear):
     load_fixtures()
     Records2Record.index.refresh()
     with tempfile.TemporaryDirectory() as fixture_dir:

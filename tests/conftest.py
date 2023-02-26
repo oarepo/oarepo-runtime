@@ -17,7 +17,7 @@ fixtures are available.
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import any_user, system_process
-from invenio_app.factory import create_app as _create_app
+from invenio_app.factory import create_api as _create_api
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -33,18 +33,6 @@ def extra_entry_points():
     """Extra entry points to load the mock_module features."""
     return {
         "oarepo.fixtures": ["1000-test = tests.pkg_data"],
-        "invenio_base.api_apps": ["records2 = records2.ext:Records2Ext"],
-        "invenio_base.apps": ["records2 = records2.ext:Records2Ext"],
-        "invenio_db.alembic": ["records2 = records2:alembic"],
-        "invenio_db.models": ["records2 = records2.records.models"],
-        "invenio_base.api_blueprints": [
-            "records2 = records2.views:create_blueprint_from_app_records2"
-        ],
-        "invenio_base.blueprints": [
-            "records2 = records2.views:create_blueprint_from_app_records2"
-        ],
-        "invenio_search.mappings": ["records2 = records2.records.mappings"],
-        "invenio_jsonschemas.schemas": ["records2 = records2.records.jsonschemas"],
     }
 
 
@@ -67,7 +55,7 @@ def app_config(app_config):
 @pytest.fixture(scope="module")
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
-    return _create_app
+    return _create_api
 
 
 @pytest.fixture(scope="module")
