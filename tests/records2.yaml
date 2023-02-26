@@ -1,0 +1,7 @@
+model:
+  use: invenio
+  schema-server: local://
+  properties:
+    metadata:
+     properties:
+      title: keyword

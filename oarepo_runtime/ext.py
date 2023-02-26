@@ -22,3 +22,9 @@ class OARepoRuntime(object):
                 app.config["OAREPO_PERMISSIONS_PRESETS"][
                     k
                 ] = ext_config.OAREPO_PERMISSIONS_PRESETS[k]
+        for k in dir(ext_config):
+            if k.startswith("DEFAULT_DATASTREAMS_"):
+                app.config.setdefault(k, {}).update(getattr(ext_config, k))
+
+            if k.startswith("DATASTREAMS_"):
+                app.config.setdefault(k, getattr(ext_config, k))

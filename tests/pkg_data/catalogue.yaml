@@ -1,0 +1,3 @@
+records:
+  - source: records.yaml
+  - service: records2
