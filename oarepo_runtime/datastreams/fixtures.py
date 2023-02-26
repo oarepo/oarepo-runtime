@@ -1,7 +1,7 @@
-import re
-from typing import Dict
-from pathlib import Path
 import dataclasses
+import re
+from pathlib import Path
+from typing import Dict
 
 import pkg_resources
 import yaml

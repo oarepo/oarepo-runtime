@@ -1,8 +1,8 @@
 #
 # This package was taken from Invenio vocabularies and modified to be more universal
 #
-import itertools
 import dataclasses
+import itertools
 from typing import List
 
 from .errors import TransformerError, WriterError
