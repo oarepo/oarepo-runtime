@@ -19,10 +19,11 @@ class FixturesResult:
     results: Dict[str, DataStreamResult] = dataclasses.field(default_factory=dict)
 
     @property
-    def errors(self):
+    def failed_entries(self):
         ret = []
+        r: DataStreamResult
         for r in self.results:
-            ret.extend(r.errors or [])
+            ret.extend(r.failed_entries or [])
         return ret
 
     def add(self, fixture_name, result: DataStreamResult):
