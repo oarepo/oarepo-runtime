@@ -17,7 +17,10 @@ def read_yaml(fp):
 
 
 def test_pkg_fixtures(db, app, identity, search_clear):
-    load_fixtures()
+    ret = load_fixtures()
+    assert ret.ok_count == 2
+    assert ret.failed_count == 0
+    assert ret.skipped_count == 0
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
@@ -26,7 +29,10 @@ def test_pkg_fixtures(db, app, identity, search_clear):
 
 
 def test_extra_fixtures(db, app, identity, search_clear):
-    load_fixtures(Path(__file__).parent / "data")
+    ret = load_fixtures(Path(__file__).parent / "data")
+    assert ret.ok_count == 2
+    assert ret.failed_count == 0
+    assert ret.skipped_count == 0
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
@@ -35,10 +41,16 @@ def test_extra_fixtures(db, app, identity, search_clear):
 
 
 def test_load_dump(db, app, identity, search_clear):
-    load_fixtures()
+    ret = load_fixtures()
+    assert ret.ok_count == 2
+    assert ret.failed_count == 0
+    assert ret.skipped_count == 0
     Records2Record.index.refresh()
     with tempfile.TemporaryDirectory() as fixture_dir:
-        dump_fixtures(fixture_dir, skip=None)
+        ret = dump_fixtures(fixture_dir)
+        assert ret.ok_count == 2
+        assert ret.failed_count == 0
+        assert ret.skipped_count == 0
         fixture_dir = Path(fixture_dir)
 
         assert read_yaml(fixture_dir / "catalogue.yaml") == {
