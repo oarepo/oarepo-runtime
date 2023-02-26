@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
-
-from .errors import TransformerError
 
 
 class BaseTransformer(ABC):
@@ -16,4 +13,3 @@ class BaseTransformer(ABC):
         :returns: A StreamEntry. The transformed entry.
                   Raises TransformerError in case of errors.
         """
-        pass

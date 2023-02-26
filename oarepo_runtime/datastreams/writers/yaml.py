@@ -1,8 +1,8 @@
-from pathlib import Path
+import yaml
 
 from oarepo_runtime.datastreams import StreamEntry
+
 from . import BaseWriter
-import yaml
 
 
 class YamlWriter(BaseWriter):

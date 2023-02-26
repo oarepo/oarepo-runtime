@@ -1,10 +1,12 @@
+from logging import getLogger
 from pathlib import Path
-from . import DataStream
-from .errors import DataStreamCatalogueError
+
+import yaml
 from flask import current_app
 from werkzeug.utils import import_string
-from logging import getLogger
-import yaml
+
+from . import DataStream
+from .errors import DataStreamCatalogueError
 
 
 class DataStreamCatalogue:

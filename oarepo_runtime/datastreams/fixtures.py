@@ -1,9 +1,11 @@
 from pathlib import Path
-from oarepo_runtime.datastreams import DataStreamCatalogue, DataStream
+
 import pkg_resources
 import yaml
 from flask import current_app
 from invenio_records_resources.proxies import current_service_registry
+
+from oarepo_runtime.datastreams import DataStream, DataStreamCatalogue
 
 
 def load_fixtures(fixture_dir=None):

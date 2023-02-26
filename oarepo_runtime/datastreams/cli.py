@@ -1,6 +1,7 @@
 import click
+
 from oarepo_runtime.cli import oarepo
-from oarepo_runtime.datastreams.fixtures import load_fixtures, dump_fixtures
+from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
 
 
 @oarepo.group()

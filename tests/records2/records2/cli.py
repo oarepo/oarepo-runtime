@@ -6,7 +6,6 @@ from invenio_access.permissions import system_identity
 from invenio_db import db
 from invenio_search import current_search
 from invenio_search.cli import search_version_check
-
 from records2.proxies import current_service
 from records2.records.api import Records2Record
 

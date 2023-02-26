@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from ..datastreams import StreamEntry
 
 
@@ -14,8 +15,6 @@ class BaseWriter(ABC):
         :returns: The result of writing the entry.
                   Raises WriterException in case of errors.
         """
-        pass
 
     def finish(self):
         """Finalizes writing"""
-        pass

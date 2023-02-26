@@ -2,7 +2,8 @@
 # This package was taken from Invenio vocabularies and modified to be more universal
 #
 import itertools
-from .errors import ReaderError, TransformerError, WriterError
+
+from .errors import TransformerError, WriterError
 
 
 class StreamEntry:

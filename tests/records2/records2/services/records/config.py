@@ -1,10 +1,8 @@
-from invenio_records_resources.services import RecordLink
-from invenio_records_resources.services import RecordServiceConfig
 from invenio_records_resources.services import (
-    RecordServiceConfig as InvenioRecordServiceConfig,
+    RecordLink,
+    RecordServiceConfig,
+    pagination_links,
 )
-from invenio_records_resources.services import pagination_links
-
 from records2.records.api import Records2Record
 from records2.services.records.permissions import Records2PermissionPolicy
 from records2.services.records.schema import Records2Schema

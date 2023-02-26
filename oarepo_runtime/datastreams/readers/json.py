@@ -1,6 +1,7 @@
-from typing import Iterator
-from . import BaseReader, StreamEntry
 import json
+from typing import Iterator
+
+from . import BaseReader, StreamEntry
 
 
 class JSONReader(BaseReader):

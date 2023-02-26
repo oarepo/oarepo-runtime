@@ -3,7 +3,6 @@ from invenio_records.systemfields import ConstantField
 from invenio_records_resources.records.api import Record
 from invenio_records_resources.records.systemfields import IndexField
 from invenio_records_resources.records.systemfields.pid import PIDField, PIDFieldContext
-
 from records2.records.dumper import Records2Dumper
 from records2.records.models import Records2Metadata
 

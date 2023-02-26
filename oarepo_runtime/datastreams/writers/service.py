@@ -1,10 +1,11 @@
-from . import BaseWriter, StreamEntry
-from ..errors import WriterError
 from invenio_access.permissions import system_identity
 from invenio_pidstore.errors import PIDAlreadyExists
 from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_records_resources.proxies import current_service_registry
 from marshmallow import ValidationError
+
+from ..errors import WriterError
+from . import BaseWriter, StreamEntry
 
 
 class ServiceWriter(BaseWriter):

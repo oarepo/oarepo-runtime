@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
 import contextlib
+from abc import ABC, abstractmethod
 from typing import Iterator
+
 from ..datastreams import StreamEntry
 
 
@@ -17,7 +18,6 @@ class BaseReader(ABC):
     @abstractmethod
     def __iter__(self) -> Iterator[StreamEntry]:
         """Yields data objects."""
-        pass
 
     @contextlib.contextmanager
     def _open(self, mode="r"):

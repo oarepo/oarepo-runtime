@@ -1,6 +1,7 @@
-from . import BaseReader, StreamEntry
 from invenio_access.permissions import system_identity
 from invenio_records_resources.proxies import current_service_registry
+
+from . import BaseReader, StreamEntry
 
 
 class ServiceReader(BaseReader):

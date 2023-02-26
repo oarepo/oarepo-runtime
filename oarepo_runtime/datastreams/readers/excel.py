@@ -1,8 +1,10 @@
-from typing import Iterator
-from . import BaseReader, StreamEntry
-import openpyxl
-from ..errors import ReaderError
 import re
+from typing import Iterator
+
+import openpyxl
+
+from ..errors import ReaderError
+from . import BaseReader, StreamEntry
 
 
 class ExcelReader(BaseReader):
