@@ -83,7 +83,16 @@ def _load_fixtures_from_catalogue(
 
 def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
     include = [re.compile(x) for x in (include or [])]
-    exclude = [re.compile(x) for x in (exclude or [])]
+    exclude = [
+        re.compile(x)
+        for x in (
+            exclude
+            or current_app.config.get(
+                "DATASTREAMS_EXCLUDES",
+                current_app.config["DEFAULT_DATASTREAMS_EXCLUDES"],
+            )
+        )
+    ]
     fixture_dir = Path(fixture_dir)
     if not fixture_dir.exists():
         fixture_dir.mkdir(parents=True)
