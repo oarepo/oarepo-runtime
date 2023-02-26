@@ -1,0 +1,9 @@
+from records2.resources.records.config import Records2ResourceConfig
+from records2.resources.records.resource import Records2Resource
+from records2.services.records.config import Records2ServiceConfig
+from records2.services.records.service import Records2Service
+
+RECORDS2_RESOURCE_CONFIG_RECORDS2 = Records2ResourceConfig
+RECORDS2_RESOURCE_CLASS_RECORDS2 = Records2Resource
+RECORDS2_SERVICE_CONFIG_RECORDS2 = Records2ServiceConfig
+RECORDS2_SERVICE_CLASS_RECORDS2 = Records2Service
