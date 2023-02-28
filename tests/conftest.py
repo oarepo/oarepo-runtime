@@ -33,6 +33,7 @@ def extra_entry_points():
     """Extra entry points to load the mock_module features."""
     return {
         "oarepo.fixtures": ["1000-test = tests.pkg_data"],
+        "invenio_i18n.translations": ["1000-test = tests"],
     }
 
 
@@ -40,15 +41,14 @@ def extra_entry_points():
 def app_config(app_config):
     """Mimic an instance's configuration."""
     app_config["JSONSCHEMAS_HOST"] = "localhost"
-    app_config["BABEL_DEFAULT_LOCALE"] = "en"
-    app_config["I18N_LANGUAGES"] = [("da", "Danish")]
     app_config[
         "RECORDS_REFRESOLVER_CLS"
     ] = "invenio_records.resolver.InvenioRefResolver"
     app_config[
         "RECORDS_REFRESOLVER_STORE"
     ] = "invenio_jsonschemas.proxies.current_refresolver_store"
-
+    app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
+    app_config["BABEL_DEFAULT_LOCALE"] = "en"
     return app_config
 
 
