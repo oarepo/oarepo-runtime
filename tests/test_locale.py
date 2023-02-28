@@ -17,18 +17,22 @@ class TestSchema(ma.Schema):
     tm = LocalizedTime()
 
 
+def replace_ws(d):
+    return {k: v.replace("\u202f", " ") for k, v in d.items()}
+
+
 def test_localized_date(app):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         assert current_i18n.language == "en"
         input_data = {"dt": "2020-01-31", "tm": "12:21", "dtm": "2020-01-31T12:21"}
-        assert TestSchema().dump(input_data) == {
+        assert replace_ws(TestSchema().dump(input_data)) == {
             "dt": "Jan 31, 2020",
             "tm": "12:21:00 PM",
             "dtm": "Jan 31, 2020, 12:21:00 PM",
         }
     with app.test_request_context(headers=[("Accept-Language", "cs")]):
         assert current_i18n.language == "cs"
-        assert TestSchema().dump(input_data) == {
+        assert replace_ws(TestSchema().dump(input_data)) == {
             "dt": "31. 1. 2020",
             "dtm": "31. 1. 2020 12:21:00",
             "tm": "12:21:00",
