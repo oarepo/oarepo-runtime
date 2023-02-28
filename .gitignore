@@ -48,7 +48,8 @@ coverage.xml
 *,cover
 
 # Translations
-*.mo
+# keeping translations for tests, so commented out
+# *.mo
 
 # Django stuff:
 *.log
