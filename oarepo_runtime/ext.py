@@ -1,3 +1,7 @@
+from .cli import oarepo as oarepo_cmd
+import oarepo_runtime.datastreams.cli  # noqa, just to register
+
+
 class OARepoRuntime(object):
     """OARepo extension of Invenio-Vocabularies."""
 
@@ -10,6 +14,7 @@ class OARepoRuntime(object):
         """Flask application initialization."""
         self.init_config(app)
         app.extensions["oarepo-runtime"] = self
+        app.cli.add_command(oarepo_cmd)
 
     def init_config(self, app):
         """Initialize configuration."""

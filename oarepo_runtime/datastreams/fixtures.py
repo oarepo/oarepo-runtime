@@ -107,6 +107,9 @@ def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
             current_app.config.get(f"DATASTREAMS_CONFIG_GENERATOR_{service_id.upper()}")
             or current_app.config["DATASTREAMS_CONFIG_GENERATOR"]
         )
+        service = current_service_registry.get(service_id)
+        if not hasattr(service, "scan"):
+            continue
         for fixture_name, fixture_read_config, fixture_write_config in config_generator(
             service_id
         ):
