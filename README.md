@@ -61,3 +61,8 @@ metadata:
 ## Validation
 
 This module provides a marshmallow validator for date strings.
+
+## Config
+
+Provides interface and definitions for loading 
+preconfigured permission sets to service config.
