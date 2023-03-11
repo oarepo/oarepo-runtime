@@ -19,16 +19,15 @@ from celery.canvas import chunks, chain, Signature, group
 
 
 @celery.shared_task
-def process_datastream_transformer(
-    entries: List[StreamEntry], *, transformer_definition
-):
+def process_datastream_transformer(_entries: List[Dict], *, transformer_definition):
+    entries: List[StreamEntry] = _deserialize_entries(_entries)
     transformer = get_instance(
         config_section=DATASTREAMS_TRANSFORMERS,
         clz="transformer",
         entry=transformer_definition,
     )
     if isinstance(transformer, BatchTransformer):
-        return transformer.apply_batch(entries)
+        return _serialize_entries(transformer.apply_batch(entries))
     else:
         result = []
         for entry in entries:
@@ -40,11 +39,12 @@ def process_datastream_transformer(
                     f"Transformer {transformer_definition} error: {e}: {stack}"
                 )
                 result.append(entry)
-        return result
+        return _serialize_entries(result)
 
 
 @celery.shared_task
-def process_datastream_writers(entries: List[StreamEntry], *, writer_definitions):
+def process_datastream_writers(_entries: List[Dict], *, writer_definitions):
+    entries: List[StreamEntry] = _deserialize_entries(_entries)
     for wd in writer_definitions:
         writer = get_instance(
             config_section=DATASTREAMS_WRITERS,
@@ -61,12 +61,12 @@ def process_datastream_writers(entries: List[StreamEntry], *, writer_definitions
                     except WriterError as e:
                         stack = "\n".join(traceback.format_stack())
                         entry.errors.append(f"Writer {wd} error: {e}: {stack}")
-    return entries
+    return _serialize_entries(entries)
 
 
 @celery.shared_task
 def process_datastream_outcome(
-    entries: List[StreamEntry],
+    _entries: List[Dict],
     *,
     success_callback: Signature,
     error_callback: Signature,
@@ -75,7 +75,7 @@ def process_datastream_outcome(
     skipped_count = 0
     failed_count = 0
     failed_entries = []
-
+    entries: List[StreamEntry] = _deserialize_entries(_entries)
     entry: StreamEntry
     for entry in entries:
         if entry.errors:
@@ -89,11 +89,13 @@ def process_datastream_outcome(
             else:
                 ok_count += 1
 
-    return DataStreamResult(
-        ok_count=ok_count,
-        failed_count=failed_count,
-        skipped_count=skipped_count,
-        failed_entries=failed_entries,
+    return _serialize_datastream_result(
+        DataStreamResult(
+            ok_count=ok_count,
+            failed_count=failed_count,
+            skipped_count=skipped_count,
+            failed_entries=failed_entries,
+        )
     )
 
 
@@ -112,7 +114,7 @@ class AsyncDataStreamResult(DataStreamResult):
         self._failed_count = 0
         self._skipped_count = 0
         for result in self._results:
-            d = result.get()
+            d = _deserialize_datastream_result(result.get())
             self._ok_count += d.ok_count
             self._failed_count += d.failed_count
             self._skipped_count += d.skipped_count
@@ -148,6 +150,7 @@ class AsyncDataStream(AbstractDataStream):
         success_callback: Signature,
         error_callback: Signature,
         batch_size=100,
+        in_process=False,
         **kwargs,
     ):
         super().__init__(
@@ -159,6 +162,7 @@ class AsyncDataStream(AbstractDataStream):
             **kwargs,
         )
         self.batch_size = batch_size
+        self.in_process = in_process
 
     def process(self, max_failures=100) -> DataStreamResult:
         def read_entries():
@@ -205,10 +209,47 @@ class AsyncDataStream(AbstractDataStream):
         for entry in read_entries():
             batch.append(entry)
             if len(batch) == self.batch_size:
-                results.append(chain_sig.apply_async((batch,)))
+                if self.in_process:
+                    results.append(chain_sig.apply((_serialize_entries(batch),)))
+                else:
+                    results.append(chain_sig.apply_async((_serialize_entries(batch),)))
                 batch = []
         if batch:
-            results.append(chain_sig.apply_async((batch,)))
+            if self.in_process:
+                results.append(chain_sig.apply((_serialize_entries(batch),)))
+            else:
+                results.append(chain_sig.apply_async((_serialize_entries(batch),)))
 
         # return an empty result as we can not say how it ended
         return AsyncDataStreamResult(results)
+
+
+def _serialize_entries(batch: List[StreamEntry]):
+    return [
+        {"entry": x.entry, "filtered": x.filtered, "errors": x.errors} for x in batch
+    ]
+
+
+def _deserialize_entries(_entries: List[Dict]):
+    return [
+        StreamEntry(entry=x["entry"], filtered=x["filtered"], errors=x["errors"])
+        for x in _entries
+    ]
+
+
+def _serialize_datastream_result(result: DataStreamResult):
+    return {
+        "ok_count": result.ok_count,
+        "failed_count": result.failed_count,
+        "skipped_count": result.skipped_count,
+        "failed_entries": _serialize_entries(result.failed_entries),
+    }
+
+
+def _deserialize_datastream_result(result: Dict):
+    return DataStreamResult(
+        ok_count=result["ok_count"],
+        failed_count=result["failed_count"],
+        skipped_count=result["skipped_count"],
+        failed_entries=_deserialize_entries(result["failed_entries"]),
+    )

@@ -62,8 +62,6 @@ def app_config(app_config):
     ] = "invenio_jsonschemas.proxies.current_refresolver_store"
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
-    app_config["INVENIO_CELERY_TASK_ALWAYS_EAGER"] = True
-    app_config["INVENIO_CELERY_TASK_STORE_EAGER_RESULT"] = True
 
     app_config["DATASTREAMS_TRANSFORMERS"] = {
         "status": StatusTransformer,
