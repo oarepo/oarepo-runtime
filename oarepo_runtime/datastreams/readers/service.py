@@ -7,14 +7,14 @@ from . import BaseReader, StreamEntry
 class ServiceReader(BaseReader):
     """Writes the entries to a repository instance using a Service object."""
 
-    def __init__(self, log, *, service=None, identity=None, **kwargs):
+    def __init__(self, *, service=None, identity=None, **kwargs):
         """Constructor.
         :param service_or_name: a service instance or a key of the
                                 service registry.
         :param identity: access identity.
         :param update: if True it will update records if they exist.
         """
-        super().__init__(log, **kwargs)
+        super().__init__(**kwargs)
 
         if isinstance(service, str):
             service = current_service_registry.get(service)
