@@ -3,18 +3,21 @@
 #
 import dataclasses
 import itertools
-from typing import List
+from typing import Dict, List
+
+from oarepo_runtime.datastreams.config import DATASTREAM_READERS, get_instance
 
 from .errors import TransformerError, WriterError
+import abc
 
 
 class StreamEntry:
     """Object to encapsulate streams processing."""
 
-    def __init__(self, entry, errors=None):
+    def __init__(self, entry, filtered=False, errors=None):
         """Constructor."""
         self.entry = entry
-        self.filtered = False
+        self.filtered = filtered
         self.errors = errors or []
 
 
@@ -26,19 +29,39 @@ class DataStreamResult:
     failed_entries: List[StreamEntry]
 
 
-class DataStream:
-    """Data stream."""
+def noop(entry: StreamEntry):
+    pass
 
-    def __init__(self, *, readers, writers, transformers=None, log=None, **kwargs):
+
+class AbstractDataStream(abc.ABC):
+    def __init__(
+        self,
+        *,
+        readers,
+        writers,
+        transformers=None,
+        success_callback=None,
+        error_callback=None,
+        **kwargs,
+    ):
         """Constructor.
-        :param readers: an ordered list of readers.
-        :param writers: an ordered list of writers.
-        :param transformers: an ordered list of transformers to apply.
+        :param readers: an ordered list of readers (whatever a reader is).
+        :param writers: an ordered list of writers (whatever a writer is).
+        :param transformers: an ordered list of transformers to apply (whatever a transformer is).
         """
         self._readers = readers
         self._transformers = transformers
         self._writers = writers
-        self._log = log
+        self._error_callback = error_callback or noop
+        self._success_callback = success_callback or noop
+
+    @abc.abstractmethod
+    def process(self, max_failures=100) -> DataStreamResult:
+        pass
+
+
+class DataStream(AbstractDataStream):
+    """Data stream."""
 
     def process(self, max_failures=100) -> DataStreamResult:
         """Iterates over the entries.
@@ -57,7 +80,7 @@ class DataStream:
                     failed_entries.append(stream_entry)
                 continue
 
-            transformed_entry = self.transform(stream_entry)
+            transformed_entry = self.transform_single(stream_entry)
             if transformed_entry.errors:
                 _failed += 1
                 failed_entries.append(transformed_entry)
@@ -66,7 +89,11 @@ class DataStream:
                 _filtered += 1
                 continue
 
-            self.write(transformed_entry)
+            written_entry = self.write(transformed_entry)
+            if written_entry.errors:
+                self._error_callback(written_entry)
+            else:
+                self._success_callback(written_entry)
             _written += 1
 
         return DataStreamResult(
@@ -81,7 +108,7 @@ class DataStream:
         for rec in itertools.chain(*[iter(x) for x in self._readers]):
             yield rec
 
-    def transform(self, stream_entry, *args, **kwargs):
+    def transform_single(self, stream_entry, *args, **kwargs):
         """Apply the transformations to an stream_entry."""
         for transformer in self._transformers:
             try:
@@ -110,14 +137,17 @@ class DataStream:
 
         return stream_entry
 
-    def read_entries(self, *args, **kwargs):
+    @property
+    def read_entries(self):
         """The total of entries obtained from the origin."""
         return self._read
 
-    def written_entries(self, *args, **kwargs):
+    @property
+    def written_entries(self):
         """The total of entries written to destination."""
         return self._written
 
-    def filtered_entries(self, *args, **kwargs):
+    @property
+    def filtered_entries(self):
         """The total of entries filtered out."""
         return self._filtered

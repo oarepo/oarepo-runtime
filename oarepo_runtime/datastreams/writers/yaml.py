@@ -8,19 +8,19 @@ from . import BaseWriter
 class YamlWriter(BaseWriter):
     """Writes the entries to a YAML file."""
 
-    def __init__(self, log, *, target, catalogue=None, **kwargs):
+    def __init__(self, *, target, base_path=None, **kwargs):
         """Constructor.
         :param file_or_path: path of the output file.
         """
-        super().__init__(log, **kwargs)
+        super().__init__(**kwargs)
         if hasattr(target, "read"):
             # opened file
             self._file = target
             self._stream = target
         else:
             self._stream = None
-            if catalogue:
-                self._file = catalogue.directory.joinpath(target)
+            if base_path:
+                self._file = base_path.joinpath(target)
             else:
                 self._file = target
         self._started = False

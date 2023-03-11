@@ -2,11 +2,12 @@ from logging import getLogger
 from pathlib import Path
 
 import yaml
-from flask import current_app
-from werkzeug.utils import import_string
 
 from .datastreams import DataStream
 from .errors import DataStreamCatalogueError
+
+from .config import get_instance
+from flask import current_app
 
 
 class DataStreamCatalogue:
@@ -56,41 +57,40 @@ class DataStreamCatalogue:
         readers = []
         transformers = []
         writers = []
-        log = getLogger(f"datastreams.{stream_name}")
         for entry in stream_definition:
             entry = {**entry}
             try:
                 if "reader" in entry:
                     readers.append(
-                        self._get_instance(
-                            log,
+                        get_instance(
                             "DATASTREAMS_READERS",
-                            entry.pop("reader"),
+                            "reader",
                             entry,
+                            base_path=self.directory,
                         )
                     )
                 elif "transformer" in entry:
                     transformers.append(
-                        self._get_instance(
-                            log,
+                        get_instance(
                             "DATASTREAMS_TRANSFORMERS",
-                            entry.pop("transformer"),
+                            "transformer",
                             entry,
+                            base_path=self.directory,
                         )
                     )
                 elif "writer" in entry:
                     writers.append(
-                        self._get_instance(
-                            log,
+                        get_instance(
                             "DATASTREAMS_WRITERS",
-                            entry.pop("writer"),
+                            "writer",
                             entry,
+                            base_path=self.directory,
                         )
                     )
                 elif "source" in entry:
-                    readers.append(self._get_reader(log, entry))
+                    readers.append(self.get_reader(entry))
                 elif "service" in entry:
-                    writers.append(self._get_service_writer(log, entry))
+                    writers.append(self.get_service_writer(entry))
                 else:
                     raise DataStreamCatalogueError(
                         "Can not decide what this record is - reader, transformer or service?"
@@ -99,42 +99,31 @@ class DataStreamCatalogue:
                 e.entry = entry
                 e.stream_name = stream_name
                 raise e
-        ds = DataStream(
-            readers=readers, transformers=transformers, writers=writers, log=log
-        )
+        ds = DataStream(readers=readers, transformers=transformers, writers=writers)
         return ds
 
-    def _get_reader(self, log, entry):
-        try:
-            source = Path(entry["source"])
-            ext = source.suffix[1:]
-            reader_class = (
-                current_app.config["DATASTREAMS_READERS_BY_EXTENSION"].get(ext)
-                or current_app.config["DEFAULT_DATASTREAMS_READERS_BY_EXTENSION"][ext]
-            )
-        except KeyError:
-            raise DataStreamCatalogueError(
-                f"Do not have loader for file {source} - extension {ext} not defined in DATASTREAMS_READERS_BY_EXTENSION config"
-            )
-        entry["source"] = self._catalogue_path.parent.joinpath(entry["source"])
-        return self._get_instance(log, "DATASTREAMS_READERS", reader_class, entry)
-
-    def _get_service_writer(self, log, entry):
-        from .writers.service import ServiceWriter
-
-        return self._get_instance(log, None, ServiceWriter, entry)
-
-    def _get_instance(self, log, config_section, clz, entry):
-        if isinstance(clz, str):
+    def get_reader(self, entry):
+        entry = {**entry}
+        if not entry.get("reader"):
             try:
-                clz = (
-                    current_app.config[config_section].get(clz)
-                    or current_app.config[f"DEFAULT_{config_section}"][clz]
+                source = Path(entry["source"])
+                ext = source.suffix[1:]
+                reader_class = (
+                    current_app.config["DATASTREAMS_READERS_BY_EXTENSION"].get(ext)
+                    or current_app.config["DEFAULT_DATASTREAMS_READERS_BY_EXTENSION"][
+                        ext
+                    ]
                 )
+                entry["reader"] = reader_class
             except KeyError:
                 raise DataStreamCatalogueError(
-                    f"Do not have implementation - '{clz}' not defined in {config_section} config"
+                    f"Do not have loader for file {source} - extension {ext} not defined in DATASTREAMS_READERS_BY_EXTENSION config"
                 )
-            if isinstance(clz, str):
-                clz = import_string(clz)
-        return clz(log=log, catalogue=self, **entry)
+        return get_instance(
+            "DATASTREAMS_READERS", "reader", entry, base_path=self.directory
+        )
+
+    def get_service_writer(self, entry):
+        from .writers.service import ServiceWriter
+
+        return get_instance(None, ServiceWriter, entry, base_path=self.directory)

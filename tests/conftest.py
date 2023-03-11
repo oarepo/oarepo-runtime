@@ -18,6 +18,9 @@ import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
+from oarepo_runtime.datastreams.datastreams import StreamEntry
+
+from oarepo_runtime.datastreams.transformers import BaseTransformer
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -37,6 +40,16 @@ def extra_entry_points():
     }
 
 
+class StatusTransformer(BaseTransformer):
+    def apply(self, stream_entry: StreamEntry, *args, **kwargs):
+        if "ok" in stream_entry.entry:
+            stream_entry.entry.pop("ok")
+            return stream_entry
+        if "skipped" in stream_entry.entry:
+            stream_entry.filtered = True
+        return stream_entry
+
+
 @pytest.fixture(scope="module")
 def app_config(app_config):
     """Mimic an instance's configuration."""
@@ -49,6 +62,10 @@ def app_config(app_config):
     ] = "invenio_jsonschemas.proxies.current_refresolver_store"
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
+
+    app_config["DATASTREAMS_TRANSFORMERS"] = {
+        "status": StatusTransformer,
+    }
     return app_config
 
 
