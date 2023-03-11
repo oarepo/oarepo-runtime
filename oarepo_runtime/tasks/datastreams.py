@@ -15,11 +15,13 @@ from oarepo_runtime.datastreams.transformers import BatchTransformer
 from oarepo_runtime.datastreams.writers import BatchWriter
 from oarepo_runtime.datastreams.errors import WriterError
 import traceback
-from celery.canvas import chunks, chain, Signature
+from celery.canvas import chunks, chain, Signature, group
 
 
 @celery.shared_task
-def process_datastream_transformer(transformer_definition, entries: List[StreamEntry]):
+def process_datastream_transformer(
+    entries: List[StreamEntry], *, transformer_definition
+):
     transformer = get_instance(
         config_section=DATASTREAMS_TRANSFORMERS,
         clz="transformer",
@@ -33,17 +35,71 @@ def process_datastream_transformer(transformer_definition, entries: List[StreamE
             try:
                 result.append(transformer.apply(entry))
             except Exception as e:
-                entry.filtered = True
+                stack = "\n".join(traceback.format_stack())
                 entry.errors.append(
-                    f"Transformer {transformer_definition} error: {e}: {traceback.format_stack()}"
+                    f"Transformer {transformer_definition} error: {e}: {stack}"
                 )
                 result.append(entry)
         return result
 
 
+@celery.shared_task
+def process_datastream_writers(entries: List[StreamEntry], *, writer_definitions):
+    for wd in writer_definitions:
+        writer = get_instance(
+            config_section=DATASTREAMS_WRITERS,
+            clz="writer",
+            entry=wd,
+        )
+        if isinstance(writer, BatchWriter):
+            writer.write_batch([x for x in entries if not x.errors and not x.filtered])
+        else:
+            for entry in entries:
+                if not entry.errors and not entry.filtered:
+                    try:
+                        writer.write(entry)
+                    except WriterError as e:
+                        stack = "\n".join(traceback.format_stack())
+                        entry.errors.append(f"Writer {wd} error: {e}: {stack}")
+    return entries
+
+
+@celery.shared_task
+def process_datastream_outcome(
+    entries: List[StreamEntry],
+    *,
+    success_callback: Signature,
+    error_callback: Signature,
+):
+    ok_count = 0
+    skipped_count = 0
+    failed_count = 0
+    failed_entries = []
+
+    entry: StreamEntry
+    for entry in entries:
+        if entry.errors:
+            error_callback.apply((entry,))
+            failed_count += 1
+            failed_entries.append(entry)
+        else:
+            success_callback.apply((entry,))
+            if entry.filtered:
+                skipped_count += 1
+            else:
+                ok_count += 1
+
+    return DataStreamResult(
+        ok_count=ok_count,
+        failed_count=failed_count,
+        skipped_count=skipped_count,
+        failed_entries=failed_entries,
+    )
+
+
 class AsyncDataStreamResult(DataStreamResult):
-    def __init__(self, result):
-        self._result = result
+    def __init__(self, results):
+        self._results = results
         self._ok_count = None
         self._failed_count = None
         self._skipped_count = None
@@ -52,12 +108,11 @@ class AsyncDataStreamResult(DataStreamResult):
     def prepare_result(self):
         if self._ok_count is not None:
             return
-        data = self._result.get()
         self._ok_count = 0
         self._failed_count = 0
         self._skipped_count = 0
-        d: DataStreamResult
-        for d in data:
+        for result in self._results:
+            d = result.get()
             self._ok_count += d.ok_count
             self._failed_count += d.failed_count
             self._skipped_count += d.skipped_count
@@ -81,39 +136,6 @@ class AsyncDataStreamResult(DataStreamResult):
     @property
     def failed_entries(self):
         return self._failed_entries
-
-
-@celery.shared_task
-def process_datastream_writers(writer_definition, entries: List[StreamEntry]):
-    writer = get_instance(
-        config_section=DATASTREAMS_WRITERS,
-        clz="writer",
-        entry=writer_definition,
-    )
-    if isinstance(writer, BatchWriter):
-        return writer.write_batch(entries)
-    else:
-        result = []
-        for entry in entries:
-            result.append(entry)
-            try:
-                writer.write(entry)
-            except WriterError as e:
-                entry.errors.append(
-                    f"Writer {writer_definition} error: {e}: {traceback.format_stack()}"
-                )
-        return result
-
-
-@celery.shared_task
-def process_datastream_outcome(
-    success_callback: Signature, error_callback: Signature, entries: List[StreamEntry]
-):
-    for entry in entries:
-        if entry.errors:
-            error_callback.apply((entry,))
-        else:
-            success_callback.apply((entry,))
 
 
 class AsyncDataStream(AbstractDataStream):
@@ -155,23 +177,38 @@ class AsyncDataStream(AbstractDataStream):
         if self._transformers:
             for transformer in self._transformers:
                 chain_def.append(
-                    process_datastream_transformer.signature((transformer,))
+                    process_datastream_transformer.signature(
+                        kwargs={"transformer_definition": transformer}
+                    )
                 )
 
-        chain_def.append(process_datastream_writers.signature((self._writers,)))
+        chain_def.append(
+            process_datastream_writers.signature(
+                kwargs={"writer_definitions": self._writers}
+            )
+        )
         chain_def.append(
             process_datastream_outcome.signature(
-                (self._success_callback, self._error_callback)
+                kwargs={
+                    "success_callback": self._success_callback,
+                    "error_callback": self._error_callback,
+                }
             )
         )
 
-        process = chunks(chain(*chain_def), read_entries(), self.batch_size).group()
-        result = process()
+        chain_sig = chain(*chain_def)
+        chain_sig.link_error(self._error_callback)
+
+        results = []
+        batch = []
+
+        for entry in read_entries():
+            batch.append(entry)
+            if len(batch) == self.batch_size:
+                results.append(chain_sig.apply_async((batch,)))
+                batch = []
+        if batch:
+            results.append(chain_sig.apply_async((batch,)))
 
         # return an empty result as we can not say how it ended
-        return DataStreamResult(
-            ok_count=None,
-            failed_count=None,
-            skipped_count=None,
-            failed_entries=None,
-        )
+        return AsyncDataStreamResult(results)

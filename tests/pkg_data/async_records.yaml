@@ -1,0 +1,15 @@
+metadata:
+  title: pkg record 1
+ok: true
+---
+metadata:
+  title: pkg record 2
+ok: true
+---
+metadata:
+  title: pkg record 3
+failed: true
+---
+metadata:
+  title: pkg record 4
+skipped: true
