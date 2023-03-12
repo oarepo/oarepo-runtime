@@ -14,11 +14,12 @@ import abc
 class StreamEntry:
     """Object to encapsulate streams processing."""
 
-    def __init__(self, entry, filtered=False, errors=None):
+    def __init__(self, entry, filtered=False, errors=None, context=None):
         """Constructor."""
         self.entry = entry
         self.filtered = filtered
         self.errors = errors or []
+        self.context = context or {}
 
 
 @dataclasses.dataclass
