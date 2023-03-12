@@ -226,13 +226,24 @@ class AsyncDataStream(AbstractDataStream):
 
 def _serialize_entries(batch: List[StreamEntry]):
     return [
-        {"entry": x.entry, "filtered": x.filtered, "errors": x.errors} for x in batch
+        {
+            "entry": x.entry,
+            "filtered": x.filtered,
+            "errors": x.errors,
+            "context": x.context,
+        }
+        for x in batch
     ]
 
 
 def _deserialize_entries(_entries: List[Dict]):
     return [
-        StreamEntry(entry=x["entry"], filtered=x["filtered"], errors=x["errors"])
+        StreamEntry(
+            entry=x["entry"],
+            filtered=x["filtered"],
+            errors=x["errors"],
+            context=x["context"],
+        )
         for x in _entries
     ]
 
