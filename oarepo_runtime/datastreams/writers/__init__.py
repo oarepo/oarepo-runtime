@@ -24,8 +24,11 @@ class BaseWriter(ABC):
 
 class BatchWriter(BaseWriter):
     @abstractmethod
-    def write_batch(self, entry: List[StreamEntry], *args, **kwargs):
+    def write_batch(self, entries: List[StreamEntry], *args, **kwargs):
         """Writes the input entry to the target output.
         :returns: nothing
                   Raises WriterException in case of errors.
         """
+
+    def write(self, entry: StreamEntry, *args, **kwargs):
+        return self.write_batch([entry], *args, **kwargs)
