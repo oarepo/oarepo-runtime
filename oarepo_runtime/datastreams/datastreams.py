@@ -9,6 +9,9 @@ from oarepo_runtime.datastreams.config import DATASTREAM_READERS, get_instance
 
 from .errors import TransformerError, WriterError
 import abc
+import logging
+
+log = logging.getLogger("datastreams")
 
 
 class StreamEntry:
@@ -128,12 +131,10 @@ class DataStream(AbstractDataStream):
             try:
                 writer.write(stream_entry)
             except WriterError as err:
-                self._log.error("Error in writer: ", err, repr(stream_entry.entry))
+                log.error("Error in writer: ", err, repr(stream_entry.entry))
                 stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
             except Exception as err:
-                self._log.error(
-                    "Unexpected error in writer: ", err, repr(stream_entry.entry)
-                )
+                log.error("Unexpected error in writer: ", err, repr(stream_entry.entry))
                 stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
 
         return stream_entry
