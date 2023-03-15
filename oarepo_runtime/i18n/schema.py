@@ -7,7 +7,7 @@ it for each project.
 """
 
 
-class MultilingualSchema(Schema):
+class I18nSchema(Schema):
     lang = fields.String(required=True)
     value = fields.String(required=True)
 
@@ -17,10 +17,10 @@ class MultilingualSchema(Schema):
             raise ValidationError("Invalid language code")
 
 
-def MultilingualField(*args, **kwargs):
+def I18nField(*args, **kwargs):
     return fields.List(fields.Nested(MultilingualSchema), *args, **kwargs)
 
-class MultilingualUISchema(Schema):
+class I18nUISchema(Schema):
     lang = fields.String(required=True)
     value = fields.String(required=True)
 
@@ -29,5 +29,5 @@ class MultilingualUISchema(Schema):
         if value != '_' and not langcodes.Language.get(value).is_valid():
             raise ValidationError("Invalid language code")
 
-def MultilingualUIField(*args, **kwargs):
+def I18nUIField(*args, **kwargs):
     return fields.List(fields.Nested(MultilingualSchema), *args, **kwargs)
