@@ -1,5 +1,5 @@
 import langcodes
-from marshmallow import Schema, fields, ValidationError, validates
+from marshmallow import Schema, ValidationError, fields, validates
 
 """
 Marshmallow schema for multilingual strings. Consider moving this file to a library, not generating
@@ -13,12 +13,13 @@ class I18nSchema(Schema):
 
     @validates("lang")
     def validate_lang(self, value):
-        if value != '_' and not langcodes.Language.get(value).is_valid():
+        if value != "_" and not langcodes.Language.get(value).is_valid():
             raise ValidationError("Invalid language code")
 
 
 def I18nField(*args, **kwargs):
     return fields.List(fields.Nested(MultilingualSchema), *args, **kwargs)
+
 
 class I18nUISchema(Schema):
     lang = fields.String(required=True)
@@ -26,8 +27,9 @@ class I18nUISchema(Schema):
 
     @validates("lang")
     def validate_lang(self, value):
-        if value != '_' and not langcodes.Language.get(value).is_valid():
+        if value != "_" and not langcodes.Language.get(value).is_valid():
             raise ValidationError("Invalid language code")
+
 
 def I18nUIField(*args, **kwargs):
     return fields.List(fields.Nested(MultilingualSchema), *args, **kwargs)

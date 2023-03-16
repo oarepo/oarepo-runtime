@@ -22,7 +22,7 @@ class BaseWriter(ABC):
         """Finalizes writing"""
 
 
-class BatchWriter:
+class BatchWriter(ABC):
     def __init__(self, **kwargs) -> None:
         """kwargs for extensions"""
 
