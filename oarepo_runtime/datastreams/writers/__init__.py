@@ -18,6 +18,13 @@ class BaseWriter(ABC):
                   Raises WriterException in case of errors.
         """
 
+    @abstractmethod
+    def delete(self, entry: StreamEntry, *args, **kwargs):
+        """Removes the stream entry
+        :returns: nothing
+                  Raises WriterException in case of errors.
+        """
+
     def finish(self):
         """Finalizes writing"""
 

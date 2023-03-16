@@ -36,6 +36,9 @@ class YamlWriter(BaseWriter):
         yaml.safe_dump(entry.entry, self._stream)
         return entry
 
+    def delete(self, stream_entry: StreamEntry):
+        """noop"""
+
     def finish(self):
         """Finalizes writing"""
         if not hasattr(self._file, "read") and self._stream:
