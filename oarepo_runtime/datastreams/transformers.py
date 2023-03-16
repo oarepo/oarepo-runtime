@@ -19,7 +19,7 @@ class BaseTransformer(ABC):
         """
 
 
-class BatchTransformer:
+class BatchTransformer(ABC):
     def __init__(self, **kwargs) -> None:
         """Extra parameters for extensions"""
 
