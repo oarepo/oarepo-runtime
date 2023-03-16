@@ -1,15 +1,13 @@
 #
 # This package was taken from Invenio vocabularies and modified to be more universal
 #
+import abc
 import dataclasses
 import itertools
-from typing import Dict, List
-
-from oarepo_runtime.datastreams.config import DATASTREAM_READERS, get_instance
+import logging
+from typing import List
 
 from .errors import TransformerError, WriterError
-import abc
-import logging
 
 log = logging.getLogger("datastreams")
 
@@ -23,6 +21,10 @@ class StreamEntry:
         self.filtered = filtered
         self.errors = errors or []
         self.context = context or {}
+
+    @property
+    def ok(self):
+        return not self.filtered and not self.errors
 
 
 @dataclasses.dataclass

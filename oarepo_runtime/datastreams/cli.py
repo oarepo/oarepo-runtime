@@ -1,14 +1,13 @@
 import click
+from flask import current_app
+from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
 from oarepo_runtime.datastreams.fixtures import (
+    FixturesResult,
     dump_fixtures,
     load_fixtures,
-    FixturesResult,
 )
-
-from flask.cli import with_appcontext
-from flask import current_app
 
 
 @oarepo.group()

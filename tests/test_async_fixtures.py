@@ -1,6 +1,6 @@
 from pathlib import Path
-from oarepo_runtime.datastreams.datastreams import StreamEntry
 
+from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.tasks.datastreams import AsyncDataStream
 
 
@@ -25,7 +25,7 @@ def test_async_fixtures(celery_app, db, app, identity, search_clear):
 
     @celery_app.task
     def error_callback(entry, *args, **kwargs):
-        print(entry, args, kwargs)
+        print("Error:", entry, args, kwargs)
         stats["error"] += 1
 
     ds = AsyncDataStream(

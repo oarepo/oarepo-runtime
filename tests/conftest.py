@@ -18,8 +18,8 @@ import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
-from oarepo_runtime.datastreams.datastreams import StreamEntry
 
+from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.transformers import BaseTransformer
 
 pytest_plugins = ("celery.contrib.pytest",)
