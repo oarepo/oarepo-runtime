@@ -53,3 +53,7 @@ class ServiceWriter(BaseWriter):
         except InvalidRelationValue as err:
             # TODO: Check if we can get the error message easier
             raise WriterError([{"InvalidRelationValue": err.args[0]}])
+
+    def delete(self, stream_entry: StreamEntry):
+        entry = stream_entry.entry
+        self._service.delete(self._identity, entry["id"])
