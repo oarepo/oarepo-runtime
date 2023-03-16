@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import List
+
+from oarepo_runtime.datastreams.batch import StreamBatch
 
 from ..datastreams import StreamEntry
-from ..errors import WriterError
 
 
 class BaseWriter(ABC):
     """Base writer."""
 
     def __init__(self, **kwargs) -> None:
-        pass
+        """kwargs for extensions"""
 
     @abstractmethod
     def write(self, entry: StreamEntry, *args, **kwargs):
@@ -22,13 +22,17 @@ class BaseWriter(ABC):
         """Finalizes writing"""
 
 
-class BatchWriter(BaseWriter):
-    @abstractmethod
-    def write_batch(self, entries: List[StreamEntry], *args, **kwargs):
-        """Writes the input entry to the target output.
-        :returns: nothing
-                  Raises WriterException in case of errors.
-        """
+class BatchWriter:
+    def __init__(self, **kwargs) -> None:
+        """kwargs for extensions"""
 
-    def write(self, entry: StreamEntry, *args, **kwargs):
-        return self.write_batch([entry], *args, **kwargs)
+    @abstractmethod
+    def write_batch(self, batch: StreamBatch, *args, **kwargs) -> StreamBatch:
+        """Writes the batch to teh stream
+        :returns: the batch written. If there are any errors writing entries
+        of the batch, should mark them on entries[x].errors.
+
+        Note: the batch contains all items, even the filtered ones or the ones
+        with errors. Get StreamEntry.ok property to write only the correct batch
+        entries.
+        """

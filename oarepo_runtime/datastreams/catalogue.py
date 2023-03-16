@@ -1,13 +1,11 @@
-from logging import getLogger
 from pathlib import Path
 
 import yaml
-
-from .datastreams import DataStream
-from .errors import DataStreamCatalogueError
+from flask import current_app
 
 from .config import get_instance
-from flask import current_app
+from .datastreams import DataStream
+from .errors import DataStreamCatalogueError
 
 
 class DataStreamCatalogue:

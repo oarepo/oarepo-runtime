@@ -1,6 +1,7 @@
-from .cli import oarepo as oarepo_cmd
 import oarepo_runtime.cf.cli  # noqa, just to register
 import oarepo_runtime.datastreams.cli  # noqa, just to register
+
+from .cli import oarepo as oarepo_cmd
 
 
 class OARepoRuntime(object):

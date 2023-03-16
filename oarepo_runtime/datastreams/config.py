@@ -1,8 +1,7 @@
 from flask import current_app
-from pathlib import Path
-from oarepo_runtime.datastreams.errors import DataStreamCatalogueError
 from werkzeug.utils import import_string
 
+from oarepo_runtime.datastreams.errors import DataStreamCatalogueError
 
 DATASTREAM_READERS = "DATASTREAMS_READERS"
 DATASTREAMS_TRANSFORMERS = "DATASTREAMS_TRANSFORMERS"

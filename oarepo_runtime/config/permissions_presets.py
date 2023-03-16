@@ -1,6 +1,5 @@
 from invenio_records_permissions import RecordPermissionPolicy
 from invenio_records_permissions.generators import AnyUser, SystemProcess
-from invenio_records_resources.services.files.generators import AnyUserIfFileIsLocal
 
 
 class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
