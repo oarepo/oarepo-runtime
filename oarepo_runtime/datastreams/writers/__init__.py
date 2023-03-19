@@ -12,14 +12,14 @@ class BaseWriter(ABC):
         """kwargs for extensions"""
 
     @abstractmethod
-    def write(self, entry: StreamEntry, *args, **kwargs):
+    def write(self, entry: StreamEntry, uow=None, *args, **kwargs):
         """Writes the input entry to the target output.
         :returns: nothing
                   Raises WriterException in case of errors.
         """
 
     @abstractmethod
-    def delete(self, entry: StreamEntry, *args, **kwargs):
+    def delete(self, entry: StreamEntry, uow=None, *args, **kwargs):
         """Removes the stream entry
         :returns: nothing
                   Raises WriterException in case of errors.
@@ -34,7 +34,7 @@ class BatchWriter(ABC):
         """kwargs for extensions"""
 
     @abstractmethod
-    def write_batch(self, batch: StreamBatch, *args, **kwargs) -> StreamBatch:
+    def write_batch(self, batch: StreamBatch, uow=None, *args, **kwargs) -> StreamBatch:
         """Writes the batch to teh stream
         :returns: the batch written. If there are any errors writing entries
         of the batch, should mark them on entries[x].errors.

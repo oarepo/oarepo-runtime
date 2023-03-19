@@ -6,6 +6,7 @@
 #
 from .catalogue import DataStreamCatalogue
 from .datastreams import DataStream, DataStreamResult, StreamEntry
+from .batch import StreamBatch
 from .errors import DataStreamCatalogueError, ReaderError, TransformerError, WriterError
 from .readers import BaseReader
 from .transformers import BaseTransformer
@@ -23,4 +24,5 @@ __all__ = [
     "ReaderError",
     "WriterError",
     "TransformerError",
+    "StreamBatch",
 ]
