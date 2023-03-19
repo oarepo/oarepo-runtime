@@ -1,8 +1,20 @@
+import logging
+import time
 import traceback
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 import celery
 from celery.canvas import Signature, chain
+from flask_principal import (
+    ActionNeed,
+    Identity,
+    ItemNeed,
+    Need,
+    RoleNeed,
+    TypeNeed,
+    UserNeed,
+)
+from invenio_access.permissions import system_identity
 
 from oarepo_runtime.datastreams.batch import StreamBatch
 from oarepo_runtime.datastreams.config import (
@@ -15,22 +27,28 @@ from oarepo_runtime.datastreams.datastreams import (
     AbstractDataStream,
     DataStreamResult,
     StreamEntry,
+    noop,
 )
 from oarepo_runtime.datastreams.errors import TransformerError, WriterError
 from oarepo_runtime.datastreams.transformers import BatchTransformer
 from oarepo_runtime.datastreams.writers import BatchWriter
 
+timing = logging.getLogger("oai.harvester.timing")
+
 
 @celery.shared_task
-def process_datastream_transformer(_batch: Dict, *, transformer_definition):
+def process_datastream_transformer(_batch: Dict, *, transformer_definition, identity):
+    identity = _deserialize_identity(identity)
     batch: StreamBatch = _deserialize_batch(_batch)
     transformer = get_instance(
         config_section=DATASTREAMS_TRANSFORMERS,
         clz="transformer",
         entry=transformer_definition,
+        identity=identity,
     )
+    start_time = time.time()
     if isinstance(transformer, BatchTransformer):
-        return _serialize_batch(transformer.apply_batch(batch))
+        batch = transformer.apply_batch(batch)
     else:
         result = []
         for entry in batch.entries:
@@ -49,17 +67,26 @@ def process_datastream_transformer(_batch: Dict, *, transformer_definition):
                 )
                 result.append(entry)
         batch.entries = result
-        return _serialize_batch(batch)
+
+    end_time = time.time()
+    timing.info(
+        f"Time spent in transformer {transformer}: {end_time-start_time} seconds"
+    )
+
+    return _serialize_batch(batch)
 
 
 @celery.shared_task
-def process_datastream_writers(_batch: Dict, *, writer_definitions):
+def process_datastream_writers(_batch: Dict, *, writer_definitions, identity):
+    identity = _deserialize_identity(identity)
     batch: StreamBatch = _deserialize_batch(_batch)
     for wd in writer_definitions:
+        start_time = time.time()
         writer = get_instance(
             config_section=DATASTREAMS_WRITERS,
             clz="writer",
             entry=wd,
+            identity=identity,
         )
         if isinstance(writer, BatchWriter):
             writer.write_batch(batch)
@@ -76,15 +103,14 @@ def process_datastream_writers(_batch: Dict, *, writer_definitions):
                         entry.errors.append(
                             f"Writer {wd} unhandled error: {e}: {stack}"
                         )
+        end_time = time.time()
+        timing.info(f"Time spent in writer {writer}: {end_time-start_time} seconds")
     return _serialize_batch(batch)
 
 
 @celery.shared_task
 def process_datastream_outcome(
-    _batch: Dict,
-    *,
-    success_callback: Signature,
-    error_callback: Signature,
+    _batch: Dict, *, success_callback: Signature, error_callback: Signature, identity
 ):
     ok_count = 0
     skipped_count = 0
@@ -94,11 +120,11 @@ def process_datastream_outcome(
     entry: StreamEntry
     for entry in batch.entries:
         if entry.errors:
-            error_callback.apply((entry,))
+            error_callback.apply((), {"entry": entry})
             failed_count += 1
             failed_entries.append(entry)
         else:
-            success_callback.apply((entry,))
+            success_callback.apply((), {"entry": entry})
             if entry.filtered:
                 skipped_count += 1
             else:
@@ -166,6 +192,7 @@ class AsyncDataStream(AbstractDataStream):
         error_callback: Signature,
         batch_size=100,
         in_process=False,
+        identity=system_identity,
         **kwargs,
     ):
         super().__init__(
@@ -178,6 +205,7 @@ class AsyncDataStream(AbstractDataStream):
         )
         self.batch_size = batch_size
         self.in_process = in_process
+        self.identity = identity
 
     def process(self, max_failures=100) -> DataStreamResult:
         def read_entries():
@@ -187,6 +215,7 @@ class AsyncDataStream(AbstractDataStream):
                     config_section=DATASTREAM_READERS,
                     clz="reader",
                     entry=reader_def,
+                    identity=self.identity,
                 )
 
                 for rec in iter(reader):
@@ -197,13 +226,19 @@ class AsyncDataStream(AbstractDataStream):
             for transformer in self._transformers:
                 chain_def.append(
                     process_datastream_transformer.signature(
-                        kwargs={"transformer_definition": transformer}
+                        kwargs={
+                            "transformer_definition": transformer,
+                            "identity": _serialize_identity(self.identity),
+                        }
                     )
                 )
 
         chain_def.append(
             process_datastream_writers.signature(
-                kwargs={"writer_definitions": self._writers}
+                kwargs={
+                    "writer_definitions": self._writers,
+                    "identity": _serialize_identity(self.identity),
+                }
             )
         )
         chain_def.append(
@@ -211,6 +246,7 @@ class AsyncDataStream(AbstractDataStream):
                 kwargs={
                     "success_callback": self._success_callback,
                     "error_callback": self._error_callback,
+                    "identity": _serialize_identity(self.identity),
                 }
             )
         )
@@ -227,7 +263,10 @@ class AsyncDataStream(AbstractDataStream):
         else:
             call = chain_sig.apply_async
 
+        read_count = 0
         for entry in read_entries():
+            read_count += 1
+            self._progress_callback(read=read_count)
             batch_entries.append(entry)
             if len(batch_entries) == self.batch_size:
                 batch = StreamBatch(
@@ -304,3 +343,29 @@ def _serialize_batch(batch: StreamBatch):
         "entries": _serialize_entries(batch.entries),
         "context": batch.context,
     }
+
+
+def _serialize_identity(identity):
+    return {
+        "id": identity.id,
+        "auth_type": identity.auth_type,
+        "provides": [
+            {"type": type(x).__name__, "params": x._asdict()} for x in identity.provides
+        ],
+    }
+
+
+def _deserialize_identity(identity_dict):
+    ret = Identity(id=identity_dict["id"], auth_type=identity_dict["auth_type"])
+    for provide in identity_dict["provides"]:
+        clz = {
+            "Need": Need,
+            "UserNeed": UserNeed,
+            "RoleNeed": RoleNeed,
+            "TypeNeed": TypeNeed,
+            "ActionNeed": ActionNeed,
+            "ItemNeed": ItemNeed,
+        }[provide["type"]]
+
+        ret.provides.add(clz(**provide["params"]))
+    return ret

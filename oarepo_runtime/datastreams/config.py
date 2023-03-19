@@ -23,4 +23,10 @@ def get_instance(config_section, clz, entry, **kwargs):
             )
         if isinstance(clz, str):
             clz = import_string(clz)
-    return clz(**entry, **kwargs)
+    try:
+        return clz(**entry, **kwargs)
+    except Exception as e:
+        args = {**entry, **kwargs}
+        raise DataStreamCatalogueError(
+            f"Exception instantiating {clz} with arguments {args}"
+        ) from e

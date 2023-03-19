@@ -10,6 +10,7 @@ from typing import List
 from .errors import TransformerError, WriterError
 
 log = logging.getLogger("datastreams")
+from invenio_access.permissions import system_identity
 
 
 class StreamEntry:
@@ -35,8 +36,8 @@ class DataStreamResult:
     failed_entries: List[StreamEntry]
 
 
-def noop(entry: StreamEntry):
-    pass
+def noop(*args, **kwargs):
+    """Noop callback"""
 
 
 class AbstractDataStream(abc.ABC):
@@ -48,6 +49,7 @@ class AbstractDataStream(abc.ABC):
         transformers=None,
         success_callback=None,
         error_callback=None,
+        progress_callback=None,
         **kwargs,
     ):
         """Constructor.
@@ -60,6 +62,7 @@ class AbstractDataStream(abc.ABC):
         self._writers = writers
         self._error_callback = error_callback or noop
         self._success_callback = success_callback or noop
+        self._progress_callback = progress_callback or noop
 
     @abc.abstractmethod
     def process(self, max_failures=100) -> DataStreamResult:
@@ -78,8 +81,11 @@ class DataStream(AbstractDataStream):
         """
         _written, _filtered, _failed = 0, 0, 0
         failed_entries = []
+        read_count = 0
 
         for stream_entry in self.read():
+            read_count += 1
+            self._success_callback(read=read_count, written=_written, failed=_failed)
             if stream_entry.errors:
                 if len(failed_entries) < max_failures:
                     _failed += 1

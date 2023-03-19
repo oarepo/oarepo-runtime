@@ -2,6 +2,7 @@ from pathlib import Path
 
 import yaml
 from flask import current_app
+from invenio_access.permissions import system_identity
 
 from .config import get_instance
 from .datastreams import DataStream
@@ -9,7 +10,7 @@ from .errors import DataStreamCatalogueError
 
 
 class DataStreamCatalogue:
-    def __init__(self, catalogue, content=None) -> None:
+    def __init__(self, catalogue, content=None, identity=system_identity) -> None:
         """
         Catalogue of data streams. The catalogue contains a dict of:
         stream_name: stream_definition, where stream definition is an array of:
@@ -34,6 +35,7 @@ class DataStreamCatalogue:
         else:
             with open(catalogue) as f:
                 self._catalogue = yaml.safe_load(f)
+        self.identity = identity
 
     @property
     def path(self):
@@ -65,6 +67,7 @@ class DataStreamCatalogue:
                             "reader",
                             entry,
                             base_path=self.directory,
+                            identity=self.identity,
                         )
                     )
                 elif "transformer" in entry:
@@ -74,6 +77,7 @@ class DataStreamCatalogue:
                             "transformer",
                             entry,
                             base_path=self.directory,
+                            identity=self.identity,
                         )
                     )
                 elif "writer" in entry:
@@ -83,6 +87,7 @@ class DataStreamCatalogue:
                             "writer",
                             entry,
                             base_path=self.directory,
+                            identity=self.identity,
                         )
                     )
                 elif "source" in entry:
@@ -118,10 +123,16 @@ class DataStreamCatalogue:
                     f"Do not have loader for file {source} - extension {ext} not defined in DATASTREAMS_READERS_BY_EXTENSION config"
                 )
         return get_instance(
-            "DATASTREAMS_READERS", "reader", entry, base_path=self.directory
+            "DATASTREAMS_READERS",
+            "reader",
+            entry,
+            base_path=self.directory,
+            identity=self.identity,
         )
 
     def get_service_writer(self, entry):
         from .writers.service import ServiceWriter
 
-        return get_instance(None, ServiceWriter, entry, base_path=self.directory)
+        return get_instance(
+            None, ServiceWriter, entry, base_path=self.directory, identity=self.identity
+        )

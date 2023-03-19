@@ -34,19 +34,24 @@ class ServiceWriter(BaseWriter):
     def _resolve(self, id_):
         return self._service.read(self._identity, id_)
 
-    def write(self, stream_entry: StreamEntry, *args, **kwargs):
+    def write(self, stream_entry: StreamEntry, *args, uow=None, **kwargs):
         """Writes the input entry using a given service."""
         entry = stream_entry.entry
+        service_kwargs = {}
+        if uow:
+            service_kwargs["uow"] = uow
         try:
             try:
-                return self._service.create(self._identity, entry)
+                return self._service.create(self._identity, entry, **service_kwargs)
             except PIDAlreadyExists:
                 if not self._update:
                     raise WriterError([f"Entry already exists: {entry}"])
                 entry_id = self._entry_id(entry)
                 current = self._resolve(entry_id)
                 updated = dict(current.to_dict(), **entry)
-                return self._service.update(self._identity, entry_id, updated)
+                return self._service.update(
+                    self._identity, entry_id, updated, **service_kwargs
+                )
 
         except ValidationError as err:
             raise WriterError([{"ValidationError": err.messages}])
@@ -54,6 +59,9 @@ class ServiceWriter(BaseWriter):
             # TODO: Check if we can get the error message easier
             raise WriterError([{"InvalidRelationValue": err.args[0]}])
 
-    def delete(self, stream_entry: StreamEntry):
+    def delete(self, stream_entry: StreamEntry, uow=None):
+        service_kwargs = {}
+        if uow:
+            service_kwargs["uow"] = uow
         entry = stream_entry.entry
-        self._service.delete(self._identity, entry["id"])
+        self._service.delete(self._identity, entry["id"], **service_kwargs)
