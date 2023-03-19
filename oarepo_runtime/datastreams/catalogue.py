@@ -2,12 +2,11 @@ from pathlib import Path
 
 import yaml
 from flask import current_app
+from invenio_access.permissions import system_identity
 
 from .config import get_instance
 from .datastreams import DataStream
 from .errors import DataStreamCatalogueError
-
-from invenio_access.permissions import system_identity
 
 
 class DataStreamCatalogue:

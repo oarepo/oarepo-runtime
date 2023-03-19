@@ -1,12 +1,14 @@
-from .base import oarepo
-from flask.cli import with_appcontext
-from flask import current_app
-from invenio_search.proxies import current_search
-from invenio_records_resources.proxies import current_service_registry
-import click
 import sys
-from werkzeug.utils import import_string, ImportStringError
+
+import click
+from flask import current_app
+from flask.cli import with_appcontext
 from invenio_db import db
+from invenio_records_resources.proxies import current_service_registry
+from invenio_search.proxies import current_search
+from werkzeug.utils import ImportStringError, import_string
+
+from .base import oarepo
 
 
 @oarepo.group()

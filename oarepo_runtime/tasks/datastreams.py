@@ -1,9 +1,20 @@
+import logging
 import time
 import traceback
 from typing import Callable, Dict, List
 
 import celery
 from celery.canvas import Signature, chain
+from flask_principal import (
+    ActionNeed,
+    Identity,
+    ItemNeed,
+    Need,
+    RoleNeed,
+    TypeNeed,
+    UserNeed,
+)
+from invenio_access.permissions import system_identity
 
 from oarepo_runtime.datastreams.batch import StreamBatch
 from oarepo_runtime.datastreams.config import (
@@ -21,17 +32,6 @@ from oarepo_runtime.datastreams.datastreams import (
 from oarepo_runtime.datastreams.errors import TransformerError, WriterError
 from oarepo_runtime.datastreams.transformers import BatchTransformer
 from oarepo_runtime.datastreams.writers import BatchWriter
-from invenio_access.permissions import system_identity
-from flask_principal import (
-    Identity,
-    UserNeed,
-    RoleNeed,
-    TypeNeed,
-    ActionNeed,
-    ItemNeed,
-    Need,
-)
-import logging
 
 timing = logging.getLogger("oai.harvester.timing")
 
