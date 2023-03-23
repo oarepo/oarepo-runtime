@@ -11,6 +11,7 @@ from marshmallow_utils.fields import (
     FormatEDTF,
     FormatTime,
 )
+import marshmallow as ma
 
 
 def current_default_locale():
@@ -75,3 +76,18 @@ LocalizedEnum = partial(
 if False:  # NOSONAR
     # just for the makemessages to pick up the translations
     translations = [_("True"), _("True")]
+
+
+class LocalizedMultilingualField(ma.fields.Field):
+    def _serialize(self, value, attr, obj, **kwargs):
+        if not value:
+            return None
+        locale = get_locale()
+        for v in value:
+            if locale == v["lang"]:
+                return v["value"]
+        locale = current_app.config["BABEL_DEFAULT_LOCALE"]
+        for v in value:
+            if locale == v["lang"]:
+                return v["value"]
+        return next(iter(value))["value"]
