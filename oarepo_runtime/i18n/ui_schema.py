@@ -36,10 +36,11 @@ def I18nStrUIField(*args, lang_field="lang", value_field="value", **kwargs):  # 
 @lru_cache
 def get_i18n_localized_ui_schema(lang_field, value_field):
     class I18nLocalizedUISchema(Schema):
-        def _serialize(self, value, attr, obj, **kwargs):
+        def _serialize(self, value, attr=None, obj=None, **kwargs):
             if not value:
                 return None
             locale = get_locale().language
+            print(value, locale)
             for v in value:
                 if locale == v[lang_field]:
                     return v[value_field]
@@ -60,9 +61,8 @@ def get_i18n_localized_ui_schema(lang_field, value_field):
 def MultilingualLocalizedUIField(  # NOSONAR
     *args, lang_field="lang", value_field="value", **kwargs
 ):
-    return fields.List(
-        fields.Nested(get_i18n_localized_ui_schema(lang_field, value_field)),
-        **kwargs,
+    return fields.Nested(
+        get_i18n_localized_ui_schema(lang_field, value_field), **kwargs
     )
 
 
@@ -70,7 +70,7 @@ def I18nStrLocalizedUIField(  # NOSONAR
     *args, lang_field="lang", value_field="value", **kwargs
 ):
     return fields.Nested(
-        get_i18n_localized_ui_schema(lang_field, value_field),
+        get_i18n_ui_schema(lang_field, value_field),
         *args,
         **kwargs,
     )
