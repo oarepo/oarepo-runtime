@@ -31,7 +31,6 @@ def MultilingualField(  # NOSONAR
 ):
     return fields.List(
         fields.Nested(get_i18n_schema(lang_field, value_field)),
-        *args,
         **kwargs,
     )
 

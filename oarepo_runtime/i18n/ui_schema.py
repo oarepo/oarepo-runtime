@@ -21,7 +21,6 @@ def MultilingualUIField(  # NOSONAR
 ):
     return fields.List(
         fields.Nested(get_i18n_ui_schema(lang_field, value_field)),
-        *args,
         **kwargs,
     )
 
@@ -63,7 +62,6 @@ def MultilingualLocalizedUIField(  # NOSONAR
 ):
     return fields.List(
         fields.Nested(get_i18n_localized_ui_schema(lang_field, value_field)),
-        *args,
         **kwargs,
     )
 
