@@ -12,6 +12,8 @@ from marshmallow_utils.fields import (
     FormatTime,
 )
 import marshmallow as ma
+from marshmallow_utils.fields import Links, TZDateTime
+from datetime import timezone
 
 
 def current_default_locale():
@@ -76,3 +78,11 @@ LocalizedEnum = partial(
 if False:  # NOSONAR
     # just for the makemessages to pick up the translations
     translations = [_("True"), _("True")]
+
+
+class InvenioUISchema(ma.Schema):
+    id = ma.fields.Str()
+    created = LocalizedDateTime(dump_only=True)
+    updated = LocalizedDateTime(dump_only=True)
+    links = Links(dump_only=True)
+    revision_id = ma.fields.Integer(dump_only=True)
