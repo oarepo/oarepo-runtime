@@ -40,7 +40,6 @@ def get_i18n_localized_ui_schema(lang_field, value_field):
             if not value:
                 return None
             locale = get_locale().language
-            print(value, locale)
             for v in value:
                 if locale == v[lang_field]:
                     return v[value_field]
