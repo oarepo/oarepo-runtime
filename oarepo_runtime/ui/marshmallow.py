@@ -84,5 +84,5 @@ class InvenioUISchema(ma.Schema):
     id = ma.fields.Str()
     created = LocalizedDateTime(dump_only=True)
     updated = LocalizedDateTime(dump_only=True)
-    links = Links(dump_only=True)
+    links = ma.fields.Raw(dump_only=True)
     revision_id = ma.fields.Integer(dump_only=True)
