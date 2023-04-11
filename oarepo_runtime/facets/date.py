@@ -1,4 +1,3 @@
-from invenio_records_resources.services.records.facets import TermsFacet
 from oarepo_runtime.ui.marshmallow import (
     LocalizedDate,
     LocalizedTime,
@@ -7,14 +6,9 @@ from oarepo_runtime.ui.marshmallow import (
     LocalizedEDTFInterval,
 )
 import re
-
-
-class LabelledValuesTermsFacet(TermsFacet):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **{"value_labels": self.value_labels, **kwargs})
-
-    def value_labels(self, values):
-        return {val: val for val in values}
+from .base import LabelledValuesTermsFacet
+from invenio_search.engine import dsl
+from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
 
 
 class DateFacet(LabelledValuesTermsFacet):
@@ -39,7 +33,13 @@ class EDTFFacet(LabelledValuesTermsFacet):
         }
 
 
-class EDTFIntervalFacet(LabelledValuesTermsFacet):
+class EDTFIntervalFacet(LabelledFacetMixin, dsl.DateHistogramFacet):
+    # auto_date_histogram
+    def __init__(self, *args, **kwargs):
+        if "interval" not in kwargs:
+            kwargs["interval"] = "year"
+        super().__init__(*args, **kwargs)
+
     def value_labels(self, values):
         return {
             val: LocalizedEDTFInterval().format_value(convert_to_edtf(val))
