@@ -1,3 +1,3 @@
-from .dates import validate_date, validate_datetime
+from .dates import validate_date, validate_datetime, CachedMultilayerEDTFValidator
 
-__all__ = ["validate_date", "validate_datetime"]
+__all__ = ["validate_date", "validate_datetime", "CachedMultilayerEDTFValidator"]
