@@ -1,3 +1,6 @@
+
+
+
 class RelationsMapping:
     """Helper class for managing relation fields."""
 
@@ -28,3 +31,10 @@ class RelationsMapping:
         """Clean dereferenced relation fields."""
         for name in fields or self:
             getattr(self, name).clean()
+
+    def set_cache(self, cache):
+        from oarepo_runtime.relations import PIDRelation
+        for key, fld in self._fields.items():
+            if isinstance(fld, PIDRelation):
+                fld.cache = cache
+                getattr(self, key).cache = cache
