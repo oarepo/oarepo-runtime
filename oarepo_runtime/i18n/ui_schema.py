@@ -1,7 +1,8 @@
-from marshmallow import Schema, fields
-from flask_babelex import get_locale
-from flask import current_app
 from functools import lru_cache
+
+from flask import current_app
+from flask_babelex import get_locale
+from marshmallow import Schema, fields
 
 
 @lru_cache

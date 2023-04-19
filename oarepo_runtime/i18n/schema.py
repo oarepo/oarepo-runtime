@@ -1,6 +1,7 @@
+from functools import lru_cache, partial
+
 import langcodes
 from marshmallow import Schema, ValidationError, fields, validates
-from functools import partial, lru_cache
 
 """
 Marshmallow schema for multilingual strings. Consider moving this file to a library, not generating
