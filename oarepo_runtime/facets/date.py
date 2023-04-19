@@ -1,14 +1,17 @@
+import re
+
+from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
+from invenio_search.engine import dsl
+
 from oarepo_runtime.ui.marshmallow import (
     LocalizedDate,
-    LocalizedTime,
     LocalizedDateTime,
     LocalizedEDTF,
     LocalizedEDTFInterval,
+    LocalizedTime,
 )
-import re
+
 from .base import LabelledValuesTermsFacet
-from invenio_search.engine import dsl
-from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
 
 
 class DateFacet(LabelledValuesTermsFacet):

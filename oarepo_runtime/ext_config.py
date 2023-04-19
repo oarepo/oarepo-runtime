@@ -1,5 +1,6 @@
 from oarepo_runtime.config.permissions_presets import (
     EveryonePermissionPolicy,
+    OaiHarvesterPermissionPolicy,
     ReadOnlyPermissionPolicy,
 )
 from oarepo_runtime.datastreams.fixtures import default_config_generator
@@ -13,6 +14,7 @@ from oarepo_runtime.datastreams.writers.yaml import YamlWriter
 OAREPO_PERMISSIONS_PRESETS = {
     "read_only": ReadOnlyPermissionPolicy,
     "everyone": EveryonePermissionPolicy,
+    "oai_harvester": OaiHarvesterPermissionPolicy,
 }
 
 

@@ -10,6 +10,7 @@ class CachingRelationsComponent(ServiceComponent):
         # skutecny jmeno relations atributu
         if isinstance(self.uow, CachingUnitOfWork) and hasattr(record, "relations"):
             record.relations.set_cache(self.uow.cache)
+
     def update(self, identity, *, record, **kwargs):
         """Update handler."""
         self.create(identity, record=record, **kwargs)

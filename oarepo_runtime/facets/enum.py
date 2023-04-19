@@ -1,5 +1,6 @@
-from .base import LabelledValuesTermsFacet
 from flask_babelex import lazy_gettext
+
+from .base import LabelledValuesTermsFacet
 
 
 class EnumTermsFacet(LabelledValuesTermsFacet):

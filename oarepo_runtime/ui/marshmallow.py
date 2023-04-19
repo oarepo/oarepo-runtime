@@ -1,7 +1,9 @@
 import datetime
 import re
+from datetime import timezone
 from functools import partial
 
+import marshmallow as ma
 from flask import current_app
 from flask_babelex import get_locale, gettext
 from marshmallow_utils.fields import (
@@ -10,10 +12,9 @@ from marshmallow_utils.fields import (
     FormatDatetime,
     FormatEDTF,
     FormatTime,
+    Links,
+    TZDateTime,
 )
-import marshmallow as ma
-from marshmallow_utils.fields import Links, TZDateTime
-from datetime import timezone
 
 
 def current_default_locale():
