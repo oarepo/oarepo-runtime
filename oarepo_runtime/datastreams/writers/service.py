@@ -42,16 +42,18 @@ class ServiceWriter(BaseWriter):
             service_kwargs["uow"] = uow
         try:
             try:
-                return self._service.create(self._identity, entry, **service_kwargs)
+                entry = self._service.create(self._identity, entry, **service_kwargs)
             except PIDAlreadyExists:
                 if not self._update:
                     raise WriterError([f"Entry already exists: {entry}"])
                 entry_id = self._entry_id(entry)
                 current = self._resolve(entry_id)
                 updated = dict(current.to_dict(), **entry)
-                return self._service.update(
+                entry = self._service.update(
                     self._identity, entry_id, updated, **service_kwargs
                 )
+            stream_entry.entry = entry.data
+            return stream_entry
 
         except ValidationError as err:
             raise WriterError([{"ValidationError": err.messages}])
