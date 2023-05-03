@@ -29,4 +29,4 @@ def collect(ctx, output_file):
         if theme in webpack.themes:
             deps.append(webpack.themes[theme].path)
     with open(output_file, "w") as f:
-        json.dump({"webpack-dependencies": deps}, f)
+        json.dump({"assets": deps}, f)
