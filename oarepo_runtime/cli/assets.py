@@ -17,10 +17,6 @@ def assets():
 @with_appcontext
 @click.pass_context
 def collect(ctx, output_file):
-    from invenio_assets.cli import collect
-
-    ctx.invoke(collect, verbose=True)
-
     deps = []
     theme = current_app.config["APP_THEME"] or "semantic-ui"
 
