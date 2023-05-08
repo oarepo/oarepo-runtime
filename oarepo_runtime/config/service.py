@@ -2,6 +2,8 @@ from flask import current_app
 
 
 class PermissionsPresetsConfigMixin:
+    components = tuple()
+
     @property
     def permission_policy_cls(self):
         assert len(self.PERMISSIONS_PRESETS) == 1
