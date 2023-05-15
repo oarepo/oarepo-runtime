@@ -4,7 +4,7 @@ import traceback
 from typing import Callable, Dict, List
 
 import celery
-from celery.canvas import Signature, chain
+from celery.canvas import Signature, chain, signature
 from flask_principal import (
     ActionNeed,
     Identity,
@@ -110,7 +110,7 @@ def process_datastream_writers(_batch: Dict, *, writer_definitions, identity):
 
 @celery.shared_task
 def process_datastream_outcome(
-    _batch: Dict, *, success_callback: Signature, error_callback: Signature, identity
+    _batch: Dict, *, success_callback, error_callback, identity
 ):
     ok_count = 0
     skipped_count = 0
@@ -120,11 +120,13 @@ def process_datastream_outcome(
     entry: StreamEntry
     for entry in batch.entries:
         if entry.errors:
-            error_callback.apply((), {"entry": entry})
+            callback = signature(error_callback)
+            callback.apply((), {"entry": entry})
             failed_count += 1
             failed_entries.append(entry)
         else:
-            success_callback.apply((), {"entry": entry})
+            callback = signature(success_callback)
+            callback.apply((), {"entry": entry})
             if entry.filtered:
                 skipped_count += 1
             else:
