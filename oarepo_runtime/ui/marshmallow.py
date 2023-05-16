@@ -44,9 +44,6 @@ class FormatTimeString(FormatTime):
 
         return super().parse(value, as_time, as_date, as_datetime)
 
-# localized date field
-LocalizedDate = partial(FormatDate, locale=get_locale)
-
 class MultilayerFormatEDTF(BabelFormatField):
     def format_value(self, value):
         try:
