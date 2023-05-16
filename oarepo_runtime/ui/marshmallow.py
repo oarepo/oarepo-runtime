@@ -1,10 +1,11 @@
 import datetime
 import re
-from datetime import timezone
 from functools import partial
 
 import marshmallow as ma
 from flask import current_app
+from babel.dates import format_date
+from babel_edtf import format_edtf
 from flask_babelex import get_locale, gettext
 from marshmallow_utils.fields import (
     BabelGettextDictField,
@@ -12,9 +13,8 @@ from marshmallow_utils.fields import (
     FormatDatetime,
     FormatEDTF,
     FormatTime,
-    Links,
-    TZDateTime,
 )
+from marshmallow_utils.fields.babel import BabelFormatField
 
 
 def current_default_locale():
@@ -44,15 +44,26 @@ class FormatTimeString(FormatTime):
 
         return super().parse(value, as_time, as_date, as_datetime)
 
+# localized date field
+LocalizedDate = partial(FormatDate, locale=get_locale)
+
+class MultilayerFormatEDTF(BabelFormatField):
+    def format_value(self, value):
+        try:
+            return format_date(
+                self.parse(value, as_date=True), format=self._format, locale=self.locale
+            )
+        except:
+            return format_edtf(value, format=self._format, locale=self.locale)
+
+# localized edtf
+LocalizedEDTF = partial(MultilayerFormatEDTF, locale=get_locale)
 
 # localized time field
 LocalizedTime = partial(FormatTimeString, locale=get_locale)
 
 # localized datetime field
 LocalizedDateTime = partial(FormatDatetime, locale=get_locale)
-
-# localized edtf
-LocalizedEDTF = partial(FormatEDTF, locale=get_locale)
 
 # localized edtf interval uses the same class as plain EDTF
 LocalizedEDTFInterval = partial(FormatEDTF, locale=get_locale)
