@@ -2,9 +2,9 @@ from invenio_pidstore.errors import PIDUnregistered
 from invenio_records_resources.references.resolvers.records import RecordProxy
 from sqlalchemy.exc import NoResultFound
 
+
 class DraftProxy(RecordProxy):
     def _resolve(self):
-
         pid_value = self._parse_ref_dict_id()
 
         try:

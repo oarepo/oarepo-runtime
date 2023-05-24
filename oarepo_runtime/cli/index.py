@@ -1,7 +1,6 @@
 import sys
 
 import click
-from flask import current_app
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
@@ -42,7 +41,6 @@ def create(model):
 
 
 def record_or_service(model):
-    record = record_or_service(model)
     try:
         service = current_service_registry.get(model)
     except KeyError:

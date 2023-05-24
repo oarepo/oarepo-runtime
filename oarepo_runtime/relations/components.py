@@ -1,6 +1,5 @@
 from invenio_records_resources.services.records.components import ServiceComponent
 
-from oarepo_runtime.relations import PIDRelation
 from oarepo_runtime.relations.uow import CachingUnitOfWork
 
 

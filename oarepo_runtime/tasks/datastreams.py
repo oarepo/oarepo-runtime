@@ -1,7 +1,6 @@
 import logging
 import time
-import traceback
-from typing import Callable, Dict, List
+from typing import Dict, List
 
 import celery
 from celery.canvas import Signature, chain, signature
@@ -27,13 +26,14 @@ from oarepo_runtime.datastreams.datastreams import (
     AbstractDataStream,
     DataStreamResult,
     StreamEntry,
-    noop,
+    StreamEntryError,
 )
 from oarepo_runtime.datastreams.errors import TransformerError, WriterError
 from oarepo_runtime.datastreams.transformers import BatchTransformer
 from oarepo_runtime.datastreams.writers import BatchWriter
 
 timing = logging.getLogger("oai.harvester.timing")
+log = logging.getLogger("datastreams")
 
 
 @celery.shared_task
@@ -55,16 +55,11 @@ def process_datastream_transformer(_batch: Dict, *, transformer_definition, iden
             try:
                 result.append(transformer.apply(entry))
             except TransformerError as e:
-                stack = "\n".join(traceback.format_stack())
-                entry.errors.append(
-                    f"Transformer {transformer_definition} error: {e}: {stack}"
-                )
+                entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
             except Exception as e:
-                stack = "\n".join(traceback.format_stack())
-                entry.errors.append(
-                    f"Transformer {transformer_definition} unhandled error: {e}: {stack}"
-                )
+                log.error("Unexpected error in transformer: %s: %s", e, repr(entry.entry))
+                entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
         batch.entries = result
 
@@ -96,13 +91,10 @@ def process_datastream_writers(_batch: Dict, *, writer_definitions, identity):
                     try:
                         writer.write(entry)
                     except WriterError as e:
-                        stack = "\n".join(traceback.format_stack())
-                        entry.errors.append(f"Writer {wd} error: {e}: {stack}")
+                        entry.errors.append(StreamEntryError.from_exception(e))
                     except Exception as e:
-                        stack = "\n".join(traceback.format_stack())
-                        entry.errors.append(
-                            f"Writer {wd} unhandled error: {e}: {stack}"
-                        )
+                        log.error("Unexpected error in writer: %s: %s", e, repr(entry.entry))
+                        entry.errors.append(StreamEntryError.from_exception(e))
         end_time = time.time()
         timing.info(f"Time spent in writer {writer}: {end_time-start_time} seconds")
     return _serialize_batch(batch)
@@ -292,7 +284,7 @@ def _serialize_entries(batch: List[StreamEntry]):
         {
             "entry": x.entry,
             "filtered": x.filtered,
-            "errors": x.errors,
+            "errors": [xx.json for xx in x.errors],
             "context": x.context,
         }
         for x in batch
@@ -304,7 +296,7 @@ def _deserialize_entries(_entries: List[Dict]):
         StreamEntry(
             entry=x["entry"],
             filtered=x["filtered"],
-            errors=x["errors"],
+            errors=[StreamEntryError.from_json(xx) for xx in x["errors"]],
             context=x["context"],
         )
         for x in _entries

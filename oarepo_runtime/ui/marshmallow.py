@@ -3,9 +3,9 @@ import re
 from functools import partial
 
 import marshmallow as ma
-from flask import current_app
 from babel.dates import format_date
 from babel_edtf import format_edtf
+from flask import current_app
 from flask_babelex import get_locale, gettext
 from marshmallow_utils.fields import (
     BabelGettextDictField,
@@ -44,6 +44,7 @@ class FormatTimeString(FormatTime):
 
         return super().parse(value, as_time, as_date, as_datetime)
 
+
 class MultilayerFormatEDTF(BabelFormatField):
     def format_value(self, value):
         try:
@@ -52,6 +53,7 @@ class MultilayerFormatEDTF(BabelFormatField):
             )
         except:
             return format_edtf(value, format=self._format, locale=self.locale)
+
 
 # localized edtf
 LocalizedEDTF = partial(MultilayerFormatEDTF, locale=get_locale)

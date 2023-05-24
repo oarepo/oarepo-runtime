@@ -1,4 +1,3 @@
-from flask_babelex import lazy_gettext
 
 from .base import LabelledValuesTermsFacet
 

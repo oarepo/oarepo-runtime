@@ -7,15 +7,14 @@ from invenio_records.dumpers import SearchDumperExt
 
 
 def getFromDict(dataDict, mapList):
-
     return reduce(operator.getitem, mapList, dataDict)
+
 
 class MultilingualDumper(SearchDumperExt):
     paths = []
     SUPPORTED_LANGS = []
 
     def dump(self, record, data):
-
         for path in self.__class__.paths:
             new_elements = {}
             record2 = record
@@ -46,7 +45,6 @@ class MultilingualDumper(SearchDumperExt):
         return data
 
     def load(self, record, data):
-
         for path in self.__class__.paths:
             record2 = record
             path_array = path.split("/")
@@ -69,7 +67,8 @@ class MultilingualDumper(SearchDumperExt):
             path_array.pop(0)
             try:
                 multilingual_element = getFromDict(record, path_array)
-            except: multilingual_element = []
+            except KeyError:
+                multilingual_element = []
             for rec in multilingual_element:
                 if rec["lang"] in self.__class__.SUPPORTED_LANGS:
                     el_name = path_array[-1] + "_" + rec["lang"]

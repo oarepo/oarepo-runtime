@@ -5,23 +5,60 @@ import abc
 import dataclasses
 import itertools
 import logging
-from typing import List
+import traceback
+from typing import Any, Dict, List
 
 from .errors import TransformerError, WriterError
 
 log = logging.getLogger("datastreams")
-from invenio_access.permissions import system_identity
 
 
+@dataclasses.dataclass
+class StreamEntryError:
+    type: str
+    message: str
+    info: str
+
+    @classmethod
+    def from_exception(cls, exc: Exception, limit=5):
+        # can not use format_exception here as the signature is different for python 3.9 and python 3.10
+        stack = "\n".join(traceback.format_exc(limit=limit))
+        return cls(
+            type=getattr(exc, "type", type(exc).__name__), message=str(exc), info=stack
+        )
+
+    @property
+    def json(self):
+        return {
+            "error_type": self.type,
+            "error_message": self.message,
+            "error_info": self.info,
+        }
+
+    @classmethod
+    def from_json(cls, js):
+        return cls(
+            type=js.get("error_type"),
+            message=js.get("error_message"),
+            info=js.get("error_info"),
+        )
+
+    def __str__(self):
+        formatted_info = "  " + (self.info or "").strip().replace("\n", "  ")
+        return f"{self.type}: {self.message}\n{formatted_info}"
+
+    def __repr__(self):
+        return str(self)
+
+
+@dataclasses.dataclass
 class StreamEntry:
     """Object to encapsulate streams processing."""
 
-    def __init__(self, entry, filtered=False, errors=None, context=None):
-        """Constructor."""
-        self.entry = entry
-        self.filtered = filtered
-        self.errors = errors or []
-        self.context = context or {}
+    entry: Any
+    filtered: bool = False
+    errors: List[StreamEntryError] = dataclasses.field(default_factory=list)
+    context: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
     @property
     def ok(self):
@@ -36,7 +73,7 @@ class DataStreamResult:
     failed_entries: List[StreamEntry]
 
 
-def noop(*args, **kwargs):
+def noop(*_args, **_kwargs):
     """Noop callback"""
 
 
@@ -120,30 +157,33 @@ class DataStream(AbstractDataStream):
         for rec in itertools.chain(*[iter(x) for x in self._readers]):
             yield rec
 
-    def transform_single(self, stream_entry, *args, **kwargs):
+    def transform_single(self, stream_entry, *_args, **_kwargs):
         """Apply the transformations to an stream_entry."""
         for transformer in self._transformers:
             try:
                 stream_entry = transformer.apply(stream_entry)
             except TransformerError as err:
-                stream_entry.errors.append(
-                    f"{transformer.__class__.__name__}: {str(err)}"
+                stream_entry.errors.append(StreamEntryError.from_exception(err))
+                return stream_entry  # break loop
+            except Exception as err:
+                log.error(
+                    "Unexpected error in transformer: %s: %s", err, repr(stream_entry.entry)
                 )
+                stream_entry.errors.append(StreamEntryError.from_exception(err))
                 return stream_entry  # break loop
 
         return stream_entry
 
-    def write(self, stream_entry, *args, **kwargs):
+    def write(self, stream_entry, *_args, **_kwargs):
         """Apply the transformations to an stream_entry."""
         for writer in self._writers:
             try:
                 writer.write(stream_entry)
             except WriterError as err:
-                log.error("Error in writer: ", err, repr(stream_entry.entry))
-                stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
+                stream_entry.errors.append(StreamEntryError.from_exception(err))
             except Exception as err:
-                log.error("Unexpected error in writer: ", err, repr(stream_entry.entry))
-                stream_entry.errors.append(f"{writer.__class__.__name__}: {str(err)}")
+                log.error("Unexpected error in writer: %s: %s", err, repr(stream_entry.entry))
+                stream_entry.errors.append(StreamEntryError.from_exception(err))
 
         return stream_entry
 
