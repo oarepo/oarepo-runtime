@@ -67,7 +67,7 @@ class MultilingualDumper(SearchDumperExt):
             path_array.pop(0)
             try:
                 multilingual_element = getFromDict(record, path_array)
-            except:
+            except KeyError:
                 multilingual_element = []
             for rec in multilingual_element:
                 if rec["lang"] in self.__class__.SUPPORTED_LANGS:
