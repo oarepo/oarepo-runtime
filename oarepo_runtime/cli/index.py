@@ -41,7 +41,6 @@ def create(model):
 
 
 def record_or_service(model):
-    record = record_or_service(model)
     try:
         service = current_service_registry.get(model)
     except KeyError:

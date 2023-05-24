@@ -73,7 +73,7 @@ class DataStreamResult:
     failed_entries: List[StreamEntry]
 
 
-def noop(*args, **kwargs):
+def noop(*_args, **_kwargs):
     """Noop callback"""
 
 
@@ -157,7 +157,7 @@ class DataStream(AbstractDataStream):
         for rec in itertools.chain(*[iter(x) for x in self._readers]):
             yield rec
 
-    def transform_single(self, stream_entry, *args, **kwargs):
+    def transform_single(self, stream_entry, *_args, **_kwargs):
         """Apply the transformations to an stream_entry."""
         for transformer in self._transformers:
             try:
@@ -174,7 +174,7 @@ class DataStream(AbstractDataStream):
 
         return stream_entry
 
-    def write(self, stream_entry, *args, **kwargs):
+    def write(self, stream_entry, *_args, **_kwargs):
         """Apply the transformations to an stream_entry."""
         for writer in self._writers:
             try:
