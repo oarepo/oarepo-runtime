@@ -1,7 +1,6 @@
 import sys
 
 import click
-from flask import current_app
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry

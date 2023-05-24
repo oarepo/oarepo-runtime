@@ -1,4 +1,4 @@
-from functools import lru_cache, partial
+from functools import lru_cache
 
 import langcodes
 from marshmallow import Schema, ValidationError, fields, validates

@@ -1,7 +1,6 @@
 from functools import cached_property
 
 import marshmallow as ma
-
 from marshmallow_oneofschema import OneOfSchema
 
 

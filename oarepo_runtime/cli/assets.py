@@ -1,11 +1,12 @@
-from .base import oarepo
+import json
+import os
+
 import click
 from flask import current_app
 from flask.cli import with_appcontext
 from importlib_metadata import entry_points
-from collections import defaultdict
-import json
-import os
+
+from .base import oarepo
 
 
 @oarepo.group()
