@@ -58,7 +58,9 @@ def process_datastream_transformer(_batch: Dict, *, transformer_definition, iden
                 entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
             except Exception as e:
-                log.error("Unexpected error in transformer: %s: %s", e, repr(entry.entry))
+                log.error(
+                    "Unexpected error in transformer: %s: %s", e, repr(entry.entry)
+                )
                 entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
         batch.entries = result
@@ -93,7 +95,9 @@ def process_datastream_writers(_batch: Dict, *, writer_definitions, identity):
                     except WriterError as e:
                         entry.errors.append(StreamEntryError.from_exception(e))
                     except Exception as e:
-                        log.error("Unexpected error in writer: %s: %s", e, repr(entry.entry))
+                        log.error(
+                            "Unexpected error in writer: %s: %s", e, repr(entry.entry)
+                        )
                         entry.errors.append(StreamEntryError.from_exception(e))
         end_time = time.time()
         timing.info(f"Time spent in writer {writer}: {end_time-start_time} seconds")

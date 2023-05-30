@@ -167,7 +167,9 @@ class DataStream(AbstractDataStream):
                 return stream_entry  # break loop
             except Exception as err:
                 log.error(
-                    "Unexpected error in transformer: %s: %s", err, repr(stream_entry.entry)
+                    "Unexpected error in transformer: %s: %s",
+                    err,
+                    repr(stream_entry.entry),
                 )
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
                 return stream_entry  # break loop
@@ -182,7 +184,9 @@ class DataStream(AbstractDataStream):
             except WriterError as err:
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
             except Exception as err:
-                log.error("Unexpected error in writer: %s: %s", err, repr(stream_entry.entry))
+                log.error(
+                    "Unexpected error in writer: %s: %s", err, repr(stream_entry.entry)
+                )
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
 
         return stream_entry
