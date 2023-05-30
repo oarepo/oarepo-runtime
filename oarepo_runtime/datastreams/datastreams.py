@@ -22,7 +22,7 @@ class StreamEntryError:
     @classmethod
     def from_exception(cls, exc: Exception, limit=5):
         # can not use format_exception here as the signature is different for python 3.9 and python 3.10
-        stack = "\n".join(traceback.format_exc(limit=limit))
+        stack = traceback.format_exc(limit=limit)
         return cls(
             type=getattr(exc, "type", type(exc).__name__), message=str(exc), info=stack
         )
