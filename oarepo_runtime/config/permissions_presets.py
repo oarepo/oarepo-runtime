@@ -1,5 +1,5 @@
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import AnyUser, SystemProcess
+from invenio_records_permissions.generators import AnyUser, AuthenticatedUser, SystemProcess
 
 
 class OaiHarvesterPermissionPolicy(RecordPermissionPolicy):
@@ -99,3 +99,35 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [AnyUser()]
     can_draft_read_files = [AnyUser()]
     can_draft_update_files = [AnyUser()]
+    
+class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
+    """record policy for read only repository"""
+
+    can_search = [SystemProcess(), AuthenticatedUser()]
+    can_read = [SystemProcess(), AuthenticatedUser()]
+    can_create = [SystemProcess(), AuthenticatedUser()]
+    can_update = [SystemProcess(), AuthenticatedUser()]
+    can_delete = [SystemProcess(), AuthenticatedUser()]
+    can_manage = [SystemProcess(), AuthenticatedUser()]
+
+    can_create_files = [SystemProcess(), AuthenticatedUser()]
+    can_set_content_files = [SystemProcess(), AuthenticatedUser()]
+    can_get_content_files = [SystemProcess(), AuthenticatedUser()]
+    can_commit_files = [SystemProcess(), AuthenticatedUser()]
+    can_read_files = [SystemProcess(), AuthenticatedUser()]
+    can_update_files = [SystemProcess(), AuthenticatedUser()]
+    can_delete_files = [SystemProcess(), AuthenticatedUser()]
+
+    can_edit = [AuthenticatedUser()]
+    can_new_version = [AuthenticatedUser()]
+    can_search_drafts = [AuthenticatedUser()]
+    can_read_draft = [AuthenticatedUser()]
+    can_update_draft = [AuthenticatedUser()]
+    can_delete_draft = [AuthenticatedUser()]
+    can_publish = [AuthenticatedUser()]
+    can_draft_create_files = [AuthenticatedUser()]
+    can_draft_set_content_files = [AuthenticatedUser()]
+    can_draft_get_content_files = [AuthenticatedUser()]
+    can_draft_commit_files = [AuthenticatedUser()]
+    can_draft_read_files = [AuthenticatedUser()]
+    can_draft_update_files = [AuthenticatedUser()]
