@@ -138,15 +138,20 @@ def test_i18n_dumper_in_array():
 
 def test_i18n_dumper_array_values():
     dumper = TestDumper()
-    assert set(dumper.dump(
-        None,
-        {
-            "a": {
-                "b": [{"lang": "en", "value": "test"},
-                      {"lang": "en", "value": "test1"}]
-            }
-        },
-    )['a']['b_en']) == {"test1", "test"}
+    assert set(
+        dumper.dump(
+            None,
+            {
+                "a": {
+                    "b": [
+                        {"lang": "en", "value": "test"},
+                        {"lang": "en", "value": "test1"},
+                    ]
+                }
+            },
+        )["a"]["b_en"]
+    ) == {"test1", "test"}
+
 
 def test_i18n_loader_no_empty():
     dumper = TestDumper()
@@ -155,9 +160,9 @@ def test_i18n_loader_no_empty():
 
 def test_i18n_loader_single():
     dumper = TestDumper()
-    assert dumper.load({
-        "a": {"b": {"lang": "en", "value": "test"}, "b_en": ["test"]}
-    }, None) == {"a": {"b": {"lang": "en", "value": "test"}}}
+    assert dumper.load(
+        {"a": {"b": {"lang": "en", "value": "test"}, "b_en": ["test"]}}, None
+    ) == {"a": {"b": {"lang": "en", "value": "test"}}}
 
 
 def test_i18n_loader_both():
@@ -165,19 +170,23 @@ def test_i18n_loader_both():
     assert dumper.load(
         {
             "a": {
-                "b": [{"lang": "en", "value": "test"}, {"lang": "cs", "value": "pokus"}],
-                "b_en": ["test"],
-                "b_cs": ["pokus"],
-            }
-        }, None
-    ) == {
-            "a": {
                 "b": [
                     {"lang": "en", "value": "test"},
                     {"lang": "cs", "value": "pokus"},
-                ]
+                ],
+                "b_en": ["test"],
+                "b_cs": ["pokus"],
             }
+        },
+        None,
+    ) == {
+        "a": {
+            "b": [
+                {"lang": "en", "value": "test"},
+                {"lang": "cs", "value": "pokus"},
+            ]
         }
+    }
 
 
 def test_i18n_dumper_in_array():
@@ -194,14 +203,15 @@ def test_i18n_dumper_in_array():
                     "b_en": ["test"],
                 }
             ]
-        }, None
+        },
+        None,
     ) == {
-            "a": [
-                {
-                    "b": [
-                        {"lang": "en", "value": "test"},
-                        {"lang": "cs", "value": "pokus"},
-                    ]
-                }
-            ]
-        }
+        "a": [
+            {
+                "b": [
+                    {"lang": "en", "value": "test"},
+                    {"lang": "cs", "value": "pokus"},
+                ]
+            }
+        ]
+    }

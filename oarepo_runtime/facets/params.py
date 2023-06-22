@@ -1,5 +1,6 @@
 from invenio_records_resources.services.records.params import FacetsParam
 
+
 class FilteredFacetsParam(FacetsParam):
     def filter(self, search):
         """Apply a post filter on the search."""
@@ -13,5 +14,3 @@ class FilteredFacetsParam(FacetsParam):
             facet_filter &= f
 
         return search.filter(facet_filter)
-
-

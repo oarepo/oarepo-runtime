@@ -17,8 +17,7 @@ def assets():
 @assets.command()
 @click.argument("output_file")
 @with_appcontext
-@click.pass_context
-def collect(ctx, output_file):
+def collect(output_file):
     asset_deps = []
     theme = (current_app.config["APP_THEME"] or ["semantic-ui"])[0]
 
@@ -44,3 +43,13 @@ def collect(ctx, output_file):
 
     with open(output_file, "w") as f:
         json.dump({"assets": asset_deps, "static": static_deps}, f)
+
+
+@assets.command(name='less-components')
+@click.argument("output_file")
+@with_appcontext
+def less_components(output_file):
+    with open(output_file, "w") as f:
+        json.dump(
+            {"components": current_app.config.get("OAREPO_UI_LESS_COMPONENTS", [])}, f
+        )
