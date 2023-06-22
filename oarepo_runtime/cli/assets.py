@@ -45,7 +45,7 @@ def collect(output_file):
         json.dump({"assets": asset_deps, "static": static_deps}, f)
 
 
-@assets.command()
+@assets.command(name='less-components')
 @click.argument("output_file")
 @with_appcontext
 def less_components(output_file):
