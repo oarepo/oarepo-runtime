@@ -51,13 +51,16 @@ def check_opensearch():
         service = current_service_registry.get(service_id)
         record_class = service.config.record_cls
 
-        indexer = service.indexer
+        indexer = getattr(service, 'indexer', None)
+        if not indexer:
+            continue
         index = indexer._prepare_index(indexer.record_to_index(record_class))
         try:
             service.indexer.client.indices.get(index=index)
         except TransportError:
             return f'index-missing:{index}'
     return 'ok'
+
 
 def check_files():
     # check that there is the default location and that is readable
