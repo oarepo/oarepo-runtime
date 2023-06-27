@@ -48,8 +48,6 @@ def check_database():
 def check_opensearch():
     services = current_service_registry._services.keys()
     for service_id in services:
-        click.secho(f"Checking if {service_id} has index", file=sys.stderr)
-
         service = current_service_registry.get(service_id)
         record_class = service.config.record_cls
 
