@@ -62,7 +62,10 @@ def prepare_cf_indices(field_names: List[str] = None):
 
 
 def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None):
-    record_class = config.record_cls
+    record_class = getattr(config, 'record_cls', None)
+    if not record_class:
+        return
+
     # try to get custom fields from the record class
     # validate them
     for field_name, available_fields in get_custom_fields(record_class):
