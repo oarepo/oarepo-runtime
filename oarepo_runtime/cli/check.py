@@ -6,6 +6,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 from invenio_files_rest.models import Location
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 from opensearchpy import TransportError
 
@@ -32,18 +33,21 @@ def check(output_file):
 
 def check_database():
     try:
-        PersistentIdentifier.query.all()[:1]
-    except:
-        return 'not_initialized'
-    alembic = current_app.extensions['invenio-db'].alembic
-    context = alembic.migration_context
-    db_heads = set(context.get_current_heads())
-    source_heads = [x.revision for x in alembic.current()]
-    for h in source_heads:
-        if h not in db_heads:
-            return 'migration_pending'
-    return 'ok'
-
+        db.session.begin()
+        try:
+            PersistentIdentifier.query.all()[:1]
+        except:
+            return 'not_initialized'
+        alembic = current_app.extensions['invenio-db'].alembic
+        context = alembic.migration_context
+        db_heads = set(context.get_current_heads())
+        source_heads = [x.revision for x in alembic.current()]
+        for h in source_heads:
+            if h not in db_heads:
+                return 'migration_pending'
+        return 'ok'
+    finally:
+        db.session.rollback()
 
 def check_opensearch():
     services = current_service_registry._services.keys()
@@ -63,9 +67,15 @@ def check_opensearch():
 
 
 def check_files():
-    # check that there is the default location and that is readable
-    default_location = Location.get_default()
-    if default_location:
-        return 'ok'
-    else:
-        return 'default-location-missing'
+    try:
+        db.session.begin()
+        # check that there is the default location and that is readable
+        default_location = Location.get_default()
+        if default_location:
+            return 'ok'
+        else:
+            return 'default-location-missing'
+    except:
+        return 'db-error'
+    finally:
+        db.session.rollback()
