@@ -1,3 +1,5 @@
+import traceback
+
 from invenio_access.permissions import system_identity
 from invenio_pidstore.errors import PIDAlreadyExists
 from invenio_records.systemfields.relations.errors import InvalidRelationValue
@@ -42,10 +44,12 @@ class ServiceWriter(BaseWriter):
             service_kwargs["uow"] = uow
         try:
             try:
+                print("Calling service create")
                 entry = self._service.create(self._identity, entry, **service_kwargs)
             except PIDAlreadyExists:
                 if not self._update:
                     raise WriterError([f"Entry already exists: {entry}"])
+                print("Calling service update")
                 entry_id = self._entry_id(entry)
                 current = self._resolve(entry_id)
                 updated = dict(current.to_dict(), **entry)
@@ -60,6 +64,9 @@ class ServiceWriter(BaseWriter):
         except InvalidRelationValue as err:
             # TODO: Check if we can get the error message easier
             raise WriterError([{"InvalidRelationValue": err.args[0]}])
+        except Exception as err:
+            traceback.print_exc()
+            raise WriterError([{"Unknown error": str(err)}])
 
     def delete(self, stream_entry: StreamEntry, uow=None):
         service_kwargs = {}

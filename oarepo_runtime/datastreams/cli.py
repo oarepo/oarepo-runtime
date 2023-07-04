@@ -19,12 +19,13 @@ def fixtures():
 @click.argument("fixture_dir", required=False)
 @click.option("--include", multiple=True)
 @click.option("--exclude", multiple=True)
+@click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
 @with_appcontext
-def load(fixture_dir=None, include=None, exclude=None):
+def load(fixture_dir=None, include=None, exclude=None, system_fixtures=None):
     """Loads fixtures"""
     with current_app.wsgi_app.mounts["/api"].app_context():
         results: FixturesResult = load_fixtures(
-            fixture_dir, _make_list(include), _make_list(exclude)
+            fixture_dir, _make_list(include), _make_list(exclude), system_fixtures=system_fixtures
         )
         _show_stats(results, "Load fixtures")
 

@@ -76,6 +76,10 @@ def reindex(model):
 
         service = current_service_registry.get(service_id)
         record_class = service.config.record_cls
+
+        if not hasattr(service, 'indexer'):
+            continue
+
         try:
             id_generator = (
                 x[0]
