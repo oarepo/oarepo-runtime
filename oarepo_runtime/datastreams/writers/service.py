@@ -1,7 +1,5 @@
-import traceback
-
 from invenio_access.permissions import system_identity
-from invenio_pidstore.errors import PIDAlreadyExists
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_records_resources.proxies import current_service_registry
 from marshmallow import ValidationError
@@ -31,10 +29,13 @@ class ServiceWriter(BaseWriter):
 
     def _entry_id(self, entry):
         """Get the id from an entry."""
-        return entry["id"]
+        return entry.get("id")
 
     def _resolve(self, id_):
-        return self._service.read(self._identity, id_)
+        try:
+            return self._service.read(self._identity, id_)
+        except PIDDoesNotExistError:
+            return None
 
     def write(self, stream_entry: StreamEntry, *args, uow=None, **kwargs):
         """Writes the input entry using a given service."""
@@ -43,30 +44,35 @@ class ServiceWriter(BaseWriter):
         if uow:
             service_kwargs["uow"] = uow
         try:
-            try:
-                print("Calling service create")
-                entry = self._service.create(self._identity, entry, **service_kwargs)
-            except PIDAlreadyExists:
-                if not self._update:
-                    raise WriterError([f"Entry already exists: {entry}"])
-                print("Calling service update")
-                entry_id = self._entry_id(entry)
-                current = self._resolve(entry_id)
-                updated = dict(current.to_dict(), **entry)
-                entry = self._service.update(
-                    self._identity, entry_id, updated, **service_kwargs
-                )
+            entry_id = self._entry_id(entry)
+            if entry_id and self._update and self.try_update(entry_id, stream_entry, **service_kwargs):
+                # update was successful
+                return
+
+            entry = self._service.create(self._identity, entry, **service_kwargs)
+
             stream_entry.entry = entry.data
-            return stream_entry
 
         except ValidationError as err:
-            raise WriterError([{"ValidationError": err.messages}])
+            raise WriterError([{"ValidationError": err.messages}]) from err
         except InvalidRelationValue as err:
             # TODO: Check if we can get the error message easier
-            raise WriterError([{"InvalidRelationValue": err.args[0]}])
+            raise WriterError([{"InvalidRelationValue": err.args[0]}]) from err
         except Exception as err:
-            traceback.print_exc()
-            raise WriterError([{"Unknown error": str(err)}])
+            raise WriterError([{"Unknown error": str(err)}]) from err
+
+    def try_update(self, entry_id, stream_entry, **service_kwargs):
+        if entry_id:
+            current = self._resolve(entry_id)
+            if current:
+                updated = dict(current.to_dict(), **stream_entry.entry)
+                # might raise exception here but that's ok - we know that the entry
+                # exists in db as it was _resolved
+                stream_entry.entry = self._service.update(
+                    self._identity, entry_id, updated, **service_kwargs
+                )
+                return True
+        return False
 
     def delete(self, stream_entry: StreamEntry, uow=None):
         service_kwargs = {}
