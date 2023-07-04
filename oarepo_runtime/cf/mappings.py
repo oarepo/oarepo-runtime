@@ -62,7 +62,7 @@ def prepare_cf_indices(field_names: List[str] = None):
 
 
 def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None):
-    record_class = getattr(config, 'record_cls', None)
+    record_class = getattr(config, "record_cls", None)
     if not record_class:
         return
 
