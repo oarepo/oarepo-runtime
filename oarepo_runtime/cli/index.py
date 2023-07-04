@@ -15,29 +15,47 @@ def index():
     "OARepo indexing addons"
 
 
-@index.command()
+@index.command(
+    help="Create all indices that do not exist yet. "
+    "This is like 'invenio index init' but does not throw "
+    "an exception if some indices already exist"
+)
 @with_appcontext
 def init():
-    """Create all indices that do not exist yet. This is like 'invenio index init' but does not throw an exception if some indices already exist"""
-
     click.secho("Creating indexes...", fg="green", bold=True, file=sys.stderr)
-    with click.progressbar(
-        current_search.create(ignore=[400], ignore_existing=True),
-        length=len(current_search.mappings),
-    ) as bar:
-        for name, response in bar:
-            bar.label = name
+    all_indices = list(gather_all_indices())
+    new_indices = []
+    with click.progressbar(all_indices, label="Checking which indices exist") as bar:
+        for name, alias in bar:
+            if not current_search.client.indices.exists(alias):
+                new_indices.append(name)
+    if new_indices:
+        with click.progressbar(
+            current_search.create(
+                ignore=[400], ignore_existing=True, index_list=new_indices
+            ),
+            length=len(new_indices),
+        ) as bar:
+            for name, response in bar:
+                bar.label = name
 
 
-@index.command()
-@with_appcontext
-@click.argument("model")
-def create(model):
-    """Create a single index. The parameter is a service name or python path of the record class"""
-    record = record_or_service(model)
-    index_name = record.index._name
-    index_result, alias_result = current_search.create_index(index_name, ignore=[])
-    print(index_name, index_result, alias_result)
+def gather_all_indices():
+    """Yield index_file, index_name for all indices."""
+
+    # partially copied from invenio-search
+    def _build(tree_or_filename, alias=None):
+        """Build a list of index/alias actions to perform."""
+        for name, value in tree_or_filename.items():
+            if isinstance(value, dict):
+                yield from _build(value, alias=name)
+            else:
+                index_result, alias_result = current_search.create_index(
+                    name, dry_run=True
+                )
+                yield name, alias_result[0]
+
+    yield from _build(current_search.active_aliases)
 
 
 def record_or_service(model):
@@ -77,7 +95,7 @@ def reindex(model):
         service = current_service_registry.get(service_id)
         record_class = service.config.record_cls
 
-        if not hasattr(service, 'indexer'):
+        if not hasattr(service, "indexer"):
             continue
 
         try:
