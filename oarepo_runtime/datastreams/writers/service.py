@@ -1,4 +1,5 @@
 from invenio_access.permissions import system_identity
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_records_resources.proxies import current_service_registry
 from marshmallow import ValidationError
@@ -33,7 +34,7 @@ class ServiceWriter(BaseWriter):
     def _resolve(self, id_):
         try:
             return self._service.read(self._identity, id_)
-        except:
+        except PIDDoesNotExistError:
             return None
 
     def write(self, stream_entry: StreamEntry, *args, uow=None, **kwargs):
