@@ -1,5 +1,9 @@
 from invenio_records_permissions import RecordPermissionPolicy
-from invenio_records_permissions.generators import AnyUser, SystemProcess, AuthenticatedUser
+from invenio_records_permissions.generators import (
+    AnyUser,
+    AuthenticatedUser,
+    SystemProcess,
+)
 
 
 class OaiHarvesterPermissionPolicy(RecordPermissionPolicy):
@@ -100,6 +104,7 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_draft_read_files = [SystemProcess(), AnyUser()]
     can_draft_update_files = [SystemProcess(), AnyUser()]
 
+
 class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
 
@@ -125,7 +130,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_update_draft = [SystemProcess(), AuthenticatedUser()]
     can_delete_draft = [SystemProcess(), AuthenticatedUser()]
     can_publish = [SystemProcess(), AuthenticatedUser()]
-    can_draft_create_files = [SystemProcess(),AuthenticatedUser()]
+    can_draft_create_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_set_content_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_get_content_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_commit_files = [SystemProcess(), AuthenticatedUser()]

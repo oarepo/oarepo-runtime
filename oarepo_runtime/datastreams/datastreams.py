@@ -182,9 +182,7 @@ class DataStream(AbstractDataStream):
             try:
                 writer.write(stream_entry)
             except WriterError as err:
-                log.error(
-                    "Error in writer: %s: %s", err, repr(stream_entry.entry)
-                )
+                log.error("Error in writer: %s: %s", err, repr(stream_entry.entry))
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
             except Exception as err:
                 log.error(

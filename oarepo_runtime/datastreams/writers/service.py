@@ -45,7 +45,11 @@ class ServiceWriter(BaseWriter):
             service_kwargs["uow"] = uow
         try:
             entry_id = self._entry_id(entry)
-            if entry_id and self._update and self.try_update(entry_id, stream_entry, **service_kwargs):
+            if (
+                entry_id
+                and self._update
+                and self.try_update(entry_id, stream_entry, **service_kwargs)
+            ):
                 # update was successful
                 return
 

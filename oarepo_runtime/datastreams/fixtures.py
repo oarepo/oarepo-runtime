@@ -33,7 +33,9 @@ class FixturesResult:
         self.results[fixture_name] = result
 
 
-def load_fixtures(fixture_dir=None, include=None, exclude=None, system_fixtures=True) -> FixturesResult:
+def load_fixtures(
+    fixture_dir=None, include=None, exclude=None, system_fixtures=True
+) -> FixturesResult:
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
     The directory must contain a catalogue.yaml file containing datastreams to load the
@@ -57,7 +59,9 @@ def load_fixtures(fixture_dir=None, include=None, exclude=None, system_fixtures=
         _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
     if system_fixtures:
         for r in reversed(
-            sorted(pkg_resources.iter_entry_points("oarepo.fixtures"), key=lambda r: r.name)
+            sorted(
+                pkg_resources.iter_entry_points("oarepo.fixtures"), key=lambda r: r.name
+            )
         ):
             pkg = r.load()
             pkg_fixture_dir = Path(pkg.__file__)

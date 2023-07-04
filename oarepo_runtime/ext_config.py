@@ -1,7 +1,8 @@
 from oarepo_runtime.config.permissions_presets import (
+    AuthenticatedPermissionPolicy,
     EveryonePermissionPolicy,
     OaiHarvesterPermissionPolicy,
-    ReadOnlyPermissionPolicy, AuthenticatedPermissionPolicy,
+    ReadOnlyPermissionPolicy,
 )
 from oarepo_runtime.datastreams.fixtures import default_config_generator
 from oarepo_runtime.datastreams.readers.excel import ExcelReader
