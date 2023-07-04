@@ -33,7 +33,7 @@ class FixturesResult:
         self.results[fixture_name] = result
 
 
-def load_fixtures(fixture_dir=None, include=None, exclude=None) -> FixturesResult:
+def load_fixtures(fixture_dir=None, include=None, exclude=None, system_fixtures=True) -> FixturesResult:
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
     The directory must contain a catalogue.yaml file containing datastreams to load the
@@ -55,15 +55,16 @@ def load_fixtures(fixture_dir=None, include=None, exclude=None) -> FixturesResul
     if fixture_dir:
         catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
         _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
-    for r in reversed(
-        sorted(pkg_resources.iter_entry_points("oarepo.fixtures"), key=lambda r: r.name)
-    ):
-        pkg = r.load()
-        pkg_fixture_dir = Path(pkg.__file__)
-        if pkg_fixture_dir.is_file():
-            pkg_fixture_dir = pkg_fixture_dir.parent
-        catalogue = DataStreamCatalogue(pkg_fixture_dir / "catalogue.yaml")
-        _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
+    if system_fixtures:
+        for r in reversed(
+            sorted(pkg_resources.iter_entry_points("oarepo.fixtures"), key=lambda r: r.name)
+        ):
+            pkg = r.load()
+            pkg_fixture_dir = Path(pkg.__file__)
+            if pkg_fixture_dir.is_file():
+                pkg_fixture_dir = pkg_fixture_dir.parent
+            catalogue = DataStreamCatalogue(pkg_fixture_dir / "catalogue.yaml")
+            _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
     return result
 
 
