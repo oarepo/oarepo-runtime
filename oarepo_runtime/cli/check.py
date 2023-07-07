@@ -50,7 +50,9 @@ def check_opensearch():
     services = current_service_registry._services.keys()
     for service_id in services:
         service = current_service_registry.get(service_id)
-        record_class = service.config.record_cls
+        record_class = getattr(service.config, "record_cls", None)
+        if not record_class:  # files??
+            continue
 
         indexer = getattr(service, "indexer", None)
         if not indexer:
