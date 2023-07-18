@@ -1,4 +1,4 @@
-from elasticsearch_dsl import Facet
+from opensearch_dsl import Facet
 from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
 
 
