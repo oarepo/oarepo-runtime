@@ -12,6 +12,7 @@ from .errors import TransformerError, WriterError
 
 log = logging.getLogger("datastreams")
 
+# TODO: add support for files
 
 @dataclasses.dataclass
 class StreamEntryError:
