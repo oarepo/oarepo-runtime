@@ -1,6 +1,7 @@
-from flask import current_app
 import inspect
 from functools import cached_property
+
+from flask import current_app
 
 
 class PermissionsPresetsConfigMixin:
@@ -16,7 +17,7 @@ class PermissionsPresetsConfigMixin:
         permissions = {}
         for preset_class in presets:
             for permission_name, permission_needs in inspect.getmembers(preset_class):
-                if not permission_name.startswith('can_'):
+                if not permission_name.startswith("can_"):
                     continue
                 if not isinstance(permission_needs, (list, tuple)):
                     continue
