@@ -20,11 +20,19 @@ class StreamEntryError:
     info: str
 
     @classmethod
-    def from_exception(cls, exc: Exception, limit=5):
+    def from_exception(cls, exc: Exception, limit=5, message=None):
         # can not use format_exception here as the signature is different for python 3.9 and python 3.10
         stack = traceback.format_exc(limit=limit)
+        if message:
+            formatted_exception = message
+        elif hasattr(exc, "format_exception"):
+            formatted_exception = exc.format_exception()
+        else:
+            formatted_exception = str(exc)
         return cls(
-            type=getattr(exc, "type", type(exc).__name__), message=str(exc), info=stack
+            type=getattr(exc, "type", type(exc).__name__),
+            message=formatted_exception,
+            info=stack,
         )
 
     @property
@@ -141,9 +149,11 @@ class DataStream(AbstractDataStream):
             written_entry = self.write(transformed_entry)
             if written_entry.errors:
                 self._error_callback(written_entry)
+                _failed += 1
+                failed_entries.append(written_entry)
             else:
                 self._success_callback(written_entry)
-            _written += 1
+                _written += 1
 
         return DataStreamResult(
             ok_count=_written,
@@ -182,7 +192,6 @@ class DataStream(AbstractDataStream):
             try:
                 writer.write(stream_entry)
             except WriterError as err:
-                log.error("Error in writer: %s: %s", err, repr(stream_entry.entry))
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
             except Exception as err:
                 log.error(

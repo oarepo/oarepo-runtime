@@ -1,5 +1,5 @@
-from opensearch_dsl import Facet
 from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
+from opensearch_dsl import Facet
 
 
 class MaxFacet(LabelledFacetMixin, Facet):

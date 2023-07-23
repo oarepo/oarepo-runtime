@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import click
 from flask import current_app
 from flask.cli import with_appcontext
@@ -20,8 +22,15 @@ def fixtures():
 @click.option("--include", multiple=True)
 @click.option("--exclude", multiple=True)
 @click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
+@click.option("--show-error-entry/--hide-error-entry", is_flag=True)
 @with_appcontext
-def load(fixture_dir=None, include=None, exclude=None, system_fixtures=None):
+def load(
+    fixture_dir=None,
+    include=None,
+    exclude=None,
+    system_fixtures=None,
+    show_error_entry=False,
+):
     """Loads fixtures"""
     with current_app.wsgi_app.mounts["/api"].app_context():
         results: FixturesResult = load_fixtures(
@@ -30,7 +39,7 @@ def load(fixture_dir=None, include=None, exclude=None, system_fixtures=None):
             _make_list(exclude),
             system_fixtures=system_fixtures,
         )
-        _show_stats(results, "Load fixtures")
+        _show_stats(results, "Load fixtures", show_error_entry=show_error_entry)
 
 
 @fixtures.command()
@@ -51,7 +60,7 @@ def _make_list(lst):
     ]
 
 
-def _show_stats(results: FixturesResult, title: str):
+def _show_stats(results: FixturesResult, title: str, show_error_entry=False):
     print(f"{title} stats:")
     print(f"    ok records: {results.ok_count}")
     print(f"    failed records: {results.failed_count}")
@@ -64,4 +73,9 @@ def _show_stats(results: FixturesResult, title: str):
         )
         if r.failed_entries:
             for fe in r.failed_entries:
-                print(f"    {fixture} failure: {fe.errors} in {fe.entry}")
+                print(f"======== {fixture} {fe.entry.get('id', '')}")
+                if show_error_entry:
+                    pprint(fe.entry)
+                for err in fe.errors:
+                    print(err.type)
+                    print(err.message)
