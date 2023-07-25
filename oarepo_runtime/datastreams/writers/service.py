@@ -4,8 +4,9 @@ from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_records_resources.proxies import current_service_registry
 from marshmallow import ValidationError
 
-from ..errors import WriterError
+from ..datastreams import StreamEntryError
 from . import BaseWriter, StreamEntry
+from .validation_errors import format_validation_error
 
 
 class ServiceWriter(BaseWriter):
@@ -58,12 +59,17 @@ class ServiceWriter(BaseWriter):
             stream_entry.entry = entry.data
 
         except ValidationError as err:
-            raise WriterError([{"ValidationError": err.messages}]) from err
+            stream_entry.errors.append(
+                StreamEntryError.from_exception(
+                    err, message=format_validation_error(err.messages)
+                )
+            )
         except InvalidRelationValue as err:
-            # TODO: Check if we can get the error message easier
-            raise WriterError([{"InvalidRelationValue": err.args[0]}]) from err
+            stream_entry.errors.append(
+                StreamEntryError.from_exception(err, message=err.args[0])
+            )
         except Exception as err:
-            raise WriterError([{"Unknown error": str(err)}]) from err
+            stream_entry.errors.append(StreamEntryError.from_exception(err))
 
     def try_update(self, entry_id, stream_entry, **service_kwargs):
         if entry_id:
