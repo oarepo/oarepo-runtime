@@ -67,6 +67,7 @@ tests/test.db
 
 .venv
 .direnv
+.venv-builder
 
 docs/migration/data
 
@@ -84,6 +85,8 @@ sample/
 
 tests/test-sample-app
 tests/test-sample-site
+
+records2
 
 dist
 .vscode
