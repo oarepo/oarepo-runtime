@@ -16,7 +16,7 @@ def read_yaml(fp):
         return ret
 
 
-def test_pkg_fixtures(db, app, identity, search_clear):
+def test_pkg_fixtures(db, app, identity, search_clear, location):
     ret = load_fixtures()
     assert ret.ok_count == 2
     assert ret.failed_count == 0
@@ -28,7 +28,7 @@ def test_pkg_fixtures(db, app, identity, search_clear):
     assert titles == {"pkg record 1", "pkg record 2"}
 
 
-def test_extra_fixtures(db, app, identity, search_clear):
+def test_extra_fixtures(db, app, identity, search_clear, location):
     ret = load_fixtures(Path(__file__).parent / "data")
     assert ret.ok_count == 2
     assert ret.failed_count == 0
@@ -40,7 +40,7 @@ def test_extra_fixtures(db, app, identity, search_clear):
     assert titles == {"record 1", "record 2"}
 
 
-def test_load_dump(db, app, identity, search_clear):
+def test_load_dump(db, app, identity, search_clear, location):
     ret = load_fixtures()
     assert ret.ok_count == 2
     assert ret.failed_count == 0

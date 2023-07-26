@@ -66,6 +66,13 @@ def app_config(app_config):
     app_config["DATASTREAMS_TRANSFORMERS"] = {
         "status": StatusTransformer,
     }
+    # for files
+    app_config["FILES_REST_STORAGE_CLASS_LIST"] = {
+        "L": "Local",
+        "F": "Fetch",
+        "R": "Remote",
+    }
+    app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
     return app_config
 
 

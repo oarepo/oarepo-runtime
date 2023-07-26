@@ -9,6 +9,7 @@ from oarepo_runtime.datastreams.readers.excel import ExcelReader
 from oarepo_runtime.datastreams.readers.json import JSONLinesReader, JSONReader
 from oarepo_runtime.datastreams.readers.service import ServiceReader
 from oarepo_runtime.datastreams.readers.yaml import YamlReader
+from oarepo_runtime.datastreams.writers.attachment import AttachmentWriter
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
 
@@ -37,7 +38,11 @@ DEFAULT_DATASTREAMS_READERS_BY_EXTENSION = {
     "jsonl": "json-lines",
 }
 
-DEFAULT_DATASTREAMS_WRITERS = {"service": ServiceWriter, "yaml": YamlWriter}
+DEFAULT_DATASTREAMS_WRITERS = {
+    "service": ServiceWriter,
+    "yaml": YamlWriter,
+    "attachments": AttachmentWriter
+}
 
 DEFAULT_DATASTREAMS_TRANSFORMERS = {}
 
