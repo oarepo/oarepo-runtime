@@ -1,7 +1,11 @@
-model:
+record:
   use: invenio
-  schema-server: local://
   properties:
     metadata:
      properties:
       title: keyword
+  module:
+    qualified: records2
+  permissions:
+    presets: [ 'everyone' ]
+
