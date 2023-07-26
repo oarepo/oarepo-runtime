@@ -11,6 +11,7 @@ from oarepo_runtime.datastreams.readers.service import ServiceReader
 from oarepo_runtime.datastreams.readers.yaml import YamlReader
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
+from invenio_records_resources.services.custom_fields import BooleanCF
 
 OAREPO_PERMISSIONS_PRESETS = {
     "read_only": ReadOnlyPermissionPolicy,
@@ -53,3 +54,5 @@ DATASTREAMS_TRANSFORMERS = {}
 DEFAULT_DATASTREAMS_EXCLUDES = []
 
 DATASTREAMS_CONFIG_GENERATOR = default_config_generator
+
+HAS_DRAFT_CUSTOM_FIELD = [BooleanCF("has_draft")]

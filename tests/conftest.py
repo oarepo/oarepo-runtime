@@ -12,7 +12,7 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
-
+import os
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -66,6 +66,12 @@ def app_config(app_config):
     app_config["DATASTREAMS_TRANSFORMERS"] = {
         "status": StatusTransformer,
     }
+    app_config["SEARCH_HOSTS"] = [
+        {
+            "host": os.environ.get("OPENSEARCH_HOST", "localhost"),
+            "port": os.environ.get("OPENSEARCH_PORT", "9200"),
+        }
+    ]
     return app_config
 
 

@@ -40,3 +40,6 @@ class OARepoRuntime(object):
 
             elif k.startswith("DATASTREAMS_"):
                 app.config.setdefault(k, getattr(ext_config, k))
+
+            elif k == "HAS_DRAFT_CUSTOM_FIELD":
+                app.config.setdefault(k, getattr(ext_config, k))
