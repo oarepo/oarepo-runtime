@@ -1,6 +1,10 @@
-model:
+record:
   use: invenio
-  schema-server: local://
+  module:
+    qualified: records2
+  files:
+    properties:
+      file_title: keyword
   properties:
     metadata:
      properties:
