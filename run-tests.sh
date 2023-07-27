@@ -1,9 +1,4 @@
 #!/bin/bash
-
-set -e 
-
-
-#!/bin/bash
 set -e
 
 BUILDER_VENV=.venv-builder
