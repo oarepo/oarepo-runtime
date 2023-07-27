@@ -3,12 +3,13 @@ from typing import Iterator
 
 import openpyxl
 
+from .attachments import AttachmentsReaderMixin
 from ..errors import ReaderError
 from . import BaseReader, StreamEntry
 
 
-class ExcelReader(BaseReader):
-    def __iter__(self) -> Iterator[StreamEntry]:
+class ExcelReader(AttachmentsReaderMixin, BaseReader):
+    def iter_entries(self) -> Iterator[StreamEntry]:
         with self._open("rb") as f:
             try:
                 wb_obj = openpyxl.load_workbook(f)

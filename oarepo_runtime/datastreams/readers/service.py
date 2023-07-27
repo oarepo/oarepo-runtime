@@ -5,6 +5,8 @@ from invenio_records_resources.services import FileService
 from . import BaseReader, StreamEntry
 from base64 import b64encode
 
+from ..utils import get_file_service_for_record_class
+
 
 class ServiceReader(BaseReader):
     """Writes the entries to a repository instance using a Service object."""
@@ -28,13 +30,7 @@ class ServiceReader(BaseReader):
 
         if self._record_cls and load_files:
             # try to get file service
-            for svc in current_service_registry._services.values():
-                if not isinstance(svc, FileService):
-                    continue
-                if svc.record_cls != self._record_cls:
-                    continue
-                self._file_service = svc
-                break
+            self._file_service = get_file_service_for_record_class(self._record_cls)
 
     def __iter__(self):
         for idx, entry in enumerate(self._service.scan(self._identity)):

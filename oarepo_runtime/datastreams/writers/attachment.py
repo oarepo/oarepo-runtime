@@ -19,13 +19,13 @@ class AttachmentWriter(BaseWriter):
     If the data key is "metadata.yaml", then "metadata" will be placed to "metametadata.yaml"
     """
 
-    def __init__(self, *, target, base_path=None, grouping=3, min_padding=3, **kwargs):
+    def __init__(self, *, target, base_path=None, **kwargs):
         """Constructor.
         :param file_or_path: path of the output file.
         """
         super().__init__(**kwargs)
-        self._grouping = grouping
-        self._min_padding = min_padding
+        self._grouping = 3
+        self._min_padding = 3
         if base_path:
             self._dir = base_path.joinpath(target)
         else:
@@ -46,7 +46,7 @@ class AttachmentWriter(BaseWriter):
         if 'serial_no' not in entry.context or not entry.context.get('files'):
             return entry
 
-        dirname = self._dir.joinpath(self.format_serial(entry.context['serial_no']))
+        dirname = self._dir.joinpath(format_serial(entry.context['serial_no'])) / 'data'
         dirname.mkdir(parents=True, exist_ok=False)
         file_keys = []
         files_metadata = []
@@ -70,16 +70,19 @@ class AttachmentWriter(BaseWriter):
             yaml.safe_dump_all(files_metadata, f)
         return entry
 
-    def format_serial(self, serial_no):
-        serial_no = str(serial_no)
-        formatted_length = max(self._min_padding, len(serial_no))
-        while formatted_length % self._grouping:
-            formatted_length += 1
-        padded_serial = serial_no.zfill(formatted_length)
-        return os.sep.join([padded_serial[i:i+self._grouping] for i in range(0, len(padded_serial), self._grouping)])
 
     def delete(self, stream_entry: StreamEntry):
         """noop"""
 
     def finish(self):
         """Finalizes writing"""
+
+def format_serial(serial_no):
+    grouping = 3
+    min_padding = 3
+    serial_no = str(serial_no)
+    formatted_length = max(min_padding, len(serial_no))
+    while formatted_length % grouping:
+        formatted_length += 1
+    padded_serial = serial_no.zfill(formatted_length)
+    return os.sep.join([padded_serial[i:i+grouping] for i in range(0, len(padded_serial), grouping)])
