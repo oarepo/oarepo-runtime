@@ -1,0 +1,13 @@
+checksum: md5:3b11d61e470665cdd98909b95447fd19
+created: '2023-07-27T09:02:25.804496+00:00'
+key: test.png
+mimetype: image/png
+size: 27
+updated: '2023-07-27T09:02:25.912204+00:00'
+---
+checksum: md5:e362d843bc49d5864595d6f6ec614ace
+created: '2023-07-27T09:02:25.976924+00:00'
+key: another.png
+mimetype: image/png
+size: 30
+updated: '2023-07-27T09:02:25.999255+00:00'

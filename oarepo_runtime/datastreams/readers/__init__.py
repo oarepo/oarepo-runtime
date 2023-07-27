@@ -8,6 +8,7 @@ from ..datastreams import StreamEntry
 
 class BaseReader(ABC):
     """Base reader."""
+    base_path: Path
 
     def __init__(self, *, source=None, base_path=None, **kwargs):
         """Constructor.
@@ -17,6 +18,12 @@ class BaseReader(ABC):
             self.source = source
         else:
             self.source = Path(base_path).joinpath(source)
+        if base_path:
+            self.base_path = Path(base_path)
+        elif isinstance(source, (str, Path)):
+            self.base_path = Path(source).parent
+        else:
+            self.base_path = None
 
     @abstractmethod
     def __iter__(self) -> Iterator[StreamEntry]:

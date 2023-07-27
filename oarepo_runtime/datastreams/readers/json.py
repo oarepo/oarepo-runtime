@@ -2,12 +2,13 @@ import json
 from typing import Iterator
 
 from . import BaseReader, StreamEntry
+from .attachments import AttachmentsReaderMixin
 
 
-class JSONReader(BaseReader):
+class JSONReader(AttachmentsReaderMixin, BaseReader):
     """JSON Lines data iterator that loads records from JSON Lines files."""
 
-    def __iter__(self) -> Iterator[StreamEntry]:
+    def iter_entries(self) -> Iterator[StreamEntry]:
         """Iterate over records."""
         with self._open() as fp:
             data = json.load(fp)

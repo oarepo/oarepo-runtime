@@ -1,11 +1,13 @@
 record:
   use: invenio
-  properties:
-    metadata:
-     properties:
-      title: keyword
   module:
     qualified: records2
   permissions:
     presets: [ 'everyone' ]
-
+  files:
+    properties:
+      file_title: keyword
+  properties:
+    metadata:
+     properties:
+      title: keyword

@@ -36,11 +36,18 @@ class EDTFFacet(LabelledValuesTermsFacet):
         }
 
 
-class EDTFIntervalFacet(LabelledFacetMixin, dsl.DateHistogramFacet):
+class AutoDateHistogramFacet(dsl.DateHistogramFacet):
+    agg_type = 'auto_date_histogram'
+    def __init__(self, **kwargs):
+        # skip DateHistogramFacet constructor
+        super(dsl.DateHistogramFacet, self).__init__(**kwargs)
+
+
+class EDTFIntervalFacet(LabelledFacetMixin, AutoDateHistogramFacet):
     # auto_date_histogram
     def __init__(self, *args, **kwargs):
-        if "interval" not in kwargs:
-            kwargs["interval"] = "year"
+        # if "interval" not in kwargs:
+        #     kwargs["interval"] = "year"
         super().__init__(*args, **kwargs)
 
     def value_labels(self, values):
@@ -50,6 +57,9 @@ class EDTFIntervalFacet(LabelledFacetMixin, dsl.DateHistogramFacet):
         }
 
 
+class DateIntervalFacet(EDTFIntervalFacet):
+    pass
+
 def convert_to_edtf(val):
     if "/" in val:
         # interval
@@ -57,3 +67,5 @@ def convert_to_edtf(val):
     val = re.sub(r"T.*", "", val)  # replace T12:00:00.000Z with nothing
     print(val)
     return val
+
+

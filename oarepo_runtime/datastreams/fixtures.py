@@ -87,7 +87,7 @@ def _load_fixtures_from_catalogue(
         result.add(stream_name, datastream.process())
 
 
-def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
+def dump_fixtures(fixture_dir, include=None, exclude=None, use_files=False) -> FixturesResult:
     include = [re.compile(x) for x in (include or [])]
     exclude = [
         re.compile(x)
@@ -116,7 +116,7 @@ def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
         if not hasattr(service, "scan"):
             continue
         for fixture_name, fixture_read_config, fixture_write_config in config_generator(
-            service_id
+            service_id, use_files=use_files
         ):
             if include and not any(x.match(fixture_name) for x in include):
                 continue
@@ -139,13 +139,21 @@ def dump_fixtures(fixture_dir, include=None, exclude=None) -> FixturesResult:
     return result
 
 
-def default_config_generator(service_id):
+def default_config_generator(service_id, use_files=False):
+    writers = [
+        {"writer": "yaml", "target": f"{service_id}.yaml"},
+    ]
+    if use_files:
+        writers.append(
+            {"writer": "attachments", "target": f"files"},
+        )
+
     yield service_id, [
         # load
         {"service": service_id},
         {"source": f"{service_id}.yaml"},
     ], [
         # dump
-        {"reader": "service", "service": service_id},
-        {"writer": "yaml", "target": f"{service_id}.yaml"},
+        {"reader": "service", "service": service_id, "load_files": use_files},
+        *writers
     ]

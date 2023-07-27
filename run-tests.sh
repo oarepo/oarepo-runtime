@@ -1,23 +1,37 @@
 #!/bin/bash
-
 set -e
-pip install -e '.[tests]'
 
-MODEL="records2"
-VENV=".model_venv"
-
-if test -d ./tests/$MODEL; then
-	rm -rf ./tests/$MODEL
+BUILDER_VENV=.venv-builder
+if test -d $BUILDER_VENV ; then
+	rm -rf $BUILDER_VENV
 fi
 
-if test -d ./$VENV; then
-	rm -rf ./$VENV
+python3 -m venv $BUILDER_VENV
+. $BUILDER_VENV/bin/activate
+pip install -U setuptools pip wheel
+pip install -U oarepo-model-builder oarepo-model-builder-files
+
+if test -d records2 ; then
+  rm -rf records2
 fi
 
-oarepo-compile-model ./tests/$MODEL.yaml --output-directory ./tests/$MODEL -vvv
+oarepo-compile-model ./tests/records2.yaml --output-directory records2 --profile record,files -vvv
+
+VENV=".venv"
+
+if test -d $VENV ; then
+  rm -rf $VENV
+fi
+
 python3 -m venv $VENV
 . $VENV/bin/activate
 pip install -U setuptools pip wheel
-pip install "./tests/$MODEL[tests]"
-rm -rf ./tests/$MODEL/tests
+
+pip install -e '.[tests]'
+pip install -e records2
+# pip install -e records
+
+pip uninstall -y uritemplate
+pip install uritemplate
+
 pytest tests

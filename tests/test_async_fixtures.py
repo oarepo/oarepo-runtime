@@ -4,7 +4,7 @@ from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.tasks.datastreams import AsyncDataStream
 
 
-def test_async_fixtures(celery_app, db, app, identity, search_clear):
+def test_async_fixtures(celery_app, db, app, identity, search_clear, location):
     writer_config = {"writer": "service", "service": "records2"}
     reader_config = {
         "source": Path(__file__).parent / "pkg_data" / f"async_records.yaml",
