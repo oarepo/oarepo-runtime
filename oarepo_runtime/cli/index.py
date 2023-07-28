@@ -59,25 +59,29 @@ def gather_all_indices():
 
 
 def record_or_service(model):
+    # TODO: is this still used (maybe from somewhere else?)
     try:
         service = current_service_registry.get(model)
     except KeyError:
         service = None
-    if service:
-        record = service.config.record_cls
+    if service and getattr(service, 'config', None):
+        record = getattr(service.config, 'record_cls', None)
     else:
         try:
             record = import_string(model)
         except ImportStringError:
-            click.secho(
-                "Service or model not found. Known services: ",
-                fg="red",
-                bold=True,
-                file=sys.stderr,
-            )
-            for svc in sorted(current_service_registry._services):
-                click.secho(f"    {svc}", file=sys.stderr)
-            sys.exit(1)
+            record=None
+
+    if record is None:
+        click.secho(
+            "Service or model not found. Known services: ",
+            fg="red",
+            bold=True,
+            file=sys.stderr,
+        )
+        for svc in sorted(current_service_registry._services):
+            click.secho(f"    {svc}", file=sys.stderr)
+        sys.exit(1)
     return record
 
 
@@ -93,9 +97,9 @@ def reindex(model):
         click.secho(f"Preparing to index {service_id}", file=sys.stderr)
 
         service = current_service_registry.get(service_id)
-        record_class = service.config.record_cls
+        record_class = getattr(service.config, 'record_cls', None)
 
-        if not hasattr(service, "indexer"):
+        if not record_class or not hasattr(service, "indexer"):
             continue
 
         try:
