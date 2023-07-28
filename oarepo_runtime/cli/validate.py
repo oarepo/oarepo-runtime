@@ -53,19 +53,22 @@ def validate(service_name, record_file, verbose):
     else:
         data = yaml.safe_load(StringIO(file_content))
 
-    loaded = schema().load(data)
-    click.secho("Marshmallow validation has been successful", fg="green")
+    if not isinstance(data, list):
+        data = [data]
+    for idx, d in enumerate(data):
+        loaded = schema().load(d)
+        click.secho(f"Marshmallow validation of record idx {idx+1} has been successful", fg="green")
 
-    rec: Record = config.record_cls(loaded)
+        rec: Record = config.record_cls(loaded)
 
-    # Run pre create extensions to check vocabularies
-    try:
-        with db.session.begin_nested():
-            for e in rec._extensions:
-                e.pre_commit(rec)
-            raise CheckOk()
-    except CheckOk:
-        click.secho("Pre-commit hook has been successful", fg="green")
+        # Run pre create extensions to check vocabularies
+        try:
+            with db.session.begin_nested():
+                for e in rec._extensions:
+                    e.pre_commit(rec)
+                raise CheckOk()
+        except CheckOk:
+            click.secho(f"Pre-commit hook of record idx {idx+1} has been successful", fg="green")
 
-    if verbose:
-        yaml.safe_dump(loaded, sys.stdout, allow_unicode=True)
+        if verbose:
+            yaml.safe_dump(loaded, sys.stdout, allow_unicode=True)
