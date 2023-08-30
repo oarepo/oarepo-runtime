@@ -53,7 +53,9 @@ def process_datastream_transformer(_batch: Dict, *, transformer_definition, iden
         result = []
         for entry in batch.entries:
             try:
-                result.append(transformer.apply(entry))
+                transformed_entry = transformer.apply(entry)
+                assert transformed_entry is not None
+                result.append(transformed_entry)
             except TransformerError as e:
                 entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
@@ -196,7 +198,7 @@ class AsyncDataStream(AbstractDataStream):
         self.in_process = in_process
         self.identity = identity
 
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         def read_entries():
             """Read the entries."""
             for reader_def in self._readers:

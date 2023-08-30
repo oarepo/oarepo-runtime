@@ -108,14 +108,14 @@ class AbstractDataStream(abc.ABC):
         self._progress_callback = progress_callback or noop
 
     @abc.abstractmethod
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         pass
 
 
 class DataStream(AbstractDataStream):
     """Data stream."""
 
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         """Iterates over the entries.
         Uses the reader to get the raw entries and transforms them.
         It will iterate over the `StreamEntry` objects returned by
