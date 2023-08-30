@@ -2,10 +2,17 @@ import os
 import random
 import sys
 
-from oarepo_runtime.datastreams import DataStream, BaseReader, StreamEntry, BaseWriter, WriterError, BaseTransformer, \
-    TransformerError
-
 import psutil
+
+from oarepo_runtime.datastreams import (
+    BaseReader,
+    BaseTransformer,
+    BaseWriter,
+    DataStream,
+    StreamEntry,
+    TransformerError,
+    WriterError,
+)
 
 
 class OOMTestReader(BaseReader):
@@ -31,7 +38,6 @@ class OOMTestWriter(BaseWriter):
     def delete(self, entry: StreamEntry, uow=None, *args, **kwargs):
         if random.random() < self.error_rate:
             raise WriterError("Writer error in delete")
-
 
 
 class OOMTestTransformer(BaseTransformer):
@@ -68,11 +74,12 @@ def test_oom():
         readers=readers,
         writers=writers,
         transformers=transformers,
-        progress_callback=progress
+        progress_callback=progress,
     )
     result = datastream.process()
     print(result)
-    print(f"Memory increased {(max_size - baseline_size) / (entry_size * sys.getsizeof(1))} * "
-          f"stream entry size {entry_size}. Up to 10 times is considered ok.")
+    print(
+        f"Memory increased {(max_size - baseline_size) / (entry_size * sys.getsizeof(1))} * "
+        f"stream entry size {entry_size}. Up to 10 times is considered ok."
+    )
     assert (max_size - baseline_size) / (entry_size * sys.getsizeof(1)) < 10
-

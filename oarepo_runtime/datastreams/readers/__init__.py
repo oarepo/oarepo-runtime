@@ -8,6 +8,7 @@ from ..datastreams import StreamEntry
 
 class BaseReader(ABC):
     """Base reader."""
+
     base_path: Path
 
     def __init__(self, *, source=None, base_path=None, **kwargs):

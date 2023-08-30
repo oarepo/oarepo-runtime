@@ -57,7 +57,10 @@ def validate(service_name, record_file, verbose):
         data = [data]
     for idx, d in enumerate(data):
         loaded = schema().load(d)
-        click.secho(f"Marshmallow validation of record idx {idx+1} has been successful", fg="green")
+        click.secho(
+            f"Marshmallow validation of record idx {idx+1} has been successful",
+            fg="green",
+        )
 
         rec: Record = config.record_cls(loaded)
 
@@ -68,7 +71,9 @@ def validate(service_name, record_file, verbose):
                     e.pre_commit(rec)
                 raise CheckOk()
         except CheckOk:
-            click.secho(f"Pre-commit hook of record idx {idx+1} has been successful", fg="green")
+            click.secho(
+                f"Pre-commit hook of record idx {idx+1} has been successful", fg="green"
+            )
 
         if verbose:
             yaml.safe_dump(loaded, sys.stdout, allow_unicode=True)
