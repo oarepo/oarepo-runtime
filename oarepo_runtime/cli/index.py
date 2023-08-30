@@ -64,13 +64,13 @@ def record_or_service(model):
         service = current_service_registry.get(model)
     except KeyError:
         service = None
-    if service and getattr(service, 'config', None):
-        record = getattr(service.config, 'record_cls', None)
+    if service and getattr(service, "config", None):
+        record = getattr(service.config, "record_cls", None)
     else:
         try:
             record = import_string(model)
         except ImportStringError:
-            record=None
+            record = None
 
     if record is None:
         click.secho(
@@ -97,7 +97,7 @@ def reindex(model):
         click.secho(f"Preparing to index {service_id}", file=sys.stderr)
 
         service = current_service_registry.get(service_id)
-        record_class = getattr(service.config, 'record_cls', None)
+        record_class = getattr(service.config, "record_cls", None)
 
         if not record_class or not hasattr(service, "indexer"):
             continue

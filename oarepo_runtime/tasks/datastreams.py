@@ -53,7 +53,9 @@ def process_datastream_transformer(_batch: Dict, *, transformer_definition, iden
         result = []
         for entry in batch.entries:
             try:
-                result.append(transformer.apply(entry))
+                transformed_entry = transformer.apply(entry)
+                assert transformed_entry is not None
+                result.append(transformed_entry)
             except TransformerError as e:
                 entry.errors.append(StreamEntryError.from_exception(e))
                 result.append(entry)
@@ -111,7 +113,6 @@ def process_datastream_outcome(
     ok_count = 0
     skipped_count = 0
     failed_count = 0
-    failed_entries = []
     batch: StreamBatch = _deserialize_batch(_batch)
     entry: StreamEntry
     for entry in batch.entries:
@@ -119,7 +120,6 @@ def process_datastream_outcome(
             callback = signature(error_callback)
             callback.apply((), {"entry": entry})
             failed_count += 1
-            failed_entries.append(entry)
         else:
             callback = signature(success_callback)
             callback.apply((), {"entry": entry})
@@ -133,7 +133,6 @@ def process_datastream_outcome(
             ok_count=ok_count,
             failed_count=failed_count,
             skipped_count=skipped_count,
-            failed_entries=failed_entries,
         )
     )
 
@@ -144,7 +143,6 @@ class AsyncDataStreamResult(DataStreamResult):
         self._ok_count = None
         self._failed_count = None
         self._skipped_count = None
-        self._failed_entries = []
 
     def prepare_result(self):
         if self._ok_count is not None:
@@ -157,7 +155,6 @@ class AsyncDataStreamResult(DataStreamResult):
             self._ok_count += d.ok_count
             self._failed_count += d.failed_count
             self._skipped_count += d.skipped_count
-            self._failed_entries.extend(d.failed_entries or [])
 
     @property
     def ok_count(self):
@@ -173,10 +170,6 @@ class AsyncDataStreamResult(DataStreamResult):
     def skipped_count(self):
         self.prepare_result()
         return self._skipped_count
-
-    @property
-    def failed_entries(self):
-        return self._failed_entries
 
 
 class AsyncDataStream(AbstractDataStream):
@@ -205,7 +198,7 @@ class AsyncDataStream(AbstractDataStream):
         self.in_process = in_process
         self.identity = identity
 
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         def read_entries():
             """Read the entries."""
             for reader_def in self._readers:
@@ -312,7 +305,6 @@ def _serialize_datastream_result(result: DataStreamResult):
         "ok_count": result.ok_count,
         "failed_count": result.failed_count,
         "skipped_count": result.skipped_count,
-        "failed_entries": _serialize_entries(result.failed_entries),
     }
 
 
@@ -321,7 +313,6 @@ def _deserialize_datastream_result(result: Dict):
         ok_count=result["ok_count"],
         failed_count=result["failed_count"],
         skipped_count=result["skipped_count"],
-        failed_entries=_deserialize_entries(result["failed_entries"]),
     )
 
 

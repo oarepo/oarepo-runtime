@@ -3,9 +3,9 @@ from typing import Iterator
 
 import openpyxl
 
-from .attachments import AttachmentsReaderMixin
 from ..errors import ReaderError
 from . import BaseReader, StreamEntry
+from .attachments import AttachmentsReaderMixin
 
 
 class ExcelReader(AttachmentsReaderMixin, BaseReader):

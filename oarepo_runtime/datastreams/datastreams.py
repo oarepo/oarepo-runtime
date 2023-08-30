@@ -12,6 +12,7 @@ from .errors import TransformerError, WriterError
 
 log = logging.getLogger("datastreams")
 
+
 @dataclasses.dataclass
 class StreamEntryError:
     type: str
@@ -77,7 +78,6 @@ class DataStreamResult:
     ok_count: int
     failed_count: int
     skipped_count: int
-    failed_entries: List[StreamEntry]
 
 
 def noop(*_args, **_kwargs):
@@ -109,14 +109,14 @@ class AbstractDataStream(abc.ABC):
         self._progress_callback = progress_callback or noop
 
     @abc.abstractmethod
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         pass
 
 
 class DataStream(AbstractDataStream):
     """Data stream."""
 
-    def process(self, max_failures=100) -> DataStreamResult:
+    def process(self) -> DataStreamResult:
         """Iterates over the entries.
         Uses the reader to get the raw entries and transforms them.
         It will iterate over the `StreamEntry` objects returned by
@@ -124,22 +124,20 @@ class DataStream(AbstractDataStream):
         writing it.
         """
         _written, _filtered, _failed = 0, 0, 0
-        failed_entries = []
         read_count = 0
 
         for stream_entry in self.read():
             read_count += 1
-            self._success_callback(read=read_count, written=_written, failed=_failed)
+            self._progress_callback(read=read_count, written=_written, failed=_failed)
             if stream_entry.errors:
-                if len(failed_entries) < max_failures:
-                    _failed += 1
-                    failed_entries.append(stream_entry)
+                self._error_callback(stream_entry)
+                _failed += 1
                 continue
 
             transformed_entry = self.transform_single(stream_entry)
             if transformed_entry.errors:
+                self._error_callback(transformed_entry)
                 _failed += 1
-                failed_entries.append(transformed_entry)
                 continue
             if transformed_entry.filtered:
                 _filtered += 1
@@ -149,7 +147,6 @@ class DataStream(AbstractDataStream):
             if written_entry.errors:
                 self._error_callback(written_entry)
                 _failed += 1
-                failed_entries.append(written_entry)
             else:
                 self._success_callback(written_entry)
                 _written += 1
@@ -158,7 +155,6 @@ class DataStream(AbstractDataStream):
             ok_count=_written,
             failed_count=_failed,
             skipped_count=_filtered,
-            failed_entries=failed_entries,
         )
 
     def read(self):
@@ -199,18 +195,3 @@ class DataStream(AbstractDataStream):
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
 
         return stream_entry
-
-    @property
-    def read_entries(self):
-        """The total of entries obtained from the origin."""
-        return self._read
-
-    @property
-    def written_entries(self):
-        """The total of entries written to destination."""
-        return self._written
-
-    @property
-    def filtered_entries(self):
-        """The total of entries filtered out."""
-        return self._filtered

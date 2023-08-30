@@ -5,6 +5,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
+from oarepo_runtime.datastreams import StreamEntry
 from oarepo_runtime.datastreams.fixtures import (
     FixturesResult,
     dump_fixtures,
@@ -32,14 +33,26 @@ def load(
     show_error_entry=False,
 ):
     """Loads fixtures"""
+    if show_error_entry:
+
+        def error_callback(entry: StreamEntry):
+            pprint(entry.entry)
+            for err in entry.errors:
+                print(err.type)
+                print(err.message)
+
+    else:
+        error_callback = None
+
     with current_app.wsgi_app.mounts["/api"].app_context():
         results: FixturesResult = load_fixtures(
             fixture_dir,
             _make_list(include),
             _make_list(exclude),
             system_fixtures=system_fixtures,
+            error_callback=error_callback(),
         )
-        _show_stats(results, "Load fixtures", show_error_entry=show_error_entry)
+        _show_stats(results, "Load fixtures")
 
 
 @fixtures.command()
@@ -60,7 +73,7 @@ def _make_list(lst):
     ]
 
 
-def _show_stats(results: FixturesResult, title: str, show_error_entry=False):
+def _show_stats(results: FixturesResult, title: str):
     print(f"{title} stats:")
     print(f"    ok records: {results.ok_count}")
     print(f"    failed records: {results.failed_count}")
@@ -71,11 +84,3 @@ def _show_stats(results: FixturesResult, title: str, show_error_entry=False):
         print(
             f"    {fixture} - {r.ok_count} ok, {r.failed_count} failed, {r.skipped_count} skipped"
         )
-        if r.failed_entries:
-            for fe in r.failed_entries:
-                print(f"======== {fixture} {fe.entry.get('id', '')}")
-                if show_error_entry:
-                    pprint(fe.entry)
-                for err in fe.errors:
-                    print(err.type)
-                    print(err.message)

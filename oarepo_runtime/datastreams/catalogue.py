@@ -52,7 +52,13 @@ class DataStreamCatalogue:
     def __iter__(self):
         return iter(self._catalogue)
 
-    def get_datastream(self, stream_name):
+    def get_datastream(
+        self,
+        stream_name,
+        progress_callback=None,
+        success_callback=None,
+        error_callback=None,
+    ):
         stream_definition = self._catalogue[stream_name]
         readers = []
         transformers = []
@@ -102,7 +108,14 @@ class DataStreamCatalogue:
                 e.entry = entry
                 e.stream_name = stream_name
                 raise e
-        ds = DataStream(readers=readers, transformers=transformers, writers=writers)
+        ds = DataStream(
+            readers=readers,
+            transformers=transformers,
+            writers=writers,
+            progress_callback=progress_callback,
+            success_callback=success_callback,
+            error_callback=error_callback,
+        )
         return ds
 
     def get_reader(self, entry):

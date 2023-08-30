@@ -34,7 +34,13 @@ class FixturesResult:
 
 
 def load_fixtures(
-    fixture_dir=None, include=None, exclude=None, system_fixtures=True
+    fixture_dir=None,
+    include=None,
+    exclude=None,
+    system_fixtures=True,
+    progress_callback=None,
+    success_callback=None,
+    error_callback=None,
 ) -> FixturesResult:
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
@@ -56,7 +62,16 @@ def load_fixtures(
 
     if fixture_dir:
         catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
-        _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
+        _load_fixtures_from_catalogue(
+            catalogue,
+            fixtures,
+            include,
+            exclude,
+            result,
+            progress_callback,
+            success_callback,
+            error_callback,
+        )
     if system_fixtures:
         for r in reversed(
             sorted(
@@ -68,12 +83,28 @@ def load_fixtures(
             if pkg_fixture_dir.is_file():
                 pkg_fixture_dir = pkg_fixture_dir.parent
             catalogue = DataStreamCatalogue(pkg_fixture_dir / "catalogue.yaml")
-            _load_fixtures_from_catalogue(catalogue, fixtures, include, exclude, result)
+            _load_fixtures_from_catalogue(
+                catalogue,
+                fixtures,
+                include,
+                exclude,
+                result,
+                progress_callback,
+                success_callback,
+                error_callback,
+            )
     return result
 
 
 def _load_fixtures_from_catalogue(
-    catalogue, fixtures, include, exclude, result: FixturesResult
+    catalogue,
+    fixtures,
+    include,
+    exclude,
+    result: FixturesResult,
+    progress_callback,
+    success_callback,
+    error_callback,
 ):
     for stream_name in catalogue:
         if stream_name in fixtures:
@@ -83,11 +114,24 @@ def _load_fixtures_from_catalogue(
         if any(x.match(stream_name) for x in exclude):
             continue
         fixtures.add(stream_name)
-        datastream: DataStream = catalogue.get_datastream(stream_name)
+        datastream: DataStream = catalogue.get_datastream(
+            stream_name,
+            progress_callback=progress_callback,
+            success_callback=success_callback,
+            error_callback=error_callback,
+        )
         result.add(stream_name, datastream.process())
 
 
-def dump_fixtures(fixture_dir, include=None, exclude=None, use_files=False) -> FixturesResult:
+def dump_fixtures(
+    fixture_dir,
+    include=None,
+    exclude=None,
+    use_files=False,
+    progress_callback=None,
+    success_callback=None,
+    error_callback=None,
+) -> FixturesResult:
     include = [re.compile(x) for x in (include or [])]
     exclude = [
         re.compile(x)
@@ -127,7 +171,12 @@ def dump_fixtures(fixture_dir, include=None, exclude=None, use_files=False) -> F
                 catalogue_path, {fixture_name: fixture_write_config}
             )
             for stream_name in catalogue:
-                datastream: DataStream = catalogue.get_datastream(stream_name)
+                datastream: DataStream = catalogue.get_datastream(
+                    stream_name,
+                    progress_callback=progress_callback,
+                    success_callback=success_callback,
+                    error_callback=error_callback,
+                )
                 datastream_result = datastream.process()
                 if datastream_result.ok_count:
                     catalogue_data[fixture_name] = fixture_read_config
@@ -155,5 +204,5 @@ def default_config_generator(service_id, use_files=False):
     ], [
         # dump
         {"reader": "service", "service": service_id, "load_files": use_files},
-        *writers
+        *writers,
     ]
