@@ -50,7 +50,7 @@ def load(
             _make_list(include),
             _make_list(exclude),
             system_fixtures=system_fixtures,
-            error_callback=error_callback(),
+            error_callback=error_callback,
         )
         _show_stats(results, "Load fixtures")
 
