@@ -6,21 +6,32 @@ import dataclasses
 import itertools
 import logging
 import traceback
+import typing
 from typing import Any, Dict, List
 
-from .errors import TransformerError, WriterError
+from .errors import DataStreamError, JSONObject, TransformerError, WriterError
+import json
 
 log = logging.getLogger("datastreams")
 
 
 @dataclasses.dataclass
 class StreamEntryError:
-    type: str
+    code: str
     message: str
-    info: str
+    location: str = None
+    info: typing.Union[JSONObject, None] = None
 
     @classmethod
     def from_exception(cls, exc: Exception, limit=5, message=None):
+        if isinstance(exc, DataStreamError):
+            return cls(
+                code=exc.code,
+                message=exc.message,
+                location=exc.location,
+                info=exc.detail,
+            )
+
         # can not use format_exception here as the signature is different for python 3.9 and python 3.10
         stack = traceback.format_exc(limit=limit)
         if message:
@@ -29,31 +40,38 @@ class StreamEntryError:
             formatted_exception = exc.format_exception()
         else:
             formatted_exception = str(exc)
+
         return cls(
-            type=getattr(exc, "type", type(exc).__name__),
+            code=getattr(exc, "type", type(exc).__name__),
             message=formatted_exception,
-            info=stack,
+            info={
+                "message": str(exc),
+                "exception": type(exc).__name__,
+                "stack": stack,
+            },
         )
 
     @property
     def json(self):
         return {
-            "error_type": self.type,
-            "error_message": self.message,
-            "error_info": self.info,
+            "code": self.code,
+            "message": self.message,
+            "location": self.location,
+            "info": self.info,
         }
 
     @classmethod
     def from_json(cls, js):
         return cls(
-            type=js.get("error_type"),
-            message=js.get("error_message"),
-            info=js.get("error_info"),
+            code=js.get("code"),
+            message=js.get("message"),
+            location=js.get("location"),
+            info=js.get("info"),
         )
 
     def __str__(self):
-        formatted_info = "  " + (self.info or "").strip().replace("\n", "  ")
-        return f"{self.type}: {self.message}\n{formatted_info}"
+        formatted_info = json.dumps(self.info or {}, ensure_ascii=False, indent=4)
+        return f"{self.code}:{self.location if self.location else ''} {self.message}\n{formatted_info}"
 
     def __repr__(self):
         return str(self)

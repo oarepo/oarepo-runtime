@@ -1,4 +1,5 @@
 import re
+from traceback import format_exc
 from typing import Iterator
 
 import openpyxl
@@ -16,7 +17,13 @@ class ExcelReader(AttachmentsReaderMixin, BaseReader):
                 sheet_obj = wb_obj.active
             except Exception as err:
                 raise ReaderError(
-                    f"Cannot decode excel file {self._data_file.name}: {str(err)}"
+                    f"Cannot decode excel file {self._data_file.name}: {str(err)}",
+                    code="EXCEL_DECODE_ERROR",
+                    detail={
+                        "message": str(err),
+                        "exception": type(err).__name__,
+                        "stack": format_exc(limit=10),
+                    },
                 )
 
             header, data = self.get_excel_data(sheet_obj)
