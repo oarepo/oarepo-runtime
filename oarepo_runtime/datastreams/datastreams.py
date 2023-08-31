@@ -19,7 +19,7 @@ log = logging.getLogger("datastreams")
 class StreamEntryError:
     code: str
     message: str
-    location: typing.Optional[str]
+    location: typing.Optional[str] = None
     info: typing.Union[JSONObject, None] = None
 
     @classmethod
