@@ -23,7 +23,9 @@ class StreamEntryError:
     info: typing.Union[JSONObject, None] = None
 
     @classmethod
-    def from_exception(cls, exc: Exception, limit=5, message=None):
+    def from_exception(
+        cls, exc: Exception, limit=5, message=None, location=None, info=None, code=None
+    ):
         if isinstance(exc, DataStreamError):
             return cls(
                 code=exc.code,
@@ -42,23 +44,29 @@ class StreamEntryError:
             formatted_exception = str(exc)
 
         return cls(
-            code=getattr(exc, "type", type(exc).__name__),
+            code=code or getattr(exc, "type", type(exc).__name__),
             message=formatted_exception,
+            location=location,
             info={
                 "message": str(exc),
                 "exception": type(exc).__name__,
                 "stack": stack,
+                **(info or {}),
             },
         )
 
     @property
     def json(self):
-        return {
-            "code": self.code,
-            "message": self.message,
-            "location": self.location,
-            "info": self.info,
-        }
+        ret = {}
+        if self.code:
+            ret["code"] = self.code
+        if self.message:
+            ret["message"] = self.message
+        if self.location:
+            ret["location"] = self.location
+        if self.info:
+            ret["info"] = self.info
+        return ret
 
     @classmethod
     def from_json(cls, js):
