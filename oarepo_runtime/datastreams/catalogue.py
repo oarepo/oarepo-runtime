@@ -58,6 +58,8 @@ class DataStreamCatalogue:
         progress_callback=None,
         success_callback=None,
         error_callback=None,
+        batch_size=None,
+        uow_class=None,
     ):
         stream_definition = self._catalogue[stream_name]
         readers = []
@@ -115,6 +117,8 @@ class DataStreamCatalogue:
             progress_callback=progress_callback,
             success_callback=success_callback,
             error_callback=error_callback,
+            batch_size=batch_size,
+            uow_class=uow_class,
         )
         return ds
 

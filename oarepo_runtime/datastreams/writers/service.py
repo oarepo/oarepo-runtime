@@ -59,19 +59,22 @@ class ServiceWriter(BaseWriter):
             service_kwargs["uow"] = uow
         try:
             entry_id = self._entry_id(entry)
-            if (
-                entry_id
-                and self._update
-                and self.try_update(entry_id, stream_entry, **service_kwargs)
-            ):
-                # update was successful
-                return
+            do_create = True
 
-            entry = self._service.create(self._identity, entry, **service_kwargs)
+            if entry_id and self._update:
+                e = self.try_update(entry_id, stream_entry, **service_kwargs)
+                if e:
+                    entry = e
+                    do_create = False
+
+            if do_create:
+                entry = self._service.create(self._identity, entry, **service_kwargs)
+                entry_id = entry.id
 
             stream_entry.entry = entry.data
 
-            stream_entry.context["pid"] = entry.id
+            stream_entry.context["pid"] = entry_id
+            stream_entry.context["revision_id"] = entry._record.revision_id
 
             if self._file_service and stream_entry.context.get("files", []):
                 # store the files with the metadata
@@ -99,12 +102,15 @@ class ServiceWriter(BaseWriter):
                     )
 
         except ValidationError as err:
-            stream_entry.errors.append(
-                StreamEntryError.from_exception(
-                    err, message=format_validation_error(err.messages)
+            validation_errors = format_validation_error(err.messages)
+            for err_path, err_value in validation_errors.items():
+                stream_entry.errors.append(
+                    StreamEntryError(
+                        code="MARHSMALLOW", message=err_value, location=err_path
+                    )
                 )
-            )
         except InvalidRelationValue as err:
+            # TODO: better formatting for this kind of error
             stream_entry.errors.append(
                 StreamEntryError.from_exception(err, message=err.args[0])
             )
@@ -112,17 +118,14 @@ class ServiceWriter(BaseWriter):
             stream_entry.errors.append(StreamEntryError.from_exception(err))
 
     def try_update(self, entry_id, stream_entry, **service_kwargs):
-        if entry_id:
-            current = self._resolve(entry_id)
-            if current:
-                updated = dict(current.to_dict(), **stream_entry.entry)
-                # might raise exception here but that's ok - we know that the entry
-                # exists in db as it was _resolved
-                stream_entry.entry = self._service.update(
-                    self._identity, entry_id, updated, **service_kwargs
-                )
-                return True
-        return False
+        current = self._resolve(entry_id)
+        if current:
+            updated = dict(current.to_dict(), **stream_entry.entry)
+            # might raise exception here but that's ok - we know that the entry
+            # exists in db as it was _resolved
+            return self._service.update(
+                self._identity, entry_id, updated, **service_kwargs
+            )
 
     def delete(self, stream_entry: StreamEntry, uow=None):
         service_kwargs = {}

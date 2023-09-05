@@ -75,8 +75,8 @@ def test_load_with_files(db, app, identity, search_clear, location):
     )
     assert len(first_record_list) == 2
     first_item = next(x for x in first_record_list if x["key"] == "test.png")
-    assert first_item["size"] == 27
+    assert first_item["size"] == 822
     with file_service.get_file_content(
         identity, results[0]["id"], "test.png"
     ).open_stream("rb") as f:
-        assert f.read() == b"test file content: test.png"
+        assert f.read()[:5] == b"\x89PNG\r"

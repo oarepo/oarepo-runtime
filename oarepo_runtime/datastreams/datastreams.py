@@ -4,23 +4,39 @@
 import abc
 import dataclasses
 import itertools
+import json
 import logging
 import traceback
+import typing
 from typing import Any, Dict, List
 
-from .errors import TransformerError, WriterError
+from invenio_db import db
+from invenio_records_resources.services.uow import UnitOfWork
+
+from .errors import DataStreamError, JSONObject, TransformerError, WriterError
 
 log = logging.getLogger("datastreams")
 
 
 @dataclasses.dataclass
 class StreamEntryError:
-    type: str
+    code: str
     message: str
-    info: str
+    location: typing.Optional[str] = None
+    info: typing.Union[JSONObject, None] = None
 
     @classmethod
-    def from_exception(cls, exc: Exception, limit=5, message=None):
+    def from_exception(
+        cls, exc: Exception, limit=5, message=None, location=None, info=None, code=None
+    ):
+        if isinstance(exc, DataStreamError):
+            return cls(
+                code=exc.code,
+                message=exc.message,
+                location=exc.location,
+                info=exc.detail,
+            )
+
         # can not use format_exception here as the signature is different for python 3.9 and python 3.10
         stack = traceback.format_exc(limit=limit)
         if message:
@@ -29,31 +45,44 @@ class StreamEntryError:
             formatted_exception = exc.format_exception()
         else:
             formatted_exception = str(exc)
+
         return cls(
-            type=getattr(exc, "type", type(exc).__name__),
+            code=code or getattr(exc, "type", type(exc).__name__),
             message=formatted_exception,
-            info=stack,
+            location=location,
+            info={
+                "message": str(exc),
+                "exception": type(exc).__name__,
+                "stack": stack,
+                **(info or {}),
+            },
         )
 
     @property
     def json(self):
-        return {
-            "error_type": self.type,
-            "error_message": self.message,
-            "error_info": self.info,
-        }
+        ret = {}
+        if self.code:
+            ret["code"] = self.code
+        if self.message:
+            ret["message"] = self.message
+        if self.location:
+            ret["location"] = self.location
+        if self.info:
+            ret["info"] = self.info
+        return ret
 
     @classmethod
     def from_json(cls, js):
         return cls(
-            type=js.get("error_type"),
-            message=js.get("error_message"),
-            info=js.get("error_info"),
+            code=js.get("code"),
+            message=js.get("message"),
+            location=js.get("location"),
+            info=js.get("info"),
         )
 
     def __str__(self):
-        formatted_info = "  " + (self.info or "").strip().replace("\n", "  ")
-        return f"{self.type}: {self.message}\n{formatted_info}"
+        formatted_info = json.dumps(self.info or {}, ensure_ascii=False, indent=4)
+        return f"{self.code}:{self.location if self.location else ''} {self.message}\n{formatted_info}"
 
     def __repr__(self):
         return str(self)
@@ -94,6 +123,8 @@ class AbstractDataStream(abc.ABC):
         success_callback=None,
         error_callback=None,
         progress_callback=None,
+        batch_size=None,
+        uow_class=None,
         **kwargs,
     ):
         """Constructor.
@@ -102,11 +133,13 @@ class AbstractDataStream(abc.ABC):
         :param transformers: an ordered list of transformers to apply (whatever a transformer is).
         """
         self._readers = readers
-        self._transformers = transformers
+        self._transformers = transformers or []
         self._writers = writers
         self._error_callback = error_callback or noop
         self._success_callback = success_callback or noop
         self._progress_callback = progress_callback or noop
+        self._batch_size = batch_size
+        self._uow_class = uow_class or UnitOfWork
 
     @abc.abstractmethod
     def process(self) -> DataStreamResult:
@@ -123,39 +156,60 @@ class DataStream(AbstractDataStream):
         the reader, apply the transformations and yield the result of
         writing it.
         """
-        _written, _filtered, _failed = 0, 0, 0
-        read_count = 0
+        self._written, self._filtered, self._failed = 0, 0, 0
+        nested = None
+        uow = None
+        try:
+            if self._uow_class and self._batch_size:
+                nested = db.session.begin_nested()
+                uow = self._uow_class(session=nested)
+            read_count = 0
+            for stream_entry in self.read():
+                read_count += 1
+                self._progress_callback(
+                    read=read_count, written=self._written, failed=self._failed
+                )
+                if stream_entry.errors:
+                    self._error_callback(stream_entry)
+                    self._failed += 1
+                    continue
+                transformed_entry = self.transform_single(stream_entry)
+                if transformed_entry.errors:
+                    self._error_callback(transformed_entry)
+                    self._failed += 1
+                    continue
+                if transformed_entry.filtered:
+                    self._filtered += 1
+                    continue
 
-        for stream_entry in self.read():
-            read_count += 1
-            self._progress_callback(read=read_count, written=_written, failed=_failed)
-            if stream_entry.errors:
-                self._error_callback(stream_entry)
-                _failed += 1
-                continue
+                written_entry = self.write(transformed_entry, uow=uow)
+                if written_entry.errors:
+                    self._error_callback(written_entry)
+                    self._failed += 1
+                else:
+                    self._success_callback(written_entry)
+                    self._written += 1
+                if self._batch_size and uow and (self._written % self._batch_size) == 0:
+                    uow.commit()
+                    # just to make sure we are not referencing committed nested if exception happens in the two lines
+                    # below
+                    nested = None
+                    nested = db.session.begin_nested()
+                    uow = self._uow_class(session=nested)
 
-            transformed_entry = self.transform_single(stream_entry)
-            if transformed_entry.errors:
-                self._error_callback(transformed_entry)
-                _failed += 1
-                continue
-            if transformed_entry.filtered:
-                _filtered += 1
-                continue
+            if uow:
+                uow.commit()
+                nested = None
 
-            written_entry = self.write(transformed_entry)
-            if written_entry.errors:
-                self._error_callback(written_entry)
-                _failed += 1
-            else:
-                self._success_callback(written_entry)
-                _written += 1
-
-        return DataStreamResult(
-            ok_count=_written,
-            failed_count=_failed,
-            skipped_count=_filtered,
-        )
+            return DataStreamResult(
+                ok_count=self._written,
+                failed_count=self._failed,
+                skipped_count=self._filtered,
+            )
+        except:
+            if nested:
+                nested.rollback()
+            raise
 
     def read(self):
         """Read the entries."""
@@ -181,11 +235,11 @@ class DataStream(AbstractDataStream):
 
         return stream_entry
 
-    def write(self, stream_entry, *_args, **_kwargs):
+    def write(self, stream_entry, *_args, **kwargs):
         """Apply the transformations to an stream_entry."""
         for writer in self._writers:
             try:
-                writer.write(stream_entry)
+                writer.write(stream_entry, **kwargs)
             except WriterError as err:
                 stream_entry.errors.append(StreamEntryError.from_exception(err))
             except Exception as err:

@@ -41,6 +41,8 @@ def load_fixtures(
     progress_callback=None,
     success_callback=None,
     error_callback=None,
+    batch_size=100,
+    uow_class=None,
 ) -> FixturesResult:
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
@@ -71,7 +73,9 @@ def load_fixtures(
             progress_callback,
             success_callback,
             error_callback,
+            batch_size=batch_size,
         )
+
     if system_fixtures:
         for r in reversed(
             sorted(
@@ -92,7 +96,10 @@ def load_fixtures(
                 progress_callback,
                 success_callback,
                 error_callback,
+                batch_size=batch_size,
+                uow_class=uow_class,
             )
+
     return result
 
 
@@ -105,6 +112,8 @@ def _load_fixtures_from_catalogue(
     progress_callback,
     success_callback,
     error_callback,
+    batch_size=None,
+    uow_class=None,
 ):
     for stream_name in catalogue:
         if stream_name in fixtures:
@@ -119,6 +128,8 @@ def _load_fixtures_from_catalogue(
             progress_callback=progress_callback,
             success_callback=success_callback,
             error_callback=error_callback,
+            batch_size=batch_size,
+            uow_class=uow_class,
         )
         result.add(stream_name, datastream.process())
 

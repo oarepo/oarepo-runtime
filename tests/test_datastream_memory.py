@@ -13,6 +13,7 @@ from oarepo_runtime.datastreams import (
     TransformerError,
     WriterError,
 )
+from oarepo_runtime.uow import BulkUnitOfWork
 
 
 class OOMTestReader(BaseReader):
@@ -75,6 +76,37 @@ def test_oom():
         writers=writers,
         transformers=transformers,
         progress_callback=progress,
+    )
+    result = datastream.process()
+    print(result)
+    print(
+        f"Memory increased {(max_size - baseline_size) / (entry_size * sys.getsizeof(1))} * "
+        f"stream entry size {entry_size}. Up to 10 times is considered ok."
+    )
+    assert (max_size - baseline_size) / (entry_size * sys.getsizeof(1)) < 10
+
+
+def test_batch_uow(app, db, search_clear):
+    entry_size = 10000
+    readers = [OOMTestReader(1000, entry_size)]
+    writers = [OOMTestWriter(error_rate=0.5)]
+
+    process = psutil.Process(os.getpid())
+    baseline_size = process.memory_info().rss
+    max_size = baseline_size
+
+    def progress(read, written, failed):
+        nonlocal max_size
+        actual_size = process.memory_info().rss
+        if actual_size > max_size:
+            max_size = actual_size
+
+    datastream: DataStream = DataStream(
+        readers=readers,
+        writers=writers,
+        progress_callback=progress,
+        uow_class=BulkUnitOfWork,
+        batch_size=100,
     )
     result = datastream.process()
     print(result)
