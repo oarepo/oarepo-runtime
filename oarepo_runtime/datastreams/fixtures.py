@@ -62,6 +62,20 @@ def load_fixtures(
     fixtures = set()
     result = FixturesResult()
 
+    if fixture_dir:
+        catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
+        _load_fixtures_from_catalogue(
+            catalogue,
+            fixtures,
+            include,
+            exclude,
+            result,
+            progress_callback,
+            success_callback,
+            error_callback,
+            batch_size=batch_size,
+        )
+
     if system_fixtures:
         for r in reversed(
             sorted(
@@ -85,20 +99,6 @@ def load_fixtures(
                 batch_size=batch_size,
                 uow_class=uow_class,
             )
-
-    if fixture_dir:
-        catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
-        _load_fixtures_from_catalogue(
-            catalogue,
-            fixtures,
-            include,
-            exclude,
-            result,
-            progress_callback,
-            success_callback,
-            error_callback,
-            batch_size=batch_size,
-        )
 
     return result
 
