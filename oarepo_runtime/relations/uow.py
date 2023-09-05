@@ -1,7 +1,5 @@
-from invenio_records_resources.services.uow import UnitOfWork
+from oarepo_runtime.uow import CachingUnitOfWork
 
+# moved to oarepo_runtime.uow, kept here for backward compatibility
 
-class CachingUnitOfWork(UnitOfWork):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cache = {}
+__all__ = ["CachingUnitOfWork"]

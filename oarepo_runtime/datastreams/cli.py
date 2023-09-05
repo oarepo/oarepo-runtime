@@ -11,6 +11,7 @@ from oarepo_runtime.datastreams.fixtures import (
     dump_fixtures,
     load_fixtures,
 )
+from oarepo_runtime.uow import BulkUnitOfWork
 
 
 @oarepo.group()
@@ -24,6 +25,18 @@ def fixtures():
 @click.option("--exclude", multiple=True)
 @click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
 @click.option("--show-error-entry/--hide-error-entry", is_flag=True)
+@click.option(
+    "--bulk/--no-bulk",
+    is_flag=True,
+    default=True,
+    help="Use bulk indexing (that is, delay indexing)",
+)
+@click.option(
+    "--bulk-size",
+    default=100,
+    help="Size for bulk indexing - this number of records "
+    "will be committed in a single transaction and indexed together",
+)
 @with_appcontext
 def load(
     fixture_dir=None,
@@ -31,6 +44,8 @@ def load(
     exclude=None,
     system_fixtures=None,
     show_error_entry=False,
+    bulk=True,
+    bulk_size=100,
 ):
     """Loads fixtures"""
     if show_error_entry:
@@ -51,6 +66,8 @@ def load(
             _make_list(exclude),
             system_fixtures=system_fixtures,
             error_callback=error_callback,
+            batch_size=bulk_size,
+            uow_class=BulkUnitOfWork if bulk else None,
         )
         _show_stats(results, "Load fixtures")
 
