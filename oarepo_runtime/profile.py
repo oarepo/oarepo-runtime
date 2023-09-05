@@ -1,9 +1,9 @@
 # profiling support
+import atexit
 import contextlib
 import functools
-import time
 import math
-import atexit
+import time
 from collections import Counter
 
 

@@ -1,15 +1,13 @@
-from invenio_indexer.api import bulk
 from flask import current_app
+from invenio_db import db
+from invenio_indexer.api import bulk
 from invenio_records_resources.services.uow import (
     RecordCommitOp,
     RecordDeleteOp,
+    UnitOfWork,
 )
 from opensearchpy.helpers import BulkIndexError, bulk
 from opensearchpy.helpers import expand_action as default_expand_action
-from invenio_db import db
-
-
-from invenio_records_resources.services.uow import UnitOfWork
 
 
 class CachingUnitOfWork(UnitOfWork):

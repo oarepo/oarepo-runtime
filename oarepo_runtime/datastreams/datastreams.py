@@ -4,16 +4,16 @@
 import abc
 import dataclasses
 import itertools
+import json
 import logging
 import traceback
 import typing
 from typing import Any, Dict, List
 
+from invenio_db import db
 from invenio_records_resources.services.uow import UnitOfWork
 
 from .errors import DataStreamError, JSONObject, TransformerError, WriterError
-import json
-from invenio_db import db
 
 log = logging.getLogger("datastreams")
 
