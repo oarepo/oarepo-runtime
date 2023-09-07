@@ -53,8 +53,9 @@ def load(
         def error_callback(entry: StreamEntry):
             pprint(entry.entry)
             for err in entry.errors:
-                print(err.type)
+                print(err.code)
                 print(err.message)
+                print(err.info)
 
     else:
         error_callback = None
