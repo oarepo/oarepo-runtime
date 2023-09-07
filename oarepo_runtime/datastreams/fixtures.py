@@ -6,6 +6,7 @@ from typing import Dict
 import pkg_resources
 import yaml
 from flask import current_app
+from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.datastreams import DataStream, DataStreamCatalogue, DataStreamResult
@@ -132,6 +133,7 @@ def _load_fixtures_from_catalogue(
             uow_class=uow_class,
         )
         result.add(stream_name, datastream.process())
+    db.session.commit()
 
 
 def dump_fixtures(
