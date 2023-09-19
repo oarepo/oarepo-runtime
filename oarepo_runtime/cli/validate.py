@@ -22,6 +22,12 @@ class CheckOk(Exception):
     pass
 
 
+def dump_data(d):
+    io = StringIO()
+    yaml.safe_dump(d, io, allow_unicode=True)
+    return io.getvalue()
+
+
 @oarepo.command(
     help="Validate a record. Takes one or two parameters - service name as "
     "the first one, file name or stdin with record data as the second"
@@ -51,12 +57,22 @@ def validate(service_name, record_file, verbose):
     if file_content.startswith("{"):
         data = json.loads(file_content)
     else:
-        data = yaml.safe_load(StringIO(file_content))
+        data = list(yaml.safe_load_all(StringIO(file_content)))
 
     if not isinstance(data, list):
         data = [data]
     for idx, d in enumerate(data):
-        loaded = schema().load(d)
+        try:
+            loaded = schema().load(d)
+        except Exception as e:
+            click.secho(
+                f"Marshmallow validation of record idx {idx + 1} failed",
+                fg="red",
+            )
+            click.secho(dump_data(d))
+            click.secho(e)
+            continue
+
         click.secho(
             f"Marshmallow validation of record idx {idx+1} has been successful",
             fg="green",
@@ -74,6 +90,14 @@ def validate(service_name, record_file, verbose):
             click.secho(
                 f"Pre-commit hook of record idx {idx+1} has been successful", fg="green"
             )
+        except Exception as e:
+            click.secho(
+                f"Pre-commit validation of record idx {idx + 1} failed",
+                fg="red",
+            )
+            click.secho(dump_data(d))
+            click.secho(e)
+            continue
 
         if verbose:
             yaml.safe_dump(loaded, sys.stdout, allow_unicode=True)
