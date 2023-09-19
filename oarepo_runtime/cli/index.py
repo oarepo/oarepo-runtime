@@ -1,3 +1,4 @@
+import itertools
 import sys
 
 import click
@@ -85,6 +86,18 @@ def record_or_service(model):
     return record
 
 
+def model_records_generator(model_class):
+    try:
+        for x in db.session.query(model_class.model_cls.id).filter(
+            model_class.model_cls.is_deleted.is_(False)
+        ):
+            rec_id = x[0]
+            yield model_class.get_record(rec_id)
+    except Exception as e:
+        if "Column expression or FROM clause expected" not in str(e):
+            raise
+
+
 @index.command()
 @with_appcontext
 @click.argument("model", required=False)
@@ -99,30 +112,38 @@ def reindex(model):
         service = current_service_registry.get(service_id)
         record_class = getattr(service.config, "record_cls", None)
 
-        if not record_class or not hasattr(service, "indexer"):
-            continue
+        id_generators = []
 
-        try:
-            id_generator = (
-                x[0]
-                for x in db.session.query(record_class.model_cls.id).filter(
-                    record_class.model_cls.is_deleted.is_(False)
+        if record_class and hasattr(service, "indexer"):
+            try:
+                id_generators.append(model_records_generator(record_class))
+            except Exception as e:
+                click.secho(
+                    f"Could not get record ids for {service_id}, exception {e}",
+                    file=sys.stderr,
                 )
-            )
-        except Exception as e:
-            click.secho(
-                f"Could not get record ids for {service_id}, exception {e}",
-                file=sys.stderr,
-            )
-            continue
+
+        draft_class = getattr(service.config, "draft_cls", None)
+
+        if draft_class and hasattr(service, "indexer"):
+            try:
+                id_generators.append(model_records_generator(draft_class))
+            except Exception as e:
+                click.secho(
+                    f"Could not get draft record ids for {service_id}, exception {e}",
+                    file=sys.stderr,
+                )
 
         click.secho(f"Indexing {service_id}", file=sys.stderr)
-        ids = list(id_generator)
-        for rec_id in ids:
-            record = record_class.get_record(rec_id)
-            service.indexer.index(record)
-        service.indexer.refresh()
+        count = 0
+        for gen in id_generators:
+            for record in gen:
+                service.indexer.index(record)
+                count += 1
+        if count:
+            service.indexer.refresh()
+
         click.secho(
-            f"Indexing {service_id} finished, indexed {len(ids)} records",
+            f"Indexing {service_id} finished, indexed {count} records",
             file=sys.stderr,
         )
