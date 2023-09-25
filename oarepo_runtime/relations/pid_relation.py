@@ -34,7 +34,8 @@ class PIDRelationResult(RelationResult):
             return obj
         except Exception as e:
             raise InvalidRelationError(
-                f"Repository object {cache_key} has not been found or there was an exception accessing it. Referenced from {self.field.key}.",
+                f"Repository object {cache_key} has not been found or there was an exception accessing it. "
+                f"Referenced from {self.field.key}.",
                 related_id=id_,
                 location=self.field.key,
             ) from e
