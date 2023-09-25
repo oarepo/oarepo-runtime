@@ -8,6 +8,7 @@ from invenio_records.systemfields.relations import (
     InvalidRelationValue,
 )
 
+from .errors import MultipleInvalidRelationErrors
 from .lookup import LookupResult, lookup_key
 from .mapping import RelationsMapping
 
@@ -18,26 +19,34 @@ class RelationResult:
         self.record = record
         self.cache = cache
 
-    def validate(self):
+    def validate(self, raise_first_exception=True):
         found: List[LookupResult] = lookup_key(self.record, self.field.key)
+        exceptions = []
         for relation in found:
-            if not isinstance(relation.value, dict):
-                raise InvalidRelationValue(
-                    f"Value at path {relation.path} must be dict, found {relation.value}"
-                )
+            try:
+                if not isinstance(relation.value, dict):
+                    raise InvalidRelationValue(
+                        f"Value at path {relation.path} must be dict, found {relation.value}"
+                    )
 
-            relation_id = self._lookup_id(relation)
+                relation_id = self._lookup_id(relation)
 
-            resolved_object = self.resolve(relation_id)
-            if not resolved_object:
-                raise InvalidRelationValue(f"Invalid value {relation_id}.")
+                resolved_object = self.resolve(relation_id)
+                if not resolved_object:
+                    raise InvalidRelationValue(f"Invalid value {relation_id}.")
 
-            if self.field.value_check:
-                transformed_data = {}
-                self._get_dereferenced_value(
-                    transformed_data, resolved_object, relation
-                )
-                self._value_check(relation.value, transformed_data)
+                if self.field.value_check:
+                    transformed_data = {}
+                    self._get_dereferenced_value(
+                        transformed_data, resolved_object, relation
+                    )
+                    self._value_check(relation.value, transformed_data)
+            except Exception as e:
+                if raise_first_exception:
+                    raise
+                exceptions.append((relation, e))
+        if exceptions:
+            raise MultipleInvalidRelationErrors(exceptions)
 
     def clean(self):
         """Clean the dereferenced attributes inside the record."""
