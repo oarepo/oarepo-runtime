@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 BUILDER_VENV=.venv-builder
@@ -27,7 +28,7 @@ python3 -m venv $VENV
 . $VENV/bin/activate
 pip install -U setuptools pip wheel
 
-pip install -e '.[tests,oarepo-${OAREPO_VERSION:-11}]'
+pip install -e ".[tests,oarepo-${OAREPO_VERSION:-11}]"
 pip install -e records2
 # pip install -e records
 
