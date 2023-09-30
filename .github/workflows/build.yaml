@@ -59,10 +59,16 @@ jobs:
 
       - name: Freeze packages
         run: |
-          pip freeze > dist/requirements.txt
+          pip freeze > requirements.txt
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist
           path: dist
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements.txt
+          path: requirements.txt
