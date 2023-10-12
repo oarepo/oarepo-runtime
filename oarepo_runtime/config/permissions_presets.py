@@ -71,6 +71,9 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_draft_read_files = [SystemProcess()]
     can_draft_update_files = [SystemProcess()]
 
+    can_add_community = [SystemProcess()]
+    can_remove_community = [SystemProcess()]
+
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
@@ -104,6 +107,9 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_draft_read_files = [SystemProcess(), AnyUser()]
     can_draft_update_files = [SystemProcess(), AnyUser()]
 
+    can_add_community = [SystemProcess(), AnyUser()]
+    can_remove_community = [SystemProcess(), AnyUser()]
+
 
 class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
@@ -136,3 +142,6 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_read_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_update_files = [SystemProcess(), AuthenticatedUser()]
+
+    can_add_community = [SystemProcess(), AuthenticatedUser()]
+    can_remove_community = [SystemProcess(), AuthenticatedUser()]
