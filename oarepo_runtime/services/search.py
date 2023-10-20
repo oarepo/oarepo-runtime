@@ -11,6 +11,8 @@ from invenio_records_resources.services.records.queryparser import SuggestQueryP
 from sqlalchemy.util import classproperty
 from flask import current_app
 
+from oarepo_runtime.cf.icu import ICUSortCF
+
 try:
     from invenio_i18n import get_locale
 except ImportError:
@@ -69,10 +71,12 @@ class I18nSearchOptions(SearchOptions):
         if not locale:
             return ret
         language = locale.language
+        cf: ICUSortCF
         for cf in current_app.config[clz.SORT_CUSTOM_FIELD_NAME]:
-            if cf.name == language:
-                ret["title"]["fields"] = [f"sort.{cf.name}"]
-                break
+            if cf.language == language:
+                if cf.sort_option not in ret:
+                    ret[cf.sort_option] = {"title": _(cf.sort_option.capitalize())}
+                ret[cf.sort_option]["fields"] = [f"sort.{cf.name}"]
         return ret
 
     @classproperty
@@ -83,12 +87,12 @@ class I18nSearchOptions(SearchOptions):
         if clz.SUGGEST_CUSTOM_FIELD_NAME and locale:
             language = locale.language
             for cf in current_app.config[clz.SUGGEST_CUSTOM_FIELD_NAME]:
-                if cf.name == language:
+                if cf.language == language:
                     search_as_you_type_fields.append(
-                        SuggestField(f"suggest.{language}.original", 2)
+                        SuggestField(f"suggest.{cf.name}.original", 2)
                     )
                     search_as_you_type_fields.append(
-                        SuggestField(f"suggest.{language}.no_accent", 1)
+                        SuggestField(f"suggest.{cf.name}.no_accent", 1)
                     )
         if not search_as_you_type_fields:
             search_as_you_type_fields = clz.SUGGEST_SEARCH_AS_YOU_TYPE_FIELDS  # noqa
