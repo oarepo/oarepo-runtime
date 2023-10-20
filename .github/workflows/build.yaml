@@ -41,6 +41,8 @@ jobs:
 
       - name: Runs Opensearch
         uses: ankane/setup-opensearch@v1
+        with:
+          plugins: analysis-icu
 
       - name: Install dependencies
         run: |

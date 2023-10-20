@@ -40,3 +40,53 @@ class ICUSortCF(BaseCF):
 
     def load(self, record, cf_key="custom_fields"):
         record.pop(cf_key, None)
+
+
+class ICUSuggestCF(BaseCF):
+    def __init__(self, name, language, source_field, field_args=None):
+        super().__init__(name=name, field_args=field_args)
+        self.language = language
+        self.source_field = source_field
+
+    @property
+    def mapping(self):
+        ret = {
+            "type": "text",
+            "fields": {
+                "original": {
+                    "type": "search_as_you_type",
+                },
+                "no_accent": {
+                    "type": "search_as_you_type",
+                    "analyzer": "accent_removal_analyzer",
+                },
+            },
+        }
+        return ret
+
+    @property
+    def mapping_settings(self):
+        return {
+            "analysis": {
+                "analyzer": {
+                    "accent_removal_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "standard",
+                        "filter": ["lowercase", "asciifolding"],
+                    }
+                }
+            }
+        }
+
+    @property
+    def field(self):
+        return None
+
+    def dump(self, record, cf_key="custom_fields"):
+        ret = []
+        for l in lookup_key(record, self.source_field):
+            ret.append(l.value)
+        record.setdefault(cf_key, {})[self.name] = ret
+
+    def load(self, record, cf_key="custom_fields"):
+        record.pop(cf_key, None)
