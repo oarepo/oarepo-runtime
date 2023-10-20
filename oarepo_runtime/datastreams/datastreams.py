@@ -27,7 +27,7 @@ class StreamEntryError:
 
     @classmethod
     def from_exception(
-        cls, exc: Exception, limit=5, message=None, location=None, info=None, code=None
+        cls, exc: Exception, limit=30, message=None, location=None, info=None, code=None
     ):
         if isinstance(exc, DataStreamError):
             return cls(

@@ -18,6 +18,7 @@ from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
 
 from oarepo_runtime.cf import CustomFieldsMixin
+import deepmerge
 
 
 class Mapping(InvenioMapping):
@@ -35,6 +36,20 @@ class Mapping(InvenioMapping):
                 properties[field.name] = field.mapping
 
         return properties
+
+    @classmethod
+    def settings_for_fields(
+        cls, given_fields_names, available_fields, field_name="custom_fields"
+    ):
+        """Prepare mapping settings for each field."""
+
+        settings = {}
+        for field in cls._get_fields(given_fields_names, available_fields):
+            if not hasattr(field, "mapping_settings"):
+                continue
+            settings = deepmerge.always_merger.merge(settings, field.mapping_settings)
+
+        return settings
 
     @classmethod
     def _get_fields(cls, given_fields_names, available_fields):
@@ -77,6 +92,9 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
         properties = Mapping.properties_for_fields(
             field_names, available_fields, field_name=field_name
         )
+        settings = Mapping.settings_for_fields(
+            field_names, available_fields, field_name=field_name
+        )
         if not properties:
             continue
 
@@ -88,7 +106,12 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
                 ),
                 using=current_search_client,
             )
-            record_index.put_mapping(body={"properties": properties})
+            if settings:
+                record_index.close()
+                record_index.put_settings(body=settings)
+                record_index.open()
+            if properties:
+                record_index.put_mapping(body={"properties": properties})
 
             if hasattr(config, "draft_cls"):
                 draft_index = dsl.Index(

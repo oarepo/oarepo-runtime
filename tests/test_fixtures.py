@@ -17,7 +17,10 @@ def read_yaml(fp):
 
 
 def test_pkg_fixtures(db, app, identity, search_clear, location):
-    ret = load_fixtures()
+    def error_callback(*args, **kwargs):
+        print(args, kwargs)
+
+    ret = load_fixtures(error_callback=error_callback)
     assert ret.ok_count == 2
     assert ret.failed_count == 0
     assert ret.skipped_count == 0
