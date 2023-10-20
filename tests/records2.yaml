@@ -13,9 +13,6 @@ record:
       - import: invenio_records_resources.records.api.Record
         alias: InvenioRecord
       - import: invenio_records_resources.records.dumpers.CustomFieldsDumperExt
-    dumper-extensions:
-      - CustomFieldsDumperExt("RUNTIME_TEST_SORT_CF", "sort")
-      - CustomFieldsDumperExt("RUNTIME_TEST_SUGGEST_CF", "suggest")
     extra-code: |-2
           # extra custom fields for testing ICU sorting and suggesting
           sort = CustomFields(
@@ -35,9 +32,15 @@ record:
       - I18nSearchOptions
     imports:
       - import: oarepo_runtime.services.search.I18nSearchOptions
+    sort-options-field: extra_sort_options
     extra-code: |-2
           SORT_CUSTOM_FIELD_NAME = "RUNTIME_TEST_SORT_CF"
           SUGGEST_CUSTOM_FIELD_NAME = "RUNTIME_TEST_SUGGEST_CF"
+
+  record-dumper:
+    extensions:
+      - CustomFieldsDumperExt("RUNTIME_TEST_SORT_CF", "sort")
+      - CustomFieldsDumperExt("RUNTIME_TEST_SUGGEST_CF", "suggest")
 
   properties:
     metadata:
