@@ -5,20 +5,30 @@ from oarepo_runtime.relations.lookup import lookup_key
 
 class ICUSortCF(BaseCF):
     def __init__(
-        self, name, language, source_field, country=None, variant=None, field_args=None
+        self,
+        language,
+        opensearch_language,
+        source_field,
+        cf_name=None,
+        country=None,
+        variant=None,
+        sort_option=None,
+        field_args=None,
     ):
-        super().__init__(name=name, field_args=field_args)
-        self.language = language
+        super().__init__(name=cf_name or language, field_args=field_args)
+        self.opensearch_language = opensearch_language
         self.country = country
         self.variant = variant
         self.source_field = source_field
+        self.sort_option = sort_option or source_field.rsplit(".", maxsplit=1)[-1]
+        self.language = language
 
     @property
     def mapping(self):
         ret = {
             "type": "icu_collation_keyword",
             "index": False,
-            "language": self.language,
+            "language": self.opensearch_language,
         }
         if self.country:
             ret["country"] = self.country
@@ -43,10 +53,13 @@ class ICUSortCF(BaseCF):
 
 
 class ICUSuggestCF(BaseCF):
-    def __init__(self, name, language, source_field, field_args=None):
-        super().__init__(name=name, field_args=field_args)
-        self.language = language
+    def __init__(
+        self, language, opensearch_language, source_field, cf_name=None, field_args=None
+    ):
+        super().__init__(name=cf_name or language, field_args=field_args)
+        self.opensearch_language = opensearch_language
         self.source_field = source_field
+        self.language = language
 
     @property
     def mapping(self):

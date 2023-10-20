@@ -81,9 +81,21 @@ def app_config(app_config):
         "R": "Remote",
     }
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
-    app_config["RUNTIME_TEST_SORT_CF"] = [ICUSortCF("cs", "czech", "metadata.title")]
+    app_config["RUNTIME_TEST_SORT_CF"] = [
+        ICUSortCF(
+            language="cs",
+            opensearch_language="czech",
+            source_field="metadata.title",
+            cf_name="blah",
+        )
+    ]
     app_config["RUNTIME_TEST_SUGGEST_CF"] = [
-        ICUSuggestCF("cs", "czech", "metadata.title")
+        ICUSuggestCF(
+            language="cs",
+            opensearch_language="czech",
+            source_field="metadata.title",
+            cf_name="blah",
+        )
     ]
     return app_config
 
