@@ -91,7 +91,6 @@ to `oarepo-model-builder` (or put this stuff to your custom superclasses).
       - import: oarepo_runtime.services.icu.I18nSearchOptions
       - import: oarepo_runtime.services.icu.ICUSuggestParser
       - import: oarepo_runtime.services.icu.ICUSortOptions
-      - import: records2.records.api.Records2Record
     sort-options-field: extra_sort_options
     extra-code: |-2
           suggest_parser_cls = ICUSuggestParser("records2")
