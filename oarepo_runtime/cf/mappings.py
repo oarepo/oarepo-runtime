@@ -2,14 +2,10 @@ import inspect
 from typing import Iterable, List
 
 import click
-from flask import current_app
+import deepmerge
 from invenio_records_resources.proxies import current_service_registry
-from invenio_records_resources.services.custom_fields import BaseCF
 from invenio_records_resources.services.custom_fields.mappings import (
     Mapping as InvenioMapping,
-)
-from invenio_records_resources.services.custom_fields.validate import (
-    validate_custom_fields,
 )
 from invenio_records_resources.services.records.config import RecordServiceConfig
 from invenio_records_resources.services.records.service import RecordService
@@ -17,8 +13,7 @@ from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
 
-from oarepo_runtime.cf import CustomFieldsMixin
-import deepmerge
+from oarepo_runtime.records import MappingSystemFieldMixin
 
 
 class Mapping(InvenioMapping):
@@ -81,22 +76,10 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
     if not record_class:
         return
 
-    # try to get custom fields from the record class
-    # validate them
-    for field_name, available_fields in get_custom_fields(record_class):
-        validate_custom_fields(
-            given_fields=field_names, available_fields=available_fields, namespaces=[]
-        )
-
+    for fld in get_mapping_fields(record_class):
         # get mapping
-        properties = Mapping.properties_for_fields(
-            field_names, available_fields, field_name=field_name
-        )
-        settings = Mapping.settings_for_fields(
-            field_names, available_fields, field_name=field_name
-        )
-        if not properties:
-            continue
+        mapping = fld.mapping
+        settings = fld.mapping_settings
 
         # upload mapping
         try:
@@ -106,12 +89,7 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
                 ),
                 using=current_search_client,
             )
-            if settings:
-                record_index.close()
-                record_index.put_settings(body=settings)
-                record_index.open()
-            if properties:
-                record_index.put_mapping(body={"properties": properties})
+            update_index(record_index, settings, mapping)
 
             if hasattr(config, "draft_cls"):
                 draft_index = dsl.Index(
@@ -120,15 +98,24 @@ def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None)
                     ),
                     using=current_search_client,
                 )
-                draft_index.put_mapping(body={"properties": properties})
+                update_index(draft_index, settings, mapping)
 
         except search.RequestError as e:
             click.secho("An error occurred while creating custom fields.", fg="red")
             click.secho(e.info["error"]["reason"], fg="red")
 
 
-def get_custom_fields(record_class) -> Iterable[List[BaseCF]]:
+def update_index(record_index, settings, mapping):
+    if settings:
+        record_index.close()
+        record_index.put_settings(body=settings)
+        record_index.open()
+    if mapping:
+        record_index.put_mapping(body={"properties": mapping})
+
+
+def get_mapping_fields(record_class) -> Iterable[MappingSystemFieldMixin]:
     for cfg_name, cfg_value in inspect.getmembers(
-        record_class, lambda x: isinstance(x, CustomFieldsMixin)
+        record_class, lambda x: isinstance(x, MappingSystemFieldMixin)
     ):
-        yield cfg_value._key, current_app.config[cfg_value.config_key]
+        yield cfg_value

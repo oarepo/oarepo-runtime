@@ -12,5 +12,7 @@ class MultipleInvalidRelationErrors(Exception):
     """
 
     def __init__(self, errors):
-        super().__init__("; ".join([f"{e[0]}: {type(e[1]).__name__}({e[1]})" for e in errors]))
+        super().__init__(
+            "; ".join([f"{e[0]}: {type(e[1]).__name__}({e[1]})" for e in errors])
+        )
         self.errors = errors

@@ -9,38 +9,31 @@ record:
       file_title: keyword
   record:
     imports:
-      - import: oarepo_runtime.cf.CustomFields
       - import: invenio_records_resources.records.api.Record
         alias: InvenioRecord
-      - import: invenio_records_resources.records.dumpers.CustomFieldsDumperExt
+      - import: oarepo_runtime.records.SystemFieldDumperExt
+      - import: oarepo_runtime.records.icu.ICUSortField
+      - import: oarepo_runtime.records.icu.ICUSuggestField
     extra-code: |-2
           # extra custom fields for testing ICU sorting and suggesting
-          sort = CustomFields(
-              "RUNTIME_TEST_SORT_CF",
-              "sort",
-              clear_none=True,
-              create_if_missing=True,
-          )
-          suggest = CustomFields(
-              "RUNTIME_TEST_SUGGEST_CF",
-              "suggest",
-              clear_none=True,
-              create_if_missing=True,
-          )
+          sort = ICUSortField(source_field="metadata.title")
+          suggest = ICUSuggestField(source_field="metadata.title")
   search-options:
     base-classes:
       - I18nSearchOptions
     imports:
-      - import: oarepo_runtime.services.search.I18nSearchOptions
+      - import: oarepo_runtime.services.icu.I18nSearchOptions
+      - import: oarepo_runtime.services.icu.ICUSuggestParser
+      - import: oarepo_runtime.services.icu.ICUSortOptions
+      - import: records2.records.api.Records2Record
     sort-options-field: extra_sort_options
     extra-code: |-2
-          SORT_CUSTOM_FIELD_NAME = "RUNTIME_TEST_SORT_CF"
-          SUGGEST_CUSTOM_FIELD_NAME = "RUNTIME_TEST_SUGGEST_CF"
+          suggest_parser_cls = ICUSuggestParser("records2")
+          sort_options = ICUSortOptions("records2")
 
   record-dumper:
     extensions:
-      - CustomFieldsDumperExt("RUNTIME_TEST_SORT_CF", "sort")
-      - CustomFieldsDumperExt("RUNTIME_TEST_SUGGEST_CF", "suggest")
+      - SystemFieldDumperExt()
 
   properties:
     metadata:

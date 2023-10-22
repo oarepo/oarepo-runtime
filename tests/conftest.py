@@ -19,7 +19,6 @@ from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
 
-from oarepo_runtime.cf.icu import ICUSortCF, ICUSuggestCF
 from oarepo_runtime.cf.mappings import prepare_cf_indices
 from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.transformers import BaseTransformer
@@ -81,22 +80,6 @@ def app_config(app_config):
         "R": "Remote",
     }
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
-    app_config["RUNTIME_TEST_SORT_CF"] = [
-        ICUSortCF(
-            language="cs",
-            opensearch_language="czech",
-            source_field="metadata.title",
-            cf_name="blah",
-        )
-    ]
-    app_config["RUNTIME_TEST_SUGGEST_CF"] = [
-        ICUSuggestCF(
-            language="cs",
-            opensearch_language="czech",
-            source_field="metadata.title",
-            cf_name="blah",
-        )
-    ]
     return app_config
 
 
