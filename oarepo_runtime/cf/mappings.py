@@ -64,14 +64,14 @@ class Mapping(InvenioMapping):
 
 # pieces taken from https://github.com/inveniosoftware/invenio-rdm-records/blob/master/invenio_rdm_records/cli.py
 # as cf initialization is not supported directly in plain invenio
-def prepare_cf_indices(field_names: List[str] = None):
+def prepare_cf_indices():
     service: RecordService
     for service in current_service_registry._services.values():
         config: RecordServiceConfig = service.config
-        prepare_cf_index(config, field_names)
+        prepare_cf_index(config)
 
 
-def prepare_cf_index(config: RecordServiceConfig, field_names: List[str] = None):
+def prepare_cf_index(config: RecordServiceConfig):
     record_class = getattr(config, "record_cls", None)
     if not record_class:
         return
