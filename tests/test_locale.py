@@ -1,4 +1,5 @@
 import marshmallow as ma
+from flask_babelex import get_locale
 from invenio_i18n.ext import current_i18n
 
 from oarepo_runtime.ui.marshmallow import (
@@ -23,14 +24,18 @@ def test_localized_date(app):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         assert current_i18n.language == "en"
         input_data = {"dt": "2020-01-31", "tm": "12:21", "dtm": "2020-01-31T12:21"}
-        assert replace_ws(TestSchema().dump(input_data)) == {
+        assert replace_ws(
+            TestSchema(context={"locale": get_locale()}).dump(input_data)
+        ) == {
             "dt": "Jan 31, 2020",
             "tm": "12:21:00 PM",
             "dtm": "Jan 31, 2020, 12:21:00 PM",
         }
     with app.test_request_context(headers=[("Accept-Language", "cs")]):
         assert current_i18n.language == "cs"
-        assert replace_ws(TestSchema().dump(input_data)) == {
+        assert replace_ws(
+            TestSchema(context={"locale": get_locale()}).dump(input_data)
+        ) == {
             "dt": "31. 1. 2020",
             "dtm": "31. 1. 2020 12:21:00",
             "tm": "12:21:00",
