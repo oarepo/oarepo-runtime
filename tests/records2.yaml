@@ -24,7 +24,7 @@ record:
     imports:
       - import: oarepo_runtime.services.search.I18nSearchOptions
       - import: oarepo_runtime.services.search.ICUSuggestParser
-      - import: oarepo_runtime.services.isearchcu.ICUSortOptions
+      - import: oarepo_runtime.services.search.ICUSortOptions
       - import: records2.records.api.Records2Record
     sort-options-field: extra_sort_options
     extra-code: |-2
