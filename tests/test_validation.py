@@ -31,4 +31,5 @@ def test_edtf_validation():
     validator("2000-02-15")
     validator("2000-02-15T12:20:15")
     validator("2004-01-01T10:10:10+05:00")
+    validator("2005-02/2020-07-25")
     validator("1979-08-28/1979-09-25")

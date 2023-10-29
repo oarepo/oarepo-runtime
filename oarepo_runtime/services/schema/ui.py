@@ -47,7 +47,7 @@ class FormatTimeString(FormatTime):
     def parse(self, value, as_time=False, as_date=False, as_datetime=False):
         if value and isinstance(value, str) and as_time == True:
             match = re.match(
-                r"^(\d|0\d|1[0-2]):(\d|[0-5]\d|60)(:(\d|[0-5]\d|60))?$", value
+                r"^(\d|0\d|1\d|2[0-3]):(\d|[0-5]\d|60)(:(\d|[0-5]\d|60))?$", value
             )
             if match:
                 value = datetime.time(
