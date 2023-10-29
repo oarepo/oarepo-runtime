@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.tasks import AsyncDataStream
 

@@ -3,7 +3,6 @@ import random
 import sys
 
 import psutil
-import pytest
 
 from oarepo_runtime.datastreams import (
     BaseReader,

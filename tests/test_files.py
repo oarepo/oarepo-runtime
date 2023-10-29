@@ -2,8 +2,6 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 
-import pytest
-
 from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
 from oarepo_runtime.datastreams.utils import get_file_service_for_record_class
 from records2.proxies import current_service
