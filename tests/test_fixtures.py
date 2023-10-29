@@ -1,7 +1,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
 
 from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures

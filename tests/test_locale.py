@@ -1,5 +1,4 @@
 import marshmallow as ma
-import pytest
 from flask_babelex import get_locale
 from invenio_i18n.ext import current_i18n
 

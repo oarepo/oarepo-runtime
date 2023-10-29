@@ -1,4 +1,4 @@
-from .icu import ICUField, ICUSuggestField, ICUSortField
+from .icu import ICUField, ICUSortField, ICUSuggestField
 from .mapping import MappingSystemFieldMixin, SystemFieldDumperExt
 
 __all__ = (

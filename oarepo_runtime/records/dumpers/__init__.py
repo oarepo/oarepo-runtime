@@ -1,6 +1,5 @@
-import inspect
 
-from invenio_records.dumpers import SearchDumperExt, SearchDumper as InvenioSearchDumper
+from invenio_records.dumpers import SearchDumper as InvenioSearchDumper
 
 
 class SearchDumper(InvenioSearchDumper):
