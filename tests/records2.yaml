@@ -11,9 +11,9 @@ record:
     imports:
       - import: invenio_records_resources.records.api.Record
         alias: InvenioRecord
-      - import: oarepo_runtime.records.SystemFieldDumperExt
-      - import: oarepo_runtime.records.icu.ICUSortField
-      - import: oarepo_runtime.records.icu.ICUSuggestField
+      - import: oarepo_runtime.records.systemfields.SystemFieldDumperExt
+      - import: oarepo_runtime.records.systemfields.ICUSortField
+      - import: oarepo_runtime.records.systemfields.ICUSuggestField
     extra-code: |-2
           # extra custom fields for testing ICU sorting and suggesting
           sort = ICUSortField(source_field="metadata.title")
@@ -22,9 +22,9 @@ record:
     base-classes:
       - I18nSearchOptions
     imports:
-      - import: oarepo_runtime.services.icu.I18nSearchOptions
-      - import: oarepo_runtime.services.icu.ICUSuggestParser
-      - import: oarepo_runtime.services.icu.ICUSortOptions
+      - import: oarepo_runtime.services.search.I18nSearchOptions
+      - import: oarepo_runtime.services.search.ICUSuggestParser
+      - import: oarepo_runtime.services.isearchcu.ICUSortOptions
       - import: records2.records.api.Records2Record
     sort-options-field: extra_sort_options
     extra-code: |-2
