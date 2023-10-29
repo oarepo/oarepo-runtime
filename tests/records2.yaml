@@ -8,32 +8,19 @@ record:
     properties:
       file_title: keyword
   record:
-    imports:
-      - import: invenio_records_resources.records.api.Record
-        alias: InvenioRecord
-      - import: oarepo_runtime.records.systemfields.SystemFieldDumperExt
-      - import: oarepo_runtime.records.systemfields.ICUSortField
-      - import: oarepo_runtime.records.systemfields.ICUSuggestField
     extra-code: |-2
           # extra custom fields for testing ICU sorting and suggesting
-          sort = ICUSortField(source_field="metadata.title")
-          suggest = ICUSuggestField(source_field="metadata.title")
+          sort = {{oarepo_runtime.records.systemfields.ICUSortField}}(source_field="metadata.title")
+          suggest = {{oarepo_runtime.records.systemfields.ICUSuggestField}}(source_field="metadata.title")
   search-options:
-    base-classes:
-      - I18nSearchOptions
-    imports:
-      - import: oarepo_runtime.services.search.I18nSearchOptions
-      - import: oarepo_runtime.services.search.ICUSuggestParser
-      - import: oarepo_runtime.services.search.ICUSortOptions
-      - import: records2.records.api.Records2Record
     sort-options-field: extra_sort_options
     extra-code: |-2
-          suggest_parser_cls = ICUSuggestParser("records2")
-          sort_options = ICUSortOptions("records2")
+          suggest_parser_cls = {{oarepo_runtime.services.search.ICUSuggestParser}}("records2")
+          sort_options = {{oarepo_runtime.services.search.ICUSortOptions}}("records2")
 
   record-dumper:
     extensions:
-      - SystemFieldDumperExt()
+      - "{{oarepo_runtime.records.systemfields.SystemFieldDumperExt}}()"
 
   properties:
     metadata:
