@@ -13,7 +13,7 @@ from invenio_search import current_search_client
 from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
 
-from oarepo_runtime.records import MappingSystemFieldMixin
+from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 
 
 class Mapping(InvenioMapping):

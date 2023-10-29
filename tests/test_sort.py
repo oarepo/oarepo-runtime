@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from oarepo_runtime.datastreams.fixtures import load_fixtures
 from records2.proxies import current_service
 from records2.records.api import Records2Record

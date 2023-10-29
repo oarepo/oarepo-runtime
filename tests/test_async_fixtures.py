@@ -1,7 +1,9 @@
 from pathlib import Path
 
+import pytest
+
 from oarepo_runtime.datastreams.datastreams import StreamEntry
-from oarepo_runtime.tasks.datastreams import AsyncDataStream
+from oarepo_runtime.datastreams.tasks import AsyncDataStream
 
 
 def test_async_fixtures(celery_app, db, app, identity, search_clear, location):
