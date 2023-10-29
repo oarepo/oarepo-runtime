@@ -1,7 +1,5 @@
 from functools import lru_cache
 
-from flask import current_app
-from flask_babelex import get_locale
 from marshmallow import Schema, fields
 
 
@@ -40,13 +38,9 @@ def get_i18n_localized_ui_schema(lang_field, value_field):
         def _serialize(self, value, attr=None, obj=None, **kwargs):
             if not value:
                 return None
-            locale = get_locale().language
+            language = self.context["locale"].language
             for v in value:
-                if locale == v[lang_field]:
-                    return v[value_field]
-            locale = current_app.config["BABEL_DEFAULT_LOCALE"]
-            for v in value:
-                if locale == v[lang_field]:
+                if language == v[lang_field]:
                     return v[value_field]
             return next(iter(value))[value_field]
 

@@ -1,5 +1,5 @@
 import inspect
-from typing import Iterable, List
+from typing import Iterable
 
 import click
 import deepmerge

@@ -1,12 +1,11 @@
 import datetime
 import re
-from functools import partial
 
 import marshmallow as ma
 from babel.dates import format_date
 from babel_edtf import format_edtf
 from flask import current_app
-from flask_babelex import get_locale, gettext
+from flask_babelex import gettext
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
@@ -26,7 +25,10 @@ def current_default_locale():
 
 
 # localized date field
-LocalizedDate = partial(FormatDate, locale=get_locale)
+class LocalizedDate(FormatDate):
+    @property
+    def locale(self):
+        return self.context["locale"]
 
 
 class FormatTimeString(FormatTime):
@@ -55,17 +57,28 @@ class MultilayerFormatEDTF(BabelFormatField):
             return format_edtf(value, format=self._format, locale=self.locale)
 
 
-# localized edtf
-LocalizedEDTF = partial(MultilayerFormatEDTF, locale=get_locale)
+class LocalizedEDTF(MultilayerFormatEDTF):
+    @property
+    def locale(self):
+        return self.context["locale"]
 
-# localized time field
-LocalizedTime = partial(FormatTimeString, locale=get_locale)
 
-# localized datetime field
-LocalizedDateTime = partial(FormatDatetime, locale=get_locale)
+class LocalizedTime(FormatTimeString):
+    @property
+    def locale(self):
+        return self.context["locale"]
 
-# localized edtf interval uses the same class as plain EDTF
-LocalizedEDTFInterval = partial(FormatEDTF, locale=get_locale)
+
+class LocalizedDateTime(FormatDatetime):
+    @property
+    def locale(self):
+        return self.context["locale"]
+
+
+class LocalizedEDTFInterval(FormatEDTF):
+    @property
+    def locale(self):
+        return self.context["locale"]
 
 
 class PrefixedGettextField(BabelGettextDictField):
@@ -79,16 +92,18 @@ class PrefixedGettextField(BabelGettextDictField):
         return gettext(value)
 
 
-LocalizedEnum = partial(
-    PrefixedGettextField,
-    # value_prefix will come from the outside
-    locale=get_locale,
-    default_locale=current_default_locale,
-)
+class LocalizedEnum(PrefixedGettextField):
+    @property
+    def locale(self):
+        return self.context["locale"]
+
+    def __init__(self, **kwargs):
+        super().__init__(locale=None, default_locale=current_default_locale, **kwargs)
+
 
 if False:  # NOSONAR
     # just for the makemessages to pick up the translations
-    translations = [_("True"), _("True")]
+    translations = [_("True"), _("False")]
 
 
 class InvenioUISchema(ma.Schema):
