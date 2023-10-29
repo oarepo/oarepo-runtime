@@ -24,11 +24,23 @@ def current_default_locale():
     return "en"
 
 
-# localized date field
-class LocalizedDate(FormatDate):
+class LocalizedMixin:
+    def __init__(self, *args, locale=None, **kwargs):
+        super().__init__(*args, locale=locale, **kwargs)
+
     @property
     def locale(self):
-        return self.context["locale"]
+        if self._locale:
+            return self._locale
+        if self.parent:
+            if "locale" in self.context:
+                return self.context["locale"]
+        return current_default_locale()
+
+
+# localized date field
+class LocalizedDate(LocalizedMixin, FormatDate):
+    pass
 
 
 class FormatTimeString(FormatTime):
@@ -56,29 +68,27 @@ class MultilayerFormatEDTF(BabelFormatField):
         except:
             return format_edtf(value, format=self._format, locale=self.locale)
 
-
-class LocalizedEDTF(MultilayerFormatEDTF):
-    @property
-    def locale(self):
-        return self.context["locale"]
-
-
-class LocalizedTime(FormatTimeString):
-    @property
-    def locale(self):
-        return self.context["locale"]
+    def parse(self, value, **kwargs):
+        # standard parsing is too lenient, for example returns "2000-01-01" for input "2000"
+        if re.match("^[0-9]+-[0-9]+-[0-9]+", value):
+            return super().parse(value, **kwargs)
+        raise ValueError("Not a valid date")
 
 
-class LocalizedDateTime(FormatDatetime):
-    @property
-    def locale(self):
-        return self.context["locale"]
+class LocalizedDateTime(LocalizedMixin, FormatDatetime):
+    pass
 
 
-class LocalizedEDTFInterval(FormatEDTF):
-    @property
-    def locale(self):
-        return self.context["locale"]
+class LocalizedTime(LocalizedMixin, FormatTimeString):
+    pass
+
+
+class LocalizedEDTF(LocalizedMixin, MultilayerFormatEDTF):
+    pass
+
+
+class LocalizedEDTFInterval(LocalizedMixin, FormatEDTF):
+    pass
 
 
 class PrefixedGettextField(BabelGettextDictField):
@@ -92,13 +102,11 @@ class PrefixedGettextField(BabelGettextDictField):
         return gettext(value)
 
 
-class LocalizedEnum(PrefixedGettextField):
-    @property
-    def locale(self):
-        return self.context["locale"]
+class LocalizedEnum(LocalizedMixin, PrefixedGettextField):
+    pass
 
     def __init__(self, **kwargs):
-        super().__init__(locale=None, default_locale=current_default_locale, **kwargs)
+        super().__init__(default_locale=current_default_locale, **kwargs)
 
 
 if False:  # NOSONAR

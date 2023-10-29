@@ -10,7 +10,7 @@ from invenio_records_resources.services.records import (
 )
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
 
-from oarepo_runtime.records.icu import ICUSuggestField
+from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
 try:
     from invenio_i18n import get_locale

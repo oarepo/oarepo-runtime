@@ -4,7 +4,7 @@ from flask import current_app
 from invenio_records.systemfields import DictField, SystemField
 from invenio_records_resources.services.custom_fields import BaseCF
 
-from oarepo_runtime.records import MappingSystemFieldMixin
+from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 
 
 class CustomFieldsMixin(MappingSystemFieldMixin):
