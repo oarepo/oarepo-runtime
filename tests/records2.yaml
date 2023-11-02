@@ -25,4 +25,8 @@ record:
   properties:
     metadata:
      properties:
-      title: keyword
+      title:
+       type: keyword
+       facets: 
+        field: TermsFacet(field="title_terms_facet_field")
+        facet-groups: [ 'curator' ]
