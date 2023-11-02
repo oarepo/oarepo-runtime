@@ -43,3 +43,6 @@ class OARepoRuntime(object):
 
             elif k == "HAS_DRAFT_CUSTOM_FIELD":
                 app.config.setdefault(k, getattr(ext_config, k))
+
+            elif k == "OAREPO_FACET_GROUP_NAME":
+                app.config.setdefault(k, getattr(ext_config, k))
