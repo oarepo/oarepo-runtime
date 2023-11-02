@@ -3,7 +3,7 @@ import re
 from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
 from invenio_search.engine import dsl
 
-from oarepo_runtime.ui.marshmallow import (
+from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
     LocalizedEDTF,
@@ -15,24 +15,27 @@ from .base import LabelledValuesTermsFacet
 
 
 class DateFacet(LabelledValuesTermsFacet):
-    def value_labels(self, values):
-        return {val: LocalizedDate().format_value(val) for val in values}
+    def localized_value_labels(self, values, locale):
+        return {val: LocalizedDate(locale=locale).format_value(val) for val in values}
 
 
 class TimeFacet(LabelledValuesTermsFacet):
-    def value_labels(self, values):
-        return {val: LocalizedTime().format_value(val) for val in values}
+    def localized_value_labels(self, values, locale):
+        return {val: LocalizedTime(locale=locale).format_value(val) for val in values}
 
 
 class DateTimeFacet(LabelledValuesTermsFacet):
-    def value_labels(self, values):
-        return {val: LocalizedDateTime().format_value(val) for val in values}
+    def localized_value_labels(self, values, locale):
+        return {
+            val: LocalizedDateTime(locale=locale).format_value(val) for val in values
+        }
 
 
 class EDTFFacet(LabelledValuesTermsFacet):
-    def value_labels(self, values):
+    def localized_value_labels(self, values, locale):
         return {
-            val: LocalizedEDTF().format_value(convert_to_edtf(val)) for val in values
+            val: LocalizedEDTF(locale=locale).format_value(convert_to_edtf(val))
+            for val in values
         }
 
 
@@ -51,9 +54,9 @@ class EDTFIntervalFacet(LabelledFacetMixin, AutoDateHistogramFacet):
         #     kwargs["interval"] = "year"
         super().__init__(*args, **kwargs)
 
-    def value_labels(self, values):
+    def localized_value_labels(self, values, locale):
         return {
-            val: LocalizedEDTFInterval().format_value(convert_to_edtf(val))
+            val: LocalizedEDTFInterval(locale=locale).format_value(convert_to_edtf(val))
             for val in values
         }
 

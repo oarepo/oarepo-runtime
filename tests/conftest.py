@@ -25,6 +25,7 @@ from invenio_access import ActionUsers, current_access
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
 
+from oarepo_runtime.cf.mappings import prepare_cf_indices
 from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.transformers import BaseTransformer
 
@@ -181,3 +182,7 @@ def sample_data_default_id(db, app, identity, search_clear, location):
     for rec in current_service.scan(identity):
         titles.add(rec["metadata"]["title"])
     assert titles == {"record 1", "record 2"}
+
+@pytest.fixture()
+def custom_fields():
+    prepare_cf_indices()

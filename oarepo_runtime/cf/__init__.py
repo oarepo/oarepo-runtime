@@ -1,15 +1,45 @@
+from typing import List
+
 from flask import current_app
 from invenio_records.systemfields import DictField, SystemField
+from invenio_records_resources.services.custom_fields import BaseCF
+
+from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 
 
-class CustomFieldsMixin:
+class CustomFieldsMixin(MappingSystemFieldMixin):
     def __init__(self, config_key, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.config_key = config_key
 
+    @property
+    def mapping(self):
+        custom_fields: List[BaseCF] = current_app.config[self.config_key]
+        return {cf.name: cf.mapping for cf in custom_fields}
+
+    @property
+    def mapping_settings(self):
+        return {}
+
+    def search_dump(self, data):
+        custom_fields = current_app.config.get(self.config_key, {})
+
+        for cf in custom_fields:
+            cf.dump(data, cf_key=self.key)
+        return data
+
+    def search_load(self, data):
+        custom_fields = current_app.config.get(self.config_key, {})
+
+        for cf in custom_fields:
+            cf.load(data, cf_key=self.key)
+        return data
+
 
 class CustomFields(CustomFieldsMixin, DictField):
-    pass
+    @property
+    def mapping(self):
+        return {self.key: {"type": "object", "properties": super().mapping}}
 
 
 class InlinedCustomFields(CustomFieldsMixin, SystemField):

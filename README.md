@@ -66,3 +66,42 @@ This module provides a marshmallow validator for date strings.
 
 Provides interface and definitions for loading 
 preconfigured permission sets to service config.
+
+## ICU sort and suggestions
+
+To use ICU sort and suggestion custom fields, provide the following configuration
+to `oarepo-model-builder` (or put this stuff to your custom superclasses).
+
+```yaml
+  record:
+    imports:
+      - import: invenio_records_resources.records.api.Record
+        alias: InvenioRecord
+      - import: oarepo_runtime.records.SystemFieldDumperExt
+      - import: oarepo_runtime.records.icu.ICUSortField
+      - import: oarepo_runtime.records.icu.ICUSuggestField
+    extra-code: |-2
+          # extra custom fields for testing ICU sorting and suggesting
+          sort = ICUSortField(source_field="metadata.title")
+          suggest = ICUSuggestField(source_field="metadata.title")
+  search-options:
+    base-classes:
+      - I18nSearchOptions
+    imports:
+      - import: oarepo_runtime.services.icu.I18nSearchOptions
+      - import: oarepo_runtime.services.icu.ICUSuggestParser
+      - import: oarepo_runtime.services.icu.ICUSortOptions
+    sort-options-field: extra_sort_options
+    extra-code: |-2
+          suggest_parser_cls = ICUSuggestParser("records2")
+          sort_options = ICUSortOptions("records2")
+
+  record-dumper:
+    extensions:
+      - SystemFieldDumperExt()
+```
+
+Run `invenio oarepo cf init` to initialize custom fields,
+`invenio oarepo index reindex` if you already have data 
+inside the repository and from this moment on, 
+`/records?sort=title` and `/records?suggest=abc` should work
