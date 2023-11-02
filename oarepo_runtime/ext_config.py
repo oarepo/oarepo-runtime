@@ -15,6 +15,8 @@ from oarepo_runtime.datastreams.writers.attachment import AttachmentWriter
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
 
+from oarepo_runtime.facets.facet_groups_names import facet_groups_names
+
 OAREPO_PERMISSIONS_PRESETS = {
     "read_only": ReadOnlyPermissionPolicy,
     "everyone": EveryonePermissionPolicy,
@@ -22,6 +24,7 @@ OAREPO_PERMISSIONS_PRESETS = {
     "authenticated": AuthenticatedPermissionPolicy,
 }
 
+OAREPO_FACET_GROUP_NAME = facet_groups_names
 
 DEFAULT_DATASTREAMS_READERS = {
     "excel": ExcelReader,
