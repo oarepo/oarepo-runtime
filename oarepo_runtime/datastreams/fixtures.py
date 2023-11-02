@@ -1,37 +1,16 @@
-import dataclasses
 import re
 from pathlib import Path
-from typing import Dict
 
 import pkg_resources
 import yaml
 from flask import current_app
-from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 
-from oarepo_runtime.datastreams import DataStream, DataStreamCatalogue, DataStreamResult
-
-
-@dataclasses.dataclass
-class FixturesResult:
-    ok_count: int = 0
-    failed_count: int = 0
-    skipped_count: int = 0
-    results: Dict[str, DataStreamResult] = dataclasses.field(default_factory=dict)
-
-    @property
-    def failed_entries(self):
-        ret = []
-        r: DataStreamResult
-        for r in self.results:
-            ret.extend(r.failed_entries or [])
-        return ret
-
-    def add(self, fixture_name, result: DataStreamResult):
-        self.ok_count += result.ok_count
-        self.failed_count += result.failed_count
-        self.skipped_count += result.skipped_count
-        self.results[fixture_name] = result
+from oarepo_runtime.datastreams import (
+    DataStreamCallback,
+    DataStreamCatalogue,
+    SynchronousDataStream,
+)
 
 
 def load_fixtures(
@@ -39,12 +18,10 @@ def load_fixtures(
     include=None,
     exclude=None,
     system_fixtures=True,
-    progress_callback=None,
-    success_callback=None,
-    error_callback=None,
+    callback: DataStreamCallback = None,
     batch_size=100,
-    uow_class=None,
-) -> FixturesResult:
+    datastreams_impl=SynchronousDataStream,
+):
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
     The directory must contain a catalogue.yaml file containing datastreams to load the
@@ -61,7 +38,6 @@ def load_fixtures(
     include = [re.compile(x) for x in (include or [])]
     exclude = [re.compile(x) for x in (exclude or [])]
     fixtures = set()
-    result = FixturesResult()
 
     if fixture_dir:
         catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
@@ -70,11 +46,9 @@ def load_fixtures(
             fixtures,
             include,
             exclude,
-            result,
-            progress_callback,
-            success_callback,
-            error_callback,
+            callback,
             batch_size=batch_size,
+            datastreams_impl=datastreams_impl,
         )
 
     if system_fixtures:
@@ -93,47 +67,34 @@ def load_fixtures(
                 fixtures,
                 include,
                 exclude,
-                result,
-                progress_callback,
-                success_callback,
-                error_callback,
+                callback,
                 batch_size=batch_size,
-                uow_class=uow_class,
+                datastreams_impl=datastreams_impl,
             )
-
-    return result
 
 
 def _load_fixtures_from_catalogue(
-    catalogue,
-    fixtures,
-    include,
-    exclude,
-    result: FixturesResult,
-    progress_callback,
-    success_callback,
-    error_callback,
-    batch_size=None,
-    uow_class=None,
+    catalogue, fixtures, include, exclude, callback, batch_size, datastreams_impl
 ):
-    for stream_name in catalogue:
-        if stream_name in fixtures:
+    for catalogue_datastream in catalogue.get_datastreams():
+        if catalogue_datastream.stream_name in fixtures:
             continue
-        if include and not any(x.match(stream_name) for x in include):
+        if include and not any(
+            x.match(catalogue_datastream.stream_name) for x in include
+        ):
             continue
-        if any(x.match(stream_name) for x in exclude):
+        if any(x.match(catalogue_datastream.stream_name) for x in exclude):
             continue
-        fixtures.add(stream_name)
-        datastream: DataStream = catalogue.get_datastream(
-            stream_name,
-            progress_callback=progress_callback,
-            success_callback=success_callback,
-            error_callback=error_callback,
+        fixtures.add(catalogue_datastream.stream_name)
+
+        datastream = datastreams_impl(
+            readers=catalogue_datastream.readers,
+            writers=catalogue_datastream.writers,
+            transformers=catalogue_datastream.transformers,
+            callback=callback,
             batch_size=batch_size,
-            uow_class=uow_class,
         )
-        result.add(stream_name, datastream.process())
-    db.session.commit()
+        datastream.process()
 
 
 def dump_fixtures(
@@ -141,28 +102,20 @@ def dump_fixtures(
     include=None,
     exclude=None,
     use_files=False,
-    progress_callback=None,
-    success_callback=None,
-    error_callback=None,
-) -> FixturesResult:
+    callback: DataStreamCallback = None,
+    datastream_impl=SynchronousDataStream,
+    batch_size=1,
+):
     include = [re.compile(x) for x in (include or [])]
     exclude = [
         re.compile(x)
-        for x in (
-            exclude
-            or current_app.config.get(
-                "DATASTREAMS_EXCLUDES",
-                current_app.config["DEFAULT_DATASTREAMS_EXCLUDES"],
-            )
-        )
+        for x in (exclude or current_app.config.get("DATASTREAMS_EXCLUDES", []))
     ]
     fixture_dir = Path(fixture_dir)
     if not fixture_dir.exists():
         fixture_dir.mkdir(parents=True)
     catalogue_path = fixture_dir / "catalogue.yaml"
     catalogue_data = {}
-
-    result = FixturesResult()
 
     for service_id in current_service_registry._services:
         config_generator = (
@@ -180,25 +133,25 @@ def dump_fixtures(
             if any(x.match(fixture_name) for x in exclude):
                 continue
 
+            catalogue_data[fixture_name] = fixture_read_config
+
             catalogue = DataStreamCatalogue(
                 catalogue_path, {fixture_name: fixture_write_config}
             )
+
             for stream_name in catalogue:
-                datastream: DataStream = catalogue.get_datastream(
-                    stream_name,
-                    progress_callback=progress_callback,
-                    success_callback=success_callback,
-                    error_callback=error_callback,
+                catalogue_datastream = catalogue.get_datastream(stream_name)
+                datastream = datastream_impl(
+                    readers=catalogue_datastream.readers,
+                    writers=catalogue_datastream.writers,
+                    transformers=catalogue_datastream.transformers,
+                    callback=callback,
+                    batch_size=batch_size,
                 )
-                datastream_result = datastream.process()
-                if datastream_result.ok_count:
-                    catalogue_data[fixture_name] = fixture_read_config
-                result.add(stream_name, datastream_result)
+                datastream.process()
 
     with open(catalogue_path, "w") as f:
         yaml.dump(catalogue_data, f)
-
-    return result
 
 
 def default_config_generator(service_id, use_files=False):
@@ -207,12 +160,13 @@ def default_config_generator(service_id, use_files=False):
     ]
     if use_files:
         writers.append(
-            {"writer": "attachments", "target": f"files"},
+            {"writer": "attachments_file", "target": f"files"},
         )
 
     yield service_id, [
         # load
-        {"service": service_id},
+        {"writer": "service", "service": service_id},
+        {"writer": "attachments_service", "service": service_id},
         {"source": f"{service_id}.yaml"},
     ], [
         # dump

@@ -1,12 +1,22 @@
+import dataclasses
 from pathlib import Path
+from typing import Iterator, List
 
 import yaml
 from flask import current_app
 from invenio_access.permissions import system_identity
 
-from .config import get_instance
-from .datastreams import DataStream
+from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
+
 from .errors import DataStreamCatalogueError
+
+
+@dataclasses.dataclass
+class CatalogueDataStream:
+    stream_name: str
+    readers: List[Signature]
+    writers: List[Signature]
+    transformers: List[Signature]
 
 
 class DataStreamCatalogue:
@@ -45,7 +55,7 @@ class DataStreamCatalogue:
     def directory(self):
         return self._catalogue_path.parent
 
-    def get_datastreams(self):
+    def get_datastreams(self) -> Iterator[CatalogueDataStream]:
         for stream_name in self._catalogue:
             yield self.get_datastream(stream_name)
 
@@ -55,12 +65,7 @@ class DataStreamCatalogue:
     def get_datastream(
         self,
         stream_name,
-        progress_callback=None,
-        success_callback=None,
-        error_callback=None,
-        batch_size=None,
-        uow_class=None,
-    ):
+    ) -> CatalogueDataStream:
         stream_definition = self._catalogue[stream_name]
         readers = []
         transformers = []
@@ -70,8 +75,7 @@ class DataStreamCatalogue:
             try:
                 if "reader" in entry:
                     readers.append(
-                        get_instance(
-                            "DATASTREAMS_READERS",
+                        get_signature(
                             "reader",
                             entry,
                             base_path=self.directory,
@@ -80,8 +84,7 @@ class DataStreamCatalogue:
                     )
                 elif "transformer" in entry:
                     transformers.append(
-                        get_instance(
-                            "DATASTREAMS_TRANSFORMERS",
+                        get_signature(
                             "transformer",
                             entry,
                             base_path=self.directory,
@@ -90,8 +93,7 @@ class DataStreamCatalogue:
                     )
                 elif "writer" in entry:
                     writers.append(
-                        get_instance(
-                            "DATASTREAMS_WRITERS",
+                        get_signature(
                             "writer",
                             entry,
                             base_path=self.directory,
@@ -110,17 +112,12 @@ class DataStreamCatalogue:
                 e.entry = entry
                 e.stream_name = stream_name
                 raise e
-        ds = DataStream(
+        return CatalogueDataStream(
+            stream_name=stream_name,
             readers=readers,
             transformers=transformers,
             writers=writers,
-            progress_callback=progress_callback,
-            success_callback=success_callback,
-            error_callback=error_callback,
-            batch_size=batch_size,
-            uow_class=uow_class,
         )
-        return ds
 
     def get_reader(self, entry):
         entry = {**entry}
@@ -139,8 +136,7 @@ class DataStreamCatalogue:
                 raise DataStreamCatalogueError(
                     f"Do not have loader for file {source} - extension {ext} not defined in DATASTREAMS_READERS_BY_EXTENSION config"
                 )
-        return get_instance(
-            "DATASTREAMS_READERS",
+        return get_signature(
             "reader",
             entry,
             base_path=self.directory,
@@ -148,8 +144,13 @@ class DataStreamCatalogue:
         )
 
     def get_service_writer(self, entry):
-        from .writers.service import ServiceWriter
-
-        return get_instance(
-            None, ServiceWriter, entry, base_path=self.directory, identity=self.identity
+        return Signature(
+            SignatureKind("writer"),
+            "service",
+            kwargs={**entry, "base_path": self.directory, "identity": self.identity},
         )
+
+
+def get_signature(kind, entry, **kwargs):
+    entry = {**entry, **kwargs}
+    return Signature(kind=SignatureKind(kind), name=entry.pop(kind), kwargs=entry)

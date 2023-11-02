@@ -1,8 +1,10 @@
 from base64 import b64encode
+from typing import List
 
 from invenio_access.permissions import system_identity
 from invenio_records_resources.proxies import current_service_registry
 
+from ..types import StreamEntryFile
 from ..utils import get_file_service_for_record_class
 from . import BaseReader, StreamEntry
 
@@ -33,7 +35,7 @@ class ServiceReader(BaseReader):
 
     def __iter__(self):
         for idx, entry in enumerate(self._service.scan(self._identity)):
-            files = []
+            files: List[StreamEntryFile] = []
             if self._file_service:
                 for f in self._file_service.list_files(
                     self._identity, entry["id"]
@@ -42,13 +44,11 @@ class ServiceReader(BaseReader):
                         self._identity, entry["id"], f["key"]
                     )
                     with file_item.open_stream("rb") as ff:
-                        file_rec = {"metadata": f, "content": b64encode(ff.read())}
-                    files.append(file_rec)
+                        base64_content = b64encode(ff.read()).decode("ascii")
+                        files.append(
+                            StreamEntryFile(
+                                metadata=f, content_url=f"data:{base64_content}"
+                            )
+                        )
 
-            yield StreamEntry(
-                entry,
-                context={
-                    "serial_no": idx + 1,  # make serial number 1 based
-                    "files": files,
-                },
-            )
+            yield StreamEntry(entry, files=files)

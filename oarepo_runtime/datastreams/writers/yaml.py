@@ -1,8 +1,8 @@
+from io import StringIO
+
 import yaml
 
-from oarepo_runtime.datastreams import StreamEntry
-
-from . import BaseWriter
+from oarepo_runtime.datastreams import BaseWriter, StreamBatch
 
 
 class YamlWriter(BaseWriter):
@@ -13,33 +13,43 @@ class YamlWriter(BaseWriter):
         :param file_or_path: path of the output file.
         """
         super().__init__(**kwargs)
-        if hasattr(target, "read"):
+        if hasattr(target, "write"):
             # opened file
             self._file = target
             self._stream = target
         else:
-            self._stream = None
             if base_path:
                 self._file = base_path.joinpath(target)
             else:
                 self._file = target
+            self._stream = open(self._file, "w")
+
         self._started = False
 
-    def write(self, entry: StreamEntry, *args, **kwargs):
+    def write(self, batch: StreamBatch):
         """Writes the input stream entry using a given service."""
+
+        for entry in batch.entries:
+            if not entry.ok:
+                continue
+
+            self._write_entry_separator()
+
+            try:
+                io = StringIO()
+                yaml.safe_dump(entry.entry, io)
+                self._stream.write(io.getvalue())
+            except Exception as e:
+                entry.errors.append(e)
+
+        return batch
+
+    def _write_entry_separator(self):
         if not self._started:
             self._started = True
-            if not self._stream:
-                self._stream = open(self._file, "w")
         else:
             self._stream.write("---\n")
-        yaml.safe_dump(entry.entry, self._stream)
-        return entry
-
-    def delete(self, stream_entry: StreamEntry):
-        """noop"""
 
     def finish(self):
         """Finalizes writing"""
-        if not hasattr(self._file, "read") and self._stream:
-            self._stream.close()
+        self._stream.close()
