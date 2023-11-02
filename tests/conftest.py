@@ -12,6 +12,7 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
+import logging
 import os
 from typing import Union
 
@@ -26,8 +27,12 @@ from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 pytest_plugins = ("celery.contrib.pytest",)
 
 
-# logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(
+    level=logging.ERROR,
+    format="%(asctime)s %(levelname)s [%(threadName)s] %(name)s %(message)s",
+)
 # logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+logging.getLogger("celery").setLevel(logging.DEBUG)
 
 
 @pytest.fixture(scope="module")

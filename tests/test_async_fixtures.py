@@ -1,5 +1,9 @@
 import sys
+import time
 from pathlib import Path
+
+from celery import shared_task
+from invenio_app.factory import create_api
 
 from oarepo_runtime.datastreams import JSONObject, StreamBatch
 from oarepo_runtime.datastreams.asynchronous import (
@@ -10,6 +14,8 @@ from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
 from oarepo_runtime.datastreams.types import StreamEntryError
 from records2.proxies import current_service
 from records2.records.api import Records2Record
+
+import celery
 
 
 def test_async_fixtures_in_process(
@@ -112,3 +118,63 @@ def test_failing_writer_in_process(
     ds.process()
 
     assert writer_error_occured, "Writer error should occur but was not detected"
+
+
+#
+# def test_async_fixtures_out_of_process(db, app, identity, search_clear, location):
+#     celery = app.extensions["flask-celeryext"].celery
+#     print(celery)
+#
+#     writer = Signature(
+#         kind=SignatureKind.WRITER, name="service", kwargs={"service": "records2"}
+#     )
+#     reader = Signature(
+#         SignatureKind.READER,
+#         name="yaml",
+#         kwargs={
+#             "source": str(Path(__file__).parent / "pkg_data" / f"async_records.yaml")
+#         },
+#     )
+#
+#     transformer = Signature(SignatureKind.TRANSFORMER, name="status", kwargs={})
+#
+#     @shared_task
+#     def callback(
+#         *,
+#         batch: JSONObject = None,
+#         identity: JSONObject = None,
+#         callback: str = None,
+#         exception: JSONObject = None,
+#         **kwargs,
+#     ):
+#         print("Callback called", callback)
+#         batch = StreamBatch.from_json(batch)
+#         identity = deserialize_identity(identity)
+#         exception = StreamEntryError.from_json(exception) if exception else None
+#
+#         if exception:
+#             print(callback, batch, identity, exception)
+#         sys.stdout.flush()
+#
+#     ds = AsynchronousDataStream(
+#         readers=[reader],
+#         writers=[writer],
+#         transformers=[transformer],
+#         callback=callback.s(),
+#         on_background=True,
+#     )
+#     ds.process()
+#
+#     for wait_timer in range(5):
+#         Records2Record.index.refresh()
+#         titles = set()
+#         for rec in current_service.scan(identity):
+#             titles.add(rec["metadata"]["title"])
+#         if len(titles) < 2:
+#             time.sleep(1)
+#             continue
+#
+#         assert titles == {"pkg record 2", "pkg record 1"}
+#         return
+#
+#     raise AssertionError("Timeout waiting for async datastream to finish")

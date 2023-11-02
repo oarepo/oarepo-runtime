@@ -212,7 +212,13 @@ class StreamBatch:
     def from_json(cls, js):
         if js is None:
             return None
-
+        try:
+            [StreamEntry.from_json(x) for x in js["entries"]]
+        except:
+            print("Exception parsing", js)
+            import traceback
+            traceback.print_exc()
+            raise
         return cls(
             entries=[StreamEntry.from_json(x) for x in js["entries"]],
             context=js["context"],

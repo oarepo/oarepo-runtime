@@ -89,7 +89,7 @@ class AsynchronousDataStreamChain(DataStreamChain):
 
     def _prepare_chain(self, callback: CelerySignature):
         chain_def = [
-            call_callback.signature(
+            datastreams_error_callback.signature(
                 kwargs={"callback": callback, "callback_name": "batch_started"}
             )
         ]
@@ -118,7 +118,7 @@ class AsynchronousDataStreamChain(DataStreamChain):
             )
 
         chain_def.append(
-            call_callback.signature(
+            datastreams_error_callback.signature(
                 kwargs=dict(
                     callback=callback,
                     callback_name="batch_finished",
@@ -129,7 +129,7 @@ class AsynchronousDataStreamChain(DataStreamChain):
 
         chain_sig = chain(*chain_def)
         chain_sig.link_error(
-            call_callback.signature(
+            datastreams_error_callback.signature(
                 kwargs=dict(
                     callback=callback,
                     callback_name="error",
@@ -183,7 +183,17 @@ def run_datastream_processor(batch: Dict, *, processor: JSONObject, identity, ca
 
 
 @celery.shared_task
-def call_callback(batch: Dict, *, identity=None, callback, callback_name, **kwargs):
+def datastreams_call_callback(batch: Dict, *, identity=None, callback, callback_name, **kwargs):
+    callback = CelerySignature(callback)
+    callback.apply(
+        kwargs=dict(batch=batch, identity=identity, callback=callback_name, **kwargs)
+    )
+    return batch
+
+
+@celery.shared_task
+def datastreams_error_callback(batch: Dict, *, identity=None, callback, callback_name, **kwargs):
+    callback = CelerySignature(callback)
     callback.apply(
         kwargs=dict(batch=batch, identity=identity, callback=callback_name, **kwargs)
     )
