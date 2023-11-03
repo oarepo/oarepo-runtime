@@ -8,10 +8,14 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
 )
-from invenio_records_resources.services.records.params import QueryStrParam, PaginationParam, SortParam
+from invenio_records_resources.services.records.params import (
+    PaginationParam,
+    QueryStrParam,
+    SortParam,
+)
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
-from oarepo_runtime.facets.params import GroupedFacetsParam
 
+from oarepo_runtime.facets.params import GroupedFacetsParam
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
 try:
@@ -21,8 +25,13 @@ except ImportError:
 
 
 class SearchOptions(InvenioSearchOptions):
-    params_interpreters_cls = [QueryStrParam, PaginationParam, SortParam, GroupedFacetsParam]
-    
+    params_interpreters_cls = [
+        QueryStrParam,
+        PaginationParam,
+        SortParam,
+        GroupedFacetsParam,
+    ]
+
     sort_options = {
         "title": dict(
             title=_("By Title"),

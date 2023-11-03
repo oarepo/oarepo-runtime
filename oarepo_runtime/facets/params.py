@@ -1,11 +1,12 @@
 import copy
+from typing import List
+
 from flask import current_app
 from flask_principal import Identity
 from invenio_app.helpers import obj_or_import_string
-from invenio_records_resources.services.records.params import FacetsParam
 from invenio_records_resources.services.records.facets import FacetsResponse
+from invenio_records_resources.services.records.params import FacetsParam
 
-from typing import List
 
 class FilteredFacetsParam(FacetsParam):
     def filter(self, search):
@@ -21,24 +22,27 @@ class FilteredFacetsParam(FacetsParam):
 
         return search.filter(facet_filter)
 
+
 class GroupedFacetsParam(FacetsParam):
     def __init__(self, config):
         super().__init__(config)
         self._facets = config.facets
-    
+
     @property
     def facets(self):
         return self._facets
-    
+
     def identity_facet_groups(self, identity: Identity) -> List[str]:
         if "OAREPO_FACET_GROUP_NAME" in current_app.config:
-            find_facet_groups_func = obj_or_import_string(current_app.config["OAREPO_FACET_GROUP_NAME"])
+            find_facet_groups_func = obj_or_import_string(
+                current_app.config["OAREPO_FACET_GROUP_NAME"]
+            )
             return find_facet_groups_func(identity, self.config, None)
-        
+
         if hasattr(identity, "provides"):
             return [need.value for need in identity.provides if need.method == "role"]
-        
-        return []    
+
+        return []
 
     def identity_facets(self, identity: Identity):
         user_facets = {}
@@ -47,11 +51,11 @@ class GroupedFacetsParam(FacetsParam):
         else:
             self.facets.clear()
             user_facets.update(self.config.facet_groups["default"])
-        
+
         groups = self.identity_facet_groups(identity)
         for group in groups:
             user_facets.update(self.config.facet_groups.get(group, {}))
-        
+
         return user_facets
 
     def aggregate(self, search, user_facets):

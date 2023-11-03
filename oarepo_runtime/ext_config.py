@@ -14,7 +14,6 @@ from oarepo_runtime.datastreams.readers.yaml import YamlReader
 from oarepo_runtime.datastreams.writers.attachment import AttachmentWriter
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
-
 from oarepo_runtime.facets.facet_groups_names import facet_groups_names
 
 OAREPO_PERMISSIONS_PRESETS = {

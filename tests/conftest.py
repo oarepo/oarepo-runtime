@@ -13,23 +13,21 @@ See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 import os
+from pathlib import Path
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
-from invenio_access.permissions import any_user, system_process
-from invenio_app.factory import create_api as _create_api
-
 from flask_security import login_user
 from flask_security.utils import hash_password
 from invenio_access import ActionUsers, current_access
+from invenio_access.permissions import any_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
+from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.cf.mappings import prepare_cf_indices
 from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.transformers import BaseTransformer
-
-from pathlib import Path
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -96,6 +94,16 @@ def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
 
+
+@pytest.fixture(scope="module")
+def identity_simple():
+    """Simple identity fixture."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(Need(method="system_role", value="any_user"))
+    return i
+
+
 @pytest.fixture(scope="module")
 def identity():
     """Simple identity to interact with the service."""
@@ -105,13 +113,6 @@ def identity():
     i.provides.add(system_process)
     return i
 
-@pytest.fixture(scope="module")
-def role_identity():
-    """Simple identity to interact with the service that has the role for restricted facets tests."""
-    i = Identity(2)
-    i.provides.add(any_user)
-    i.provides.add(Need(method="role", value="admin"))
-    return i
 
 @pytest.fixture()
 def user(app, db):
@@ -128,7 +129,7 @@ def user(app, db):
 
 
 @pytest.fixture()
-def role(app, db):
+def admin_role(app, db):
     """Create some roles."""
     with db.session.begin_nested():
         datastore = app.extensions["security"].datastore
@@ -139,10 +140,21 @@ def role(app, db):
 
 
 @pytest.fixture()
-def client_with_credentials(db, client, user, role):
-    """Log in a user to the client."""
+def curator_role(app, db):
+    """Create some roles."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        role = datastore.create_role(name="curator", description="curator role")
 
-    current_datastore.add_role_to_user(user, role)
+    db.session.commit()
+    return role
+
+
+@pytest.fixture()
+def client_with_credentials_admin(db, client, user, admin_role):
+    """Log in a user to the client with admin role. This role does not have defined facets."""
+
+    current_datastore.add_role_to_user(user, admin_role)
     action = current_access.actions["superuser-access"]
     db.session.add(ActionUsers.allow(action, user_id=user.id))
 
@@ -151,37 +163,32 @@ def client_with_credentials(db, client, user, role):
 
     return client
 
-@pytest.fixture()
-def sample_data_role_id(db, app, role_identity, search_clear, location):
-    from oarepo_runtime.datastreams.fixtures import load_fixtures
-    from records2.proxies import current_service
-    from records2.records.api import Records2Record
-    
-    ret = load_fixtures(Path(__file__).parent / "data")
-    assert ret.ok_count == 2
-    assert ret.failed_count == 0
-    assert ret.skipped_count == 0
-    Records2Record.index.refresh()
-    titles = set()
-    for rec in current_service.scan(role_identity):
-        titles.add(rec["metadata"]["title"])
-    assert titles == {"record 1", "record 2"}
 
 @pytest.fixture()
-def sample_data_default_id(db, app, identity, search_clear, location):
+def client_with_credentials_curator(db, client, user, curator_role):
+    """Log in a user to the client with curator role. This role has defined facets."""
+
+    current_datastore.add_role_to_user(user, curator_role)
+    action = current_access.actions["superuser-access"]
+    db.session.add(ActionUsers.allow(action, user_id=user.id))
+
+    login_user(user, remember=True)
+    login_user_via_session(client, email=user.email)
+
+    return client
+
+
+@pytest.fixture()
+def sample_data(db, app, search_clear, location):
     from oarepo_runtime.datastreams.fixtures import load_fixtures
-    from records2.proxies import current_service
     from records2.records.api import Records2Record
-    
+
     ret = load_fixtures(Path(__file__).parent / "data")
     assert ret.ok_count == 2
     assert ret.failed_count == 0
     assert ret.skipped_count == 0
     Records2Record.index.refresh()
-    titles = set()
-    for rec in current_service.scan(identity):
-        titles.add(rec["metadata"]["title"])
-    assert titles == {"record 1", "record 2"}
+
 
 @pytest.fixture()
 def custom_fields():
