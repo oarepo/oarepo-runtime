@@ -6,6 +6,7 @@ from records2.records.api import Records2Record
 
 
 def test_czech_sort(app, custom_fields, search_clear, db, identity, location):
+    
     ret = load_fixtures(Path(__file__).parent / "czech_data")
     assert ret.ok_count == 3
     assert ret.failed_count == 0
