@@ -13,6 +13,7 @@ record:
           sort = {{oarepo_runtime.records.systemfields.ICUSortField}}(source_field="metadata.title")
           suggest = {{oarepo_runtime.records.systemfields.ICUSuggestField}}(source_field="metadata.title")
   search-options:
+    base-classes: [ oarepo_runtime.services.search.SearchOptions ]
     sort-options-field: extra_sort_options
     extra-code: |-2
           suggest_parser_cls = {{oarepo_runtime.services.search.ICUSuggestParser}}("records2")
@@ -27,6 +28,5 @@ record:
      properties:
       title:
        type: keyword
-       facets: 
-        field: TermsFacet(field="title_terms_facet_field")
+       facets:
         facet-groups: [ 'curator' ]
