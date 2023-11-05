@@ -46,20 +46,21 @@ test -d $VENV/var/instance || mkdir $VENV/var/instance
 POSTGRES_HOST="${POSTGRES_HOST:-postgres}"
 cat tests/records2_async_data/invenio.cfg | sed "s/POSTGRES_HOST/${POSTGRES_HOST}/g" > $VENV/var/instance/invenio.cfg
 
-celery -A invenio_app.celery worker -l INFO -c 1 &
-CELERY_PID=$!
-
-trap "kill $CELERY_PID" EXIT
-
-sleep 5
-
-
 invenio db destroy --yes-i-know || true
 invenio db init create
 invenio index destroy --force --yes-i-know || true
 invenio index init
 invenio oarepo cf init
 invenio files location create --default default file:////tmp/data
+
+
+
+celery -A invenio_app.celery worker -l INFO -c 1 &
+CELERY_PID=$!
+
+trap "kill $CELERY_PID" EXIT
+
+sleep 5
 
 python tests/records2_async_data/generate_async_data_for_import.py /tmp/sample-records-for-import 100
 invenio oarepo fixtures load --no-system-fixtures /tmp/sample-records-for-import --on-background --bulk-size 10
