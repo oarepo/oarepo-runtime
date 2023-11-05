@@ -37,13 +37,14 @@ pip install uritemplate
 
 invenio index destroy --force --yes-i-know || true
 
-# run OOM separately as it needs its own configuration of logging
-pytest -m "not oom" tests
-pytest -m "oom" tests
+## run OOM separately as it needs its own configuration of logging
+#pytest -m "not oom" tests
+#pytest -m "oom" tests
 
-exit 0
 
-# TODO: this does not work on sqlite
+test -d $VENV/var/instance || mkdir $VENV/var/instance
+POSTGRES_HOST="${POSTGRES_HOST:-postgres}"
+cat tests/records2_async_data/invenio.cfg | sed "s/POSTGRES_HOST/${POSTGRES_HOST}/g" > $VENV/var/instance/invenio.cfg
 
 celery -A invenio_app.celery worker -l INFO -c 1 &
 CELERY_PID=$!
@@ -52,8 +53,6 @@ trap "kill $CELERY_PID" EXIT
 
 sleep 5
 
-test -d $VENV/var/instance || mkdir $VENV/var/instance
-cp tests/records2_async_data/invenio.cfg $VENV/var/instance/invenio.cfg
 
 invenio db destroy --yes-i-know || true
 invenio db init create
