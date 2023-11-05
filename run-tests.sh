@@ -2,6 +2,9 @@
 
 set -e
 
+OAREPO_VERSION="${OAREPO_VERSION:-11}"
+OAREPO_VERSION_MAX=$((OAREPO_VERSION+1))
+
 BUILDER_VENV=.venv-builder
 if test -d $BUILDER_VENV ; then
 	rm -rf $BUILDER_VENV
@@ -28,6 +31,7 @@ python3 -m venv $VENV
 . $VENV/bin/activate
 pip install -U setuptools pip wheel
 
+pip install "oarepo>=${OAREPO_VERSION},<${OAREPO_VERSION_MAX}"
 pip install -e ".[tests,oarepo-${OAREPO_VERSION:-11}]"
 pip install -e records2
 # pip install -e records
@@ -43,7 +47,7 @@ invenio index destroy --force --yes-i-know || true
 
 
 test -d $VENV/var/instance || mkdir $VENV/var/instance
-POSTGRES_HOST="${POSTGRES_HOST:-postgres}"
+POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
 cat tests/records2_async_data/invenio.cfg | sed "s/POSTGRES_HOST/${POSTGRES_HOST}/g" > $VENV/var/instance/invenio.cfg
 
 invenio db destroy --yes-i-know || true
