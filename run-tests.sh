@@ -41,7 +41,7 @@ invenio index destroy --force --yes-i-know || true
 pytest -m "not oom" tests
 pytest -m "oom" tests
 
-return 0
+exit 0
 
 # TODO: this does not work on sqlite
 
