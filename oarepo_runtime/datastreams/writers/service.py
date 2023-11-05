@@ -73,7 +73,7 @@ class ServiceWriter(BaseWriter):
         entry_id = self._get_stream_entry_id(stream_entry)
 
         if entry_id and self._update:
-            repository_entry = self.try_update(entry_id, stream_entry, **service_kwargs)
+            repository_entry = self.try_update(entry_id, entry, **service_kwargs)
             if repository_entry:
                 do_create = False
 
@@ -87,10 +87,10 @@ class ServiceWriter(BaseWriter):
 
         stream_entry.context["revision_id"] = repository_entry._record.revision_id
 
-    def try_update(self, entry_id, stream_entry, **service_kwargs):
+    def try_update(self, entry_id, entry, **service_kwargs):
         current = self._resolve(entry_id)
         if current:
-            updated = dict(current.to_dict(), **stream_entry.entry)
+            updated = dict(current.to_dict(), **entry)
             # might raise exception here but that's ok - we know that the entry
             # exists in db as it was _resolved
             return self._service.update(

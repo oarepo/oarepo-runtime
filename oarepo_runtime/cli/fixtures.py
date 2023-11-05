@@ -3,7 +3,13 @@ from flask import current_app
 from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
+from oarepo_runtime.datastreams import SynchronousDataStream
+from oarepo_runtime.datastreams.asynchronous import AsynchronousDataStream
+from oarepo_runtime.datastreams.fixtures import (
+    dump_fixtures,
+    fixtures_asynchronous_callback,
+    load_fixtures,
+)
 from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
 
@@ -18,12 +24,7 @@ def fixtures():
 @click.option("--exclude", multiple=True)
 @click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
 @click.option("--verbose", is_flag=True)
-@click.option(
-    "--bulk/--no-bulk",
-    is_flag=True,
-    default=True,
-    help="Use bulk indexing (that is, delay indexing)",
-)
+@click.option("--on-background", is_flag=True)
 @click.option(
     "--bulk-size",
     default=100,
@@ -37,12 +38,15 @@ def load(
     exclude=None,
     system_fixtures=None,
     verbose=False,
-    bulk=True,
     bulk_size=100,
+    on_background=False,
 ):
     """Loads fixtures"""
 
-    callback = StatsKeepingDataStreamCallback(log_error_entry=verbose)
+    if not on_background:
+        callback = StatsKeepingDataStreamCallback(log_error_entry=verbose)
+    else:
+        callback = fixtures_asynchronous_callback.s()
 
     with current_app.wsgi_app.mounts["/api"].app_context():
         load_fixtures(
@@ -52,8 +56,12 @@ def load(
             system_fixtures=system_fixtures,
             callback=callback,
             batch_size=bulk_size,
+            datastreams_impl=AsynchronousDataStream
+            if on_background
+            else SynchronousDataStream,
         )
-        _show_stats(callback, "Load fixtures")
+        if not on_background:
+            _show_stats(callback, "Load fixtures")
 
 
 @fixtures.command()

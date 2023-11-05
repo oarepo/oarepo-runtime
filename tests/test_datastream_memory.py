@@ -4,6 +4,7 @@ import random
 import sys
 
 import psutil
+import pytest
 
 from oarepo_runtime.datastreams import (
     BaseReader,
@@ -71,6 +72,7 @@ class OOMTestTransformer(BaseTransformer):
         return stream_entry
 
 
+@pytest.mark.oom
 def test_oom(app, db, search_clear):
     # disable logging as pytest captures this and it will increase the memory usage immensely
     log.level = logging.CRITICAL

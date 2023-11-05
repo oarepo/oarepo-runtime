@@ -1,9 +1,5 @@
 import sys
-import time
 from pathlib import Path
-
-from celery import shared_task
-from invenio_app.factory import create_api
 
 from oarepo_runtime.datastreams import JSONObject, StreamBatch
 from oarepo_runtime.datastreams.asynchronous import (
@@ -14,8 +10,6 @@ from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
 from oarepo_runtime.datastreams.types import StreamEntryError
 from records2.proxies import current_service
 from records2.records.api import Records2Record
-
-import celery
 
 
 def test_async_fixtures_in_process(

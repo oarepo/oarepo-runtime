@@ -4,7 +4,6 @@ from typing import Iterator, List
 
 import yaml
 from flask import current_app
-from invenio_access.permissions import system_identity
 
 from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
 
@@ -20,7 +19,7 @@ class CatalogueDataStream:
 
 
 class DataStreamCatalogue:
-    def __init__(self, catalogue, content=None, identity=system_identity) -> None:
+    def __init__(self, catalogue, content=None) -> None:
         """
         Catalogue of data streams. The catalogue contains a dict of:
         stream_name: stream_definition, where stream definition is an array of:
@@ -45,7 +44,6 @@ class DataStreamCatalogue:
         else:
             with open(catalogue) as f:
                 self._catalogue = yaml.safe_load(f)
-        self.identity = identity
 
     @property
     def path(self):
@@ -78,8 +76,7 @@ class DataStreamCatalogue:
                         get_signature(
                             "reader",
                             entry,
-                            base_path=self.directory,
-                            identity=self.identity,
+                            base_path=str(self.directory),
                         )
                     )
                 elif "transformer" in entry:
@@ -87,8 +84,7 @@ class DataStreamCatalogue:
                         get_signature(
                             "transformer",
                             entry,
-                            base_path=self.directory,
-                            identity=self.identity,
+                            base_path=str(self.directory),
                         )
                     )
                 elif "writer" in entry:
@@ -96,8 +92,7 @@ class DataStreamCatalogue:
                         get_signature(
                             "writer",
                             entry,
-                            base_path=self.directory,
-                            identity=self.identity,
+                            base_path=str(self.directory),
                         )
                     )
                 elif "source" in entry:
@@ -139,15 +134,14 @@ class DataStreamCatalogue:
         return get_signature(
             "reader",
             entry,
-            base_path=self.directory,
-            identity=self.identity,
+            base_path=str(self.directory),
         )
 
     def get_service_writer(self, entry):
         return Signature(
             SignatureKind("writer"),
             "service",
-            kwargs={**entry, "base_path": self.directory, "identity": self.identity},
+            kwargs={**entry, "base_path": str(self.directory)},
         )
 
 

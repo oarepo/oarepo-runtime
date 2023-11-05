@@ -4,6 +4,8 @@ import dataclasses
 from enum import Enum
 from typing import Any, Iterator, List, Union
 
+from invenio_access.permissions import system_identity
+
 from oarepo_runtime.datastreams.types import (
     DataStreamCallback,
     StreamBatch,
@@ -48,11 +50,13 @@ class Signature:
             kwargs=json["kwargs"],
         )
 
-    def resolve(self, **kwargs):
+    def resolve(self, *, identity, **kwargs):
         if self.kind == SignatureKind.TRANSFORMER:
-            return current_datastreams.get_transformer(self, **kwargs)
+            return current_datastreams.get_transformer(
+                self, **kwargs, identity=identity
+            )
         elif self.kind == SignatureKind.WRITER:
-            return current_datastreams.get_writer(self, **kwargs)
+            return current_datastreams.get_writer(self, **kwargs, identity=identity)
         else:
             raise ValueError(f"Unknown signature kind: {self.kind}")
 
@@ -66,6 +70,7 @@ class AbstractDataStream(abc.ABC):
         transformers: List[Union[Signature, Any]] = None,
         callback: Union[DataStreamCallback, Any],
         batch_size=1,
+        identity=system_identity,
     ):
         """Constructor.
         :param readers: an ordered list of readers (whatever a reader is).
@@ -77,11 +82,14 @@ class AbstractDataStream(abc.ABC):
         self._writers: List[Signature] = [*writers]
         self._callback = callback
         self._batch_size = batch_size
+        self._identity = identity
 
     def _read_entries(self) -> Iterator[StreamEntry]:
         seq = 0
         for reader_signature in self._readers:
-            reader = current_datastreams.get_reader(reader_signature)
+            reader = current_datastreams.get_reader(
+                reader_signature, identity=self._identity
+            )
             try:
                 for entry in reader:
                     seq += 1
@@ -113,14 +121,14 @@ class AbstractDataStream(abc.ABC):
             batch_entries.append(entry)
         yield batch_maker(last=True)
 
-    def process(self, context=None):
+    def process(self, context=None, identity=system_identity):
         context = context or {}
-        chain = self.build_chain()
+        chain = self.build_chain(identity)
         for batch in self._read_batches(context):
             chain.process(batch, self._callback)
 
     @abc.abstractmethod
-    def build_chain(self) -> DataStreamChain:
+    def build_chain(self, identity) -> DataStreamChain:
         pass
 
     def _reader_error(self, reader, exception):

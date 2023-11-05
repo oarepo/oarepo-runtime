@@ -9,32 +9,26 @@ class OARepoDataStreamsExt:
     def __init__(self, app):
         self.app = app
 
-    def get_reader(self, reader):
-        if isinstance(reader, Signature):
-            reader_class = self._get_class("DATASTREAMS_READERS", reader.name)
-            return reader_class(**(reader.kwargs or {}))
+    def get_reader(self, reader, identity, **kwargs):
+        return self._get_instance("DATASTREAMS_READERS", identity, kwargs, reader)
+
+    def get_writer(self, writer, identity, **kwargs):
+        return self._get_instance("DATASTREAMS_WRITERS", identity, kwargs, writer)
+
+    def get_transformer(self, transformer, identity, **kwargs):
+        return self._get_instance(
+            "DATASTREAMS_TRANSFORMERS", identity, kwargs, transformer
+        )
+
+    def _get_instance(self, config_name, identity, kwargs, inst):
+        if isinstance(inst, Signature):
+            config_classes = self._get_classes_from_config(config_name)
+            if inst.name not in config_classes:
+                raise KeyError(f"'{inst.name}' not found in config {config_name}")
+            reader_class = config_classes[inst.name]
+            return reader_class(**(inst.kwargs or {}), **kwargs, identity=identity)
         else:
-            return reader
-
-    def get_writer(self, writer, **kwargs):
-        if isinstance(writer, Signature):
-            writer_class = self._get_class("DATASTREAMS_WRITERS", writer.name)
-            return writer_class(**(writer.kwargs or {}), **kwargs)
-        return writer
-
-    def get_transformer(self, transformer, **kwargs):
-        if isinstance(transformer, Signature):
-            transformer_class = self._get_class(
-                "DATASTREAMS_TRANSFORMERS", transformer.name
-            )
-            return transformer_class(**(transformer.kwargs or {}), **kwargs)
-        return transformer
-
-    def _get_class(self, config_name, name):
-        config_classes = self._get_classes_from_config(config_name)
-        if name in config_classes:
-            return config_classes[name]
-        raise KeyError(f"'{name}' not found in config {config_name}")
+            return inst
 
     @functools.lru_cache(maxsize=5)
     def _get_classes_from_config(self, config_name):

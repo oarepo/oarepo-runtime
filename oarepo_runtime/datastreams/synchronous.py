@@ -57,10 +57,14 @@ class SynchronousDataStreamChain(DataStreamChain):
 class SynchronousDataStream(AbstractDataStream):
     """Data stream."""
 
-    def build_chain(self) -> DataStreamChain:
+    def build_chain(self, identity) -> DataStreamChain:
         return SynchronousDataStreamChain(
             transformers=[
-                current_datastreams.get_transformer(tr) for tr in self._transformers
+                current_datastreams.get_transformer(tr, identity=identity)
+                for tr in self._transformers
             ],
-            writers=[current_datastreams.get_writer(wr) for wr in self._writers],
+            writers=[
+                current_datastreams.get_writer(wr, identity=identity)
+                for wr in self._writers
+            ],
         )

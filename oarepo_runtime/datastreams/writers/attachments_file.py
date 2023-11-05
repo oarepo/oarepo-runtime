@@ -27,7 +27,7 @@ class AttachmentsFileWriter(BaseWriter):
         self._grouping = 3
         self._min_padding = 3
         if base_path:
-            self._dir = base_path.joinpath(target)
+            self._dir = Path(base_path).joinpath(target)
         else:
             self._dir = Path(target)
 

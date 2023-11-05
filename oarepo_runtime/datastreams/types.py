@@ -97,8 +97,9 @@ class StreamEntryFile:
             "content_url": self.content_url,
         }
 
-    def from_json(self, js: JSONObject):
-        return StreamEntryFile(
+    @classmethod
+    def from_json(cls, js: JSONObject):
+        return cls(
             metadata=js["metadata"],
             content_url=js["content_url"],
         )
@@ -215,9 +216,7 @@ class StreamBatch:
         try:
             [StreamEntry.from_json(x) for x in js["entries"]]
         except:
-            print("Exception parsing", js)
-            import traceback
-            traceback.print_exc()
+            log.exception("Exception parsing %s", js)
             raise
         return cls(
             entries=[StreamEntry.from_json(x) for x in js["entries"]],

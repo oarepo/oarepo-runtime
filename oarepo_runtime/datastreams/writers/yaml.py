@@ -1,4 +1,5 @@
 from io import StringIO
+from pathlib import Path
 
 import yaml
 
@@ -19,7 +20,7 @@ class YamlWriter(BaseWriter):
             self._stream = target
         else:
             if base_path:
-                self._file = base_path.joinpath(target)
+                self._file = Path(base_path).joinpath(target)
             else:
                 self._file = target
             self._stream = open(self._file, "w")

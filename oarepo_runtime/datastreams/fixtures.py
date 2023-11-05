@@ -1,16 +1,21 @@
+import logging
 import re
 from pathlib import Path
 
 import pkg_resources
 import yaml
+from celery import shared_task
 from flask import current_app
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.datastreams import (
     DataStreamCallback,
     DataStreamCatalogue,
+    StreamBatch,
     SynchronousDataStream,
 )
+
+log = logging.getLogger("fixtures")
 
 
 def load_fixtures(
@@ -173,3 +178,47 @@ def default_config_generator(service_id, use_files=False):
         {"reader": "service", "service": service_id, "load_files": use_files},
         *writers,
     ]
+
+
+@shared_task
+def fixtures_asynchronous_callback(*args, callback, **kwargs):
+    try:
+        if "batch" in kwargs:
+            batch = StreamBatch.from_json(kwargs["batch"])
+            log.info(
+                "Fixtures progress: %s in batch.seq=%s, batch.last=%s",
+                callback,
+                batch.seq,
+                batch.last,
+            )
+        else:
+            batch = None
+            log.info(f"Fixtures progress: %s", callback)
+
+        if "error" in callback:
+            log.error(
+                f"Error in loading fixtures: %s\n%s\n%s",
+                callback,
+                "\n".join(args),
+                "\n".join(f"{kwarg}: {value}" for kwarg, value in kwargs.items()),
+            )
+
+        if batch:
+            if batch.errors:
+                log.error(
+                    "Batch errors: batch %s:\n%s",
+                    batch.seq,
+                    "\n".join(str(x) for x in batch.errors),
+                )
+
+            for entry in batch.entries:
+                if entry.errors:
+                    log.error(
+                        f"Errors in entry %s of batch %s:\npayload %s\n",
+                        entry.seq,
+                        batch.seq,
+                        entry.entry,
+                        "\n".join(str(x) for x in entry.errors),
+                    )
+    except Exception as e:
+        print(f"Error in fixtures callback: {callback=}, {args=}, {kwargs=}")

@@ -13,7 +13,6 @@ from flask_principal import (
     TypeNeed,
     UserNeed,
 )
-from invenio_access.permissions import system_identity
 
 from oarepo_runtime.datastreams import BaseWriter, DataStreamCallback, StreamBatch
 from oarepo_runtime.datastreams.datastreams import (
@@ -38,7 +37,6 @@ class AsynchronousDataStream(AbstractDataStream):
         transformers: List[Union[Signature, Any]] = None,
         callback: Union[DataStreamCallback, Any],
         batch_size=100,
-        identity=system_identity,
         on_background=True,
     ):
         super().__init__(
@@ -49,14 +47,13 @@ class AsynchronousDataStream(AbstractDataStream):
             batch_size=batch_size,
         )
         self._on_background = on_background
-        self._identity = identity
 
-    def build_chain(self) -> DataStreamChain:
+    def build_chain(self, identity) -> DataStreamChain:
         return AsynchronousDataStreamChain(
-            identity=self._identity,
             transformers=self._transformers,
             writers=self._writers,
             on_background=self._on_background,
+            identity=identity,
         )
 
     def _reader_error(self, reader, exception):
@@ -89,8 +86,8 @@ class AsynchronousDataStreamChain(DataStreamChain):
 
     def _prepare_chain(self, callback: CelerySignature):
         chain_def = [
-            datastreams_error_callback.signature(
-                kwargs={"callback": callback, "callback_name": "batch_started"}
+            datastreams_call_callback.signature(
+                (), kwargs={"callback": callback, "callback_name": "batch_started"}
             )
         ]
         serialized_identity = _serialize_identity(self._identity)
@@ -118,23 +115,25 @@ class AsynchronousDataStreamChain(DataStreamChain):
             )
 
         chain_def.append(
-            datastreams_error_callback.signature(
+            datastreams_call_callback.signature(
+                (),
                 kwargs=dict(
                     callback=callback,
                     callback_name="batch_finished",
                     identity=serialized_identity,
-                )
+                ),
             )
         )
 
         chain_sig = chain(*chain_def)
         chain_sig.link_error(
             datastreams_error_callback.signature(
+                (),
                 kwargs=dict(
                     callback=callback,
                     callback_name="error",
                     identity=serialized_identity,
-                )
+                ),
             )
         )
         return chain_sig
@@ -168,6 +167,8 @@ def run_datastream_processor(batch: Dict, *, processor: JSONObject, identity, ca
             )
 
     except Exception as ex:
+        log.exception("Error processing batch inside %s", processor_signature)
+
         err = StreamEntryError.from_exception(ex)
         deserialized_batch.errors.append(err)
         callback.apply(
@@ -183,7 +184,9 @@ def run_datastream_processor(batch: Dict, *, processor: JSONObject, identity, ca
 
 
 @celery.shared_task
-def datastreams_call_callback(batch: Dict, *, identity=None, callback, callback_name, **kwargs):
+def datastreams_call_callback(
+    batch: Dict, *, identity=None, callback, callback_name, **kwargs
+):
     callback = CelerySignature(callback)
     callback.apply(
         kwargs=dict(batch=batch, identity=identity, callback=callback_name, **kwargs)
@@ -192,7 +195,9 @@ def datastreams_call_callback(batch: Dict, *, identity=None, callback, callback_
 
 
 @celery.shared_task
-def datastreams_error_callback(batch: Dict, *, identity=None, callback, callback_name, **kwargs):
+def datastreams_error_callback(
+    batch: Dict, *, identity=None, callback, callback_name, **kwargs
+):
     callback = CelerySignature(callback)
     callback.apply(
         kwargs=dict(batch=batch, identity=identity, callback=callback_name, **kwargs)
