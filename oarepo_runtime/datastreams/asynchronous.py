@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Union
 import celery
 from celery.canvas import Signature as CelerySignature
 from celery.canvas import chain
+from celery.result import allow_join_result
 from flask_principal import (
     ActionNeed,
     Identity,
@@ -196,13 +197,18 @@ def datastreams_call_callback(
 
 @celery.shared_task
 def datastreams_error_callback(
-    batch: Dict, *, identity=None, callback, callback_name, **kwargs
+    parent_task_id, *, identity=None, callback, callback_name, **kwargs
 ):
-    callback = CelerySignature(callback)
-    callback.apply(
-        kwargs=dict(batch=batch, identity=identity, callback=callback_name, **kwargs)
-    )
-    return batch
+    with allow_join_result():
+        from celery import current_app
+        result = current_app.AsyncResult(parent_task_id)
+        result.get(propagate=False)
+
+        callback = CelerySignature(callback)
+        callback.apply(
+            kwargs=dict(batch={}, identity=identity, callback=callback_name,
+                        result=result.result, traceback=result.traceback, **kwargs)
+        )
 
 
 def _serialize_identity(identity):
