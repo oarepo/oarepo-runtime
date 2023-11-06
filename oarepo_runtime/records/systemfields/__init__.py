@@ -1,6 +1,6 @@
+from .has_draftcheck import HasDraftCheckField
 from .icu import ICUField, ICUSortField, ICUSuggestField
 from .mapping import MappingSystemFieldMixin, SystemFieldDumperExt
-from .has_draftcheck import HasDraftCheckField
 
 __all__ = (
     "ICUField",
@@ -8,5 +8,5 @@ __all__ = (
     "ICUSortField",
     "MappingSystemFieldMixin",
     "SystemFieldDumperExt",
-    "HasDraftCheckField"
+    "HasDraftCheckField",
 )

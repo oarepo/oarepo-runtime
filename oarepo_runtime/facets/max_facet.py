@@ -8,4 +8,3 @@ warnings.warn(
 )
 
 __all__ = ("MaxFacet",)
-

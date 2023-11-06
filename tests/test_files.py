@@ -2,10 +2,11 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
-from oarepo_runtime.datastreams.utils import get_file_service_for_record_class
 from records2.proxies import current_service
 from records2.records.api import Records2Record
+
+from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
+from oarepo_runtime.datastreams.utils import get_file_service_for_record_class
 from tests.test_fixtures import read_yaml
 
 

@@ -2,10 +2,10 @@ import tempfile
 from pathlib import Path
 
 import yaml
-
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
 from records2.proxies import current_service
 from records2.records.api import Records2Record
+
+from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
 
 
 def read_yaml(fp):
