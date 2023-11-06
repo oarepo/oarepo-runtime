@@ -1,4 +1,11 @@
-class ExpandableFieldsServiceMixin:
-    @property
-    def expandable_fields(self):
-        return getattr(self.config, "expandable_fields", [])
+import warnings
+
+from oarepo_runtime.services.expansions.service import ExpandableFieldsServiceMixin
+
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.expansions.service.ExpandableFieldsServiceMixin",
+    DeprecationWarning,
+)
+
+__all__ = ("ExpandableFieldsServiceMixin",)
+
