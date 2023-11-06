@@ -50,7 +50,7 @@ class ServiceWriter(BaseWriter):
         """Writes the input entry using the given service."""
         with BulkUnitOfWork() as uow:
             for entry in batch.entries:
-                if not entry.ok:
+                if entry.filtered or entry.errors:
                     continue
                 with record_invenio_exceptions(entry):
                     if entry.deleted:
@@ -98,9 +98,10 @@ class ServiceWriter(BaseWriter):
             )
 
     def _delete_entry(self, stream_entry: StreamEntry, uow=None):
+        entry_id = self._get_stream_entry_id(stream_entry)
+        if not entry_id:
+            return
         service_kwargs = {}
         if uow:
             service_kwargs["uow"] = uow
-        self._service.delete(
-            self._identity, self._get_stream_entry_id(stream_entry), **service_kwargs
-        )
+        self._service.delete(self._identity, entry_id, **service_kwargs)

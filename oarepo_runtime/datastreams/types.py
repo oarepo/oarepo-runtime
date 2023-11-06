@@ -57,10 +57,14 @@ class StreamEntryError:
     @property
     def json(self) -> JSONObject:
         ret = {}
-        ret["code"] = self.code
-        ret["message"] = self.message
-        ret["location"] = self.location
-        ret["info"] = self.info
+        if self.code:
+            ret["code"] = self.code
+        if self.message:
+            ret["message"] = self.message
+        if self.location:
+            ret["location"] = self.location
+        if self.info:
+            ret["info"] = self.info
         return ret
 
     @classmethod
@@ -68,10 +72,10 @@ class StreamEntryError:
         if js is None:
             return None
         return cls(
-            code=js["code"],
-            message=js["message"],
-            location=js["location"],
-            info=js["info"],
+            code=js.get("code"),
+            message=js.get("message"),
+            location=js.get("location"),
+            info=js.get("info"),
         )
 
     def __str__(self):
