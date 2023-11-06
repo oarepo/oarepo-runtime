@@ -12,7 +12,9 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
+import logging
 import os
+from typing import Union
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -20,10 +22,17 @@ from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.cf.mappings import prepare_cf_indices
-from oarepo_runtime.datastreams.datastreams import StreamEntry
-from oarepo_runtime.datastreams.transformers import BaseTransformer
+from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 
 pytest_plugins = ("celery.contrib.pytest",)
+
+
+logging.basicConfig(
+    level=logging.ERROR,
+    format="%(asctime)s %(levelname)s [%(threadName)s] %(name)s %(message)s",
+)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+logging.getLogger("celery").setLevel(logging.DEBUG)
 
 
 @pytest.fixture(scope="module")
@@ -42,13 +51,18 @@ def extra_entry_points():
 
 
 class StatusTransformer(BaseTransformer):
-    def apply(self, stream_entry: StreamEntry, *args, **kwargs):
-        if "ok" in stream_entry.entry:
-            stream_entry.entry.pop("ok")
-            return stream_entry
-        if "skipped" in stream_entry.entry:
-            stream_entry.filtered = True
-        return stream_entry
+    def apply(self, batch: StreamBatch, *args, **kwargs):
+        for stream_entry in batch.entries:
+            if "ok" in stream_entry.entry:
+                stream_entry.entry.pop("ok")
+            if "skipped" in stream_entry.entry:
+                stream_entry.filtered = True
+        return batch
+
+
+class FailingWriter(BaseWriter):
+    def write(self, batch: StreamBatch) -> Union[StreamBatch, None]:
+        raise Exception("Failing writer")
 
 
 @pytest.fixture(scope="module")
@@ -80,6 +94,8 @@ def app_config(app_config):
         "R": "Remote",
     }
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
+    app_config["DATASTREAMS_WRITERS"] = {"failing": FailingWriter}
+
     return app_config
 
 

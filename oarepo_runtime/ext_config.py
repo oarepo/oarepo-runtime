@@ -11,7 +11,10 @@ from oarepo_runtime.datastreams.readers.excel import ExcelReader
 from oarepo_runtime.datastreams.readers.json import JSONLinesReader, JSONReader
 from oarepo_runtime.datastreams.readers.service import ServiceReader
 from oarepo_runtime.datastreams.readers.yaml import YamlReader
-from oarepo_runtime.datastreams.writers.attachment import AttachmentWriter
+from oarepo_runtime.datastreams.writers.attachments_file import AttachmentsFileWriter
+from oarepo_runtime.datastreams.writers.attachments_service import (
+    AttachmentsServiceWriter,
+)
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
 
@@ -23,7 +26,7 @@ OAREPO_PERMISSIONS_PRESETS = {
 }
 
 
-DEFAULT_DATASTREAMS_READERS = {
+DATASTREAMS_READERS = {
     "excel": ExcelReader,
     "yaml": YamlReader,
     "json": JSONReader,
@@ -31,7 +34,7 @@ DEFAULT_DATASTREAMS_READERS = {
     "service": ServiceReader,
 }
 
-DEFAULT_DATASTREAMS_READERS_BY_EXTENSION = {
+DATASTREAMS_READERS_BY_EXTENSION = {
     "xlsx": "excel",
     "yaml": "yaml",
     "yml": "yaml",
@@ -40,24 +43,14 @@ DEFAULT_DATASTREAMS_READERS_BY_EXTENSION = {
     "jsonl": "json-lines",
 }
 
-DEFAULT_DATASTREAMS_WRITERS = {
+DATASTREAMS_WRITERS = {
     "service": ServiceWriter,
+    "attachments_service": AttachmentsServiceWriter,
     "yaml": YamlWriter,
-    "attachments": AttachmentWriter,
+    "attachments_file": AttachmentsFileWriter,
 }
 
-DEFAULT_DATASTREAMS_TRANSFORMERS = {}
-
-
-DATASTREAMS_READERS = {}
-
-DATASTREAMS_READERS_BY_EXTENSION = {}
-
-DATASTREAMS_WRITERS = {}
-
 DATASTREAMS_TRANSFORMERS = {}
-
-DEFAULT_DATASTREAMS_EXCLUDES = []
 
 DATASTREAMS_CONFIG_GENERATOR = default_config_generator
 

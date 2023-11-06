@@ -1,21 +1,23 @@
-#
-#
-# These files were taken and adapted from invenio-vocabularies and adapted so that they can be used
-# to
-#
-#
-from .batch import StreamBatch
 from .catalogue import DataStreamCatalogue
-from .datastreams import DataStream, DataStreamResult, StreamEntry
-from .errors import DataStreamCatalogueError, ReaderError, TransformerError, WriterError
+from .datastreams import AbstractDataStream
+from .errors import (
+    DataStreamCatalogueError,
+    DataStreamError,
+    ReaderError,
+    TransformerError,
+    WriterError,
+)
+from .json import JSON, JSONObject
 from .readers import BaseReader
+from .synchronous import SynchronousDataStream
 from .transformers import BaseTransformer
+from .types import DataStreamCallback, StreamBatch, StreamEntry
 from .writers import BaseWriter
 
 __all__ = [
+    "JSONObject",
+    "JSON",
     "StreamEntry",
-    "DataStream",
-    "DataStreamResult",
     "DataStreamCatalogue",
     "BaseReader",
     "BaseWriter",
@@ -25,4 +27,8 @@ __all__ = [
     "WriterError",
     "TransformerError",
     "StreamBatch",
+    "DataStreamError",
+    "DataStreamCallback",
+    "SynchronousDataStream",
+    "AbstractDataStream",
 ]
