@@ -2,7 +2,7 @@ from invenio_records.dictutils import dict_set
 from invenio_records.systemfields import SystemField
 from sqlalchemy.orm.exc import NoResultFound
 
-from oarepo_runtime.cf import CustomFieldsMixin
+from oarepo_runtime.services.custom_fields import CustomFieldsMixin
 
 
 # taken from https://github.com/inveniosoftware/invenio-rdm-records/blob/master/invenio_rdm_records/records/systemfields/has_draftcheck.py
