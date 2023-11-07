@@ -96,6 +96,8 @@ def app_config(app_config):
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
     app_config["DATASTREAMS_WRITERS"] = {"failing": FailingWriter}
 
+    app_config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:?check_same_thread=False"
+
     return app_config
 
 
