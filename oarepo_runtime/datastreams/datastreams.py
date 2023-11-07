@@ -2,7 +2,7 @@ import abc
 import copy
 import dataclasses
 from enum import Enum
-from typing import Any, Iterator, List, Union
+from typing import Any, Iterator, List, Union, Callable
 
 from invenio_access.permissions import system_identity
 
@@ -68,9 +68,10 @@ class AbstractDataStream(abc.ABC):
         readers: List[Union[Signature, Any]],
         writers: List[Union[Signature, Any]],
         transformers: List[Union[Signature, Any]] = None,
-        callback: Union[DataStreamCallback, Any],
+        callback: Union[DataStreamCallback, Signature],
         batch_size=1,
         identity=system_identity,
+        reader_callback: Callable[[StreamBatch], None] = None,
     ):
         """Constructor.
         :param readers: an ordered list of readers (whatever a reader is).
@@ -83,6 +84,7 @@ class AbstractDataStream(abc.ABC):
         self._callback = callback
         self._batch_size = batch_size
         self._identity = identity
+        self._reader_callback = reader_callback
 
     def _read_entries(self) -> Iterator[StreamEntry]:
         seq = 0
@@ -116,10 +118,16 @@ class AbstractDataStream(abc.ABC):
 
         for entry in self._read_entries():
             if len(batch_entries) == self._batch_size:
-                yield batch_maker()
+                batch = batch_maker()
+                if self._reader_callback:
+                    self._reader_callback(batch)
+                yield batch
                 batch_entries = []
             batch_entries.append(entry)
-        yield batch_maker(last=True)
+        batch = batch_maker(last=True)
+        if self._reader_callback:
+            self._reader_callback(batch)
+        yield batch
 
     def process(self, context=None, identity=system_identity):
         context = context or {}
