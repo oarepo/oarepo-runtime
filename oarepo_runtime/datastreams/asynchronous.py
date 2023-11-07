@@ -39,6 +39,7 @@ class AsynchronousDataStream(AbstractDataStream):
         callback: Union[DataStreamCallback, Any],
         batch_size=100,
         on_background=True,
+        reader_callback=None,
     ):
         super().__init__(
             readers=readers,
@@ -46,6 +47,7 @@ class AsynchronousDataStream(AbstractDataStream):
             transformers=transformers,
             callback=callback,
             batch_size=batch_size,
+            reader_callback=reader_callback,
         )
         self._on_background = on_background
 
