@@ -16,6 +16,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Union
+from oarepo_runtime.datastreams.types import DataStreamCallback
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -197,15 +198,17 @@ def client_with_credentials_curator(db, client, user, curator_role):
 
 
 @pytest.fixture()
-def sample_data(db, app, search_clear, location):
+def sample_data(db, app, identity, search_clear, location):
     from oarepo_runtime.datastreams.fixtures import load_fixtures
+    from records2.proxies import current_service
     from records2.records.api import Records2Record
 
-    ret = load_fixtures(Path(__file__).parent / "data")
-    assert ret.ok_count == 2
-    assert ret.failed_count == 0
-    assert ret.skipped_count == 0
-    Records2Record.index.refresh()
+    load_fixtures(Path(__file__).parent / "data", callback=DataStreamCallback())
+    Records2Record.index.refresh()    
+    titles = set()
+    for rec in current_service.scan(identity):
+        titles.add(rec["metadata"]["title"])
+    assert titles == {"record 1", "record 2"}
 
 
 @pytest.fixture()
