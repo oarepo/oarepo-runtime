@@ -27,6 +27,9 @@ class BulkRecordCommitOp(RecordCommitOp):
         """Postponed."""
 
     def get_index_action(self):
+        if self._indexer is None:
+            return None
+
         index = self._indexer.record_to_index(self._record)
         arguments = {}
         body = self._indexer._prepare_record(self._record, index, arguments)
@@ -56,6 +59,8 @@ class BulkRecordDeleteOp(RecordDeleteOp):
         """Postponed."""
 
     def get_index_action(self):
+        if self._indexer is None:
+            return None
         index = self._indexer.record_to_index(self._record)
         index = self._indexer._prepare_index(index)
 
@@ -84,7 +89,9 @@ class BulkUnitOfWork(CachingUnitOfWork):
         for op in self._operations:
             if isinstance(op, BulkRecordCommitOp) or isinstance(op, BulkRecordDeleteOp):
                 indexer = op._indexer
-                bulk_data.append(op.get_index_action())
+                index_action = op.get_index_action()
+                if index_action:
+                    bulk_data.append(index_action)
         if indexer:
             req_timeout = current_app.config["INDEXER_BULK_REQUEST_TIMEOUT"]
             try:
