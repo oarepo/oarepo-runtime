@@ -1,5 +1,4 @@
 from flask import current_app
-from invenio_db import db
 from invenio_indexer.api import bulk
 from invenio_records_resources.services.uow import (
     RecordCommitOp,
@@ -77,9 +76,7 @@ class BulkUnitOfWork(CachingUnitOfWork):
         return super().register(op)
 
     def commit(self):
-        # prevent session to extend outside of this call
-        with db.session.begin_nested():
-            super().commit()
+        super().commit()
 
         # do bulk indexing
         bulk_data = []

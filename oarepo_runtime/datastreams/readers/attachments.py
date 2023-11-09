@@ -4,7 +4,8 @@ from pathlib import Path
 import yaml
 
 from oarepo_runtime.datastreams import BaseReader, StreamEntry
-from oarepo_runtime.datastreams.writers.attachment import format_serial
+from oarepo_runtime.datastreams.types import StreamEntryFile
+from oarepo_runtime.datastreams.writers.attachments_file import format_serial
 
 
 class AttachmentsReaderMixin(BaseReader):
@@ -22,17 +23,16 @@ class AttachmentsReaderMixin(BaseReader):
                 )
                 if file_path.exists():
                     file_metadata = self.load_file_metadata(file_path)
-                    files = []
                     for md in file_metadata:
-                        files.append(
-                            {
-                                "metadata": md,
-                                "content": b64encode(
+                        se.files.append(
+                            StreamEntryFile(
+                                metadata=md,
+                                content_url="data:"
+                                + b64encode(
                                     (file_path / md["key"]).read_bytes()
-                                ),
-                            }
+                                ).decode("ascii"),
+                            )
                         )
-                    se.context["files"] = files
             yield se
 
     def load_file_metadata(self, file_path: Path):

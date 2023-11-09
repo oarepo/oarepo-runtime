@@ -1,29 +1,32 @@
-from base64 import b64decode
-from io import BytesIO
-
 from invenio_access.permissions import system_identity
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_records_resources.proxies import current_service_registry
-from marshmallow import ValidationError
+from invenio_records_resources.services.uow import UnitOfWork
 
-from ..datastreams import StreamEntryError
-from ..utils import get_file_service_for_record_class
-from . import BaseWriter, StreamEntry
-from .validation_errors import format_validation_error
+from ...uow import BulkUnitOfWork
+from ..types import StreamBatch, StreamEntry
+from . import BaseWriter
+from .utils import record_invenio_exceptions
 
 
 class ServiceWriter(BaseWriter):
     """Writes the entries to a repository instance using a Service object."""
 
     def __init__(
-        self, *, service, identity=None, update=False, write_files=True, **kwargs
+        self,
+        *,
+        service,
+        identity=None,
+        update=False,
+        **kwargs,
     ):
         """Constructor.
         :param service_or_name: a service instance or a key of the
                                 service registry.
         :param identity: access identity.
         :param update: if True it will update records if they exist.
+        :param write_files: if True it will write files to the file service.
+        :param uow: UnitOfWork fully qualified class name or class to use for the unit of work.
         """
         super().__init__(**kwargs)
 
@@ -34,102 +37,71 @@ class ServiceWriter(BaseWriter):
         self._identity = identity or system_identity
         self._update = update
 
-        self._file_service = None
-        self._record_cls = getattr(self._service.config, "record_cls", None)
-
-        if self._record_cls and write_files:
-            # try to get file service
-            self._file_service = get_file_service_for_record_class(self._record_cls)
-
-    def _entry_id(self, entry):
-        """Get the id from an entry."""
-        return entry.get("id")
-
     def _resolve(self, id_):
         try:
             return self._service.read(self._identity, id_)
         except PIDDoesNotExistError:
             return None
 
-    def write(self, stream_entry: StreamEntry, *args, uow=None, **kwargs):
-        """Writes the input entry using a given service."""
+    def _get_stream_entry_id(self, entry: StreamEntry):
+        return entry.id
+
+    def write(self, batch: StreamBatch):
+        """Writes the input entry using the given service."""
+        with BulkUnitOfWork() as uow:
+            for entry in batch.entries:
+                if entry.filtered or entry.errors:
+                    continue
+                with record_invenio_exceptions(entry):
+                    if entry.deleted:
+                        self._delete_entry(entry, uow=uow)
+                    else:
+                        self._write_entry(entry, uow)
+            uow.commit()
+
+        return batch
+
+    def _write_entry(self, stream_entry: StreamEntry, uow: UnitOfWork):
         entry = stream_entry.entry
         service_kwargs = {}
         if uow:
             service_kwargs["uow"] = uow
-        try:
-            entry_id = self._entry_id(entry)
-            do_create = True
 
-            if entry_id and self._update:
-                e = self.try_update(entry_id, stream_entry, **service_kwargs)
-                if e:
-                    entry = e
-                    do_create = False
+        do_create = True
+        repository_entry = None  # just to make linter happy
 
-            if do_create:
-                entry = self._service.create(self._identity, entry, **service_kwargs)
-                entry_id = entry.id
+        entry_id = self._get_stream_entry_id(stream_entry)
 
-            stream_entry.entry = entry.data
+        if entry_id and self._update:
+            repository_entry = self.try_update(entry_id, entry, **service_kwargs)
+            if repository_entry:
+                do_create = False
 
-            stream_entry.context["pid"] = entry_id
-            stream_entry.context["revision_id"] = entry._record.revision_id
-
-            if self._file_service and stream_entry.context.get("files", []):
-                # store the files with the metadata
-                for f in stream_entry.context["files"]:
-                    self._file_service.init_files(
-                        self._identity,
-                        entry.id,
-                        [{"key": f["metadata"]["key"]}],
-                        **service_kwargs,
-                    )
-                    metadata = f["metadata"].get("metadata", {})
-                    if metadata:
-                        self._file_service.update_file_metadata(
-                            self._identity, entry.id, metadata, **service_kwargs
-                        )
-                    self._file_service.set_file_content(
-                        self._identity,
-                        entry.id,
-                        f["metadata"]["key"],
-                        BytesIO(b64decode(f["content"])),
-                        **service_kwargs,
-                    )
-                    self._file_service.commit_file(
-                        self._identity, entry.id, f["metadata"]["key"], **service_kwargs
-                    )
-
-        except ValidationError as err:
-            validation_errors = format_validation_error(err.messages)
-            for err_path, err_value in validation_errors.items():
-                stream_entry.errors.append(
-                    StreamEntryError(
-                        code="MARHSMALLOW", message=err_value, location=err_path
-                    )
-                )
-        except InvalidRelationValue as err:
-            # TODO: better formatting for this kind of error
-            stream_entry.errors.append(
-                StreamEntryError.from_exception(err, message=err.args[0])
+        if do_create:
+            repository_entry = self._service.create(
+                self._identity, entry, **service_kwargs
             )
-        except Exception as err:
-            stream_entry.errors.append(StreamEntryError.from_exception(err))
 
-    def try_update(self, entry_id, stream_entry, **service_kwargs):
+        stream_entry.entry = repository_entry.data
+        stream_entry.id = repository_entry.id
+
+        stream_entry.context["revision_id"] = repository_entry._record.revision_id
+
+    def try_update(self, entry_id, entry, **service_kwargs):
         current = self._resolve(entry_id)
         if current:
-            updated = dict(current.to_dict(), **stream_entry.entry)
+            updated = dict(current.to_dict(), **entry)
             # might raise exception here but that's ok - we know that the entry
             # exists in db as it was _resolved
             return self._service.update(
                 self._identity, entry_id, updated, **service_kwargs
             )
 
-    def delete(self, stream_entry: StreamEntry, uow=None):
+    def _delete_entry(self, stream_entry: StreamEntry, uow=None):
+        entry_id = self._get_stream_entry_id(stream_entry)
+        if not entry_id:
+            return
         service_kwargs = {}
         if uow:
             service_kwargs["uow"] = uow
-        entry = stream_entry.entry
-        self._service.delete(self._identity, entry["id"], **service_kwargs)
+        self._service.delete(self._identity, entry_id, **service_kwargs)

@@ -1,7 +1,7 @@
 import oarepo_runtime.cf.cli  # noqa, just to register
-import oarepo_runtime.datastreams.cli  # noqa, just to register
 
 from .cli import oarepo as oarepo_cmd
+from .datastreams.ext import OARepoDataStreamsExt
 
 
 class OARepoRuntime(object):
@@ -16,6 +16,7 @@ class OARepoRuntime(object):
         """Flask application initialization."""
         self.init_config(app)
         app.extensions["oarepo-runtime"] = self
+        app.extensions["oarepo-datastreams"] = OARepoDataStreamsExt(app)
         app.cli.add_command(oarepo_cmd)
 
     def init_config(self, app):
@@ -35,14 +36,20 @@ class OARepoRuntime(object):
             if k == "DEFAULT_DATASTREAMS_EXCLUDES":
                 app.config.setdefault(k, []).extend(getattr(ext_config, k))
 
-            elif k.startswith("DEFAULT_DATASTREAMS_"):
-                app.config.setdefault(k, {}).update(getattr(ext_config, k))
-
             elif k.startswith("DATASTREAMS_"):
-                app.config.setdefault(k, getattr(ext_config, k))
+                val = getattr(ext_config, k)
+                if isinstance(val, dict):
+                    self.add_non_existing(app.config.setdefault(k, {}), val)
+                else:
+                    app.config.setdefault(k, val)
 
             elif k == "HAS_DRAFT_CUSTOM_FIELD":
                 app.config.setdefault(k, getattr(ext_config, k))
 
             elif k == "OAREPO_FACET_GROUP_NAME":
                 app.config.setdefault(k, getattr(ext_config, k))
+                
+    def add_non_existing(self, target, source):
+        for val_k, val_value in source.items():
+            if val_k not in target:
+                target[val_k] = val_value
