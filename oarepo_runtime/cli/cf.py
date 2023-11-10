@@ -1,7 +1,6 @@
 from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
-
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 

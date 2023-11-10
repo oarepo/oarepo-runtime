@@ -19,9 +19,9 @@ from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
 
-from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 from oarepo_runtime.datastreams.datastreams import StreamEntry
 from oarepo_runtime.datastreams.transformers import BaseTransformer
+from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 pytest_plugins = ("celery.contrib.pytest",)
 

@@ -1,11 +1,5 @@
 from invenio_records_resources.services.custom_fields import BooleanCF
 
-from oarepo_runtime.services.config.permissions_presets import (
-    AuthenticatedPermissionPolicy,
-    EveryonePermissionPolicy,
-    OaiHarvesterPermissionPolicy,
-    ReadOnlyPermissionPolicy,
-)
 from oarepo_runtime.datastreams.fixtures import default_config_generator
 from oarepo_runtime.datastreams.readers.excel import ExcelReader
 from oarepo_runtime.datastreams.readers.json import JSONLinesReader, JSONReader
@@ -14,6 +8,12 @@ from oarepo_runtime.datastreams.readers.yaml import YamlReader
 from oarepo_runtime.datastreams.writers.attachment import AttachmentWriter
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
+from oarepo_runtime.services.config.permissions_presets import (
+    AuthenticatedPermissionPolicy,
+    EveryonePermissionPolicy,
+    OaiHarvesterPermissionPolicy,
+    ReadOnlyPermissionPolicy,
+)
 
 OAREPO_PERMISSIONS_PRESETS = {
     "read_only": ReadOnlyPermissionPolicy,

@@ -1,7 +1,8 @@
 from invenio_db import db
 
-from .base import Relation, RelationResult
 from oarepo_runtime.services.relations.errors import InvalidRelationError
+
+from .base import Relation, RelationResult
 from .lookup import LookupResult
 
 

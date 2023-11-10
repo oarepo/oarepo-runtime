@@ -9,8 +9,9 @@ from invenio_records.systemfields.relations import (
 )
 
 from oarepo_runtime.services.relations.errors import MultipleInvalidRelationErrors
-from .lookup import LookupResult, lookup_key
 from oarepo_runtime.services.relations.mapping import RelationsMapping
+
+from .lookup import LookupResult, lookup_key
 
 
 class RelationResult:
