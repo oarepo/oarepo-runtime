@@ -2,7 +2,7 @@ import abc
 import copy
 import dataclasses
 from enum import Enum
-from typing import Any, Iterator, List, Union, Callable
+from typing import Any, Callable, Iterator, List, Union
 
 from invenio_access.permissions import system_identity
 
