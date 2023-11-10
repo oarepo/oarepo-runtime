@@ -1,17 +1,16 @@
-from pprint import pprint
-
 import click
 from flask import current_app
 from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
-from oarepo_runtime.datastreams import StreamEntry
+from oarepo_runtime.datastreams import SynchronousDataStream
+from oarepo_runtime.datastreams.asynchronous import AsynchronousDataStream
 from oarepo_runtime.datastreams.fixtures import (
-    FixturesResult,
     dump_fixtures,
+    fixtures_asynchronous_callback,
     load_fixtures,
 )
-from oarepo_runtime.uow import BulkUnitOfWork
+from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
 
 @oarepo.group()
@@ -24,13 +23,8 @@ def fixtures():
 @click.option("--include", multiple=True)
 @click.option("--exclude", multiple=True)
 @click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
-@click.option("--show-error-entry/--hide-error-entry", is_flag=True)
-@click.option(
-    "--bulk/--no-bulk",
-    is_flag=True,
-    default=True,
-    help="Use bulk indexing (that is, delay indexing)",
-)
+@click.option("--verbose", is_flag=True)
+@click.option("--on-background", is_flag=True)
 @click.option(
     "--bulk-size",
     default=100,
@@ -43,46 +37,46 @@ def load(
     include=None,
     exclude=None,
     system_fixtures=None,
-    show_error_entry=False,
-    bulk=True,
+    verbose=False,
     bulk_size=100,
+    on_background=False,
 ):
     """Loads fixtures"""
-    if show_error_entry:
 
-        def error_callback(entry: StreamEntry):
-            pprint(entry.entry)
-            for err in entry.errors:
-                print(err.code)
-                print(err.message)
-                print(err.info)
-
+    if not on_background:
+        callback = StatsKeepingDataStreamCallback(log_error_entry=verbose)
     else:
-        error_callback = None
+        callback = fixtures_asynchronous_callback.s()
 
     with current_app.wsgi_app.mounts["/api"].app_context():
-        results: FixturesResult = load_fixtures(
+        load_fixtures(
             fixture_dir,
             _make_list(include),
             _make_list(exclude),
             system_fixtures=system_fixtures,
-            error_callback=error_callback,
+            callback=callback,
             batch_size=bulk_size,
-            uow_class=BulkUnitOfWork if bulk else None,
+            datastreams_impl=AsynchronousDataStream
+            if on_background
+            else SynchronousDataStream,
         )
-        _show_stats(results, "Load fixtures")
+        if not on_background:
+            _show_stats(callback, "Load fixtures")
 
 
 @fixtures.command()
 @click.option("--include", multiple=True)
 @click.option("--exclude", multiple=True)
 @click.argument("fixture_dir", required=True)
+@click.option("--verbose", is_flag=True)
 @with_appcontext
-def dump(fixture_dir, include, exclude):
+def dump(fixture_dir, include, exclude, verbose):
     """Dump fixtures"""
+    callback = StatsKeepingDataStreamCallback(log_error_entry=verbose)
+
     with current_app.wsgi_app.mounts["/api"].app_context():
-        results = dump_fixtures(fixture_dir, _make_list(include), _make_list(exclude))
-        _show_stats(results, "Dump fixtures")
+        dump_fixtures(fixture_dir, _make_list(include), _make_list(exclude))
+        _show_stats(callback, "Dump fixtures")
 
 
 def _make_list(lst):
@@ -91,14 +85,6 @@ def _make_list(lst):
     ]
 
 
-def _show_stats(results: FixturesResult, title: str):
+def _show_stats(callback: StatsKeepingDataStreamCallback, title: str):
     print(f"{title} stats:")
-    print(f"    ok records: {results.ok_count}")
-    print(f"    failed records: {results.failed_count}")
-    print(f"    skipped records: {results.skipped_count}")
-    print()
-    print("Details:")
-    for fixture, r in results.results.items():
-        print(
-            f"    {fixture} - {r.ok_count} ok, {r.failed_count} failed, {r.skipped_count} skipped"
-        )
+    print(callback.stats())

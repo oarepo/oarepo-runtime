@@ -7,10 +7,9 @@
 # details.
 
 """Datastream errors."""
-import typing as t
+from typing import Union
 
-JSON = t.Union[str, int, float, bool, None, t.Mapping[str, "JSON"], t.List["JSON"]]
-JSONObject = t.Mapping[str, "JSON"]
+from .json import JSONObject
 
 
 class DataStreamError(Exception):
@@ -19,7 +18,7 @@ class DataStreamError(Exception):
         message,
         code=None,
         location=None,
-        detail: t.Union[JSONObject, None] = None,
+        detail: Union[JSONObject, None] = None,
     ):
         """
         @param message: a string message (overview)

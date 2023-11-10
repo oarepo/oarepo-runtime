@@ -1,15 +1,15 @@
 import os
-from base64 import b64decode
 from pathlib import Path
 
 import yaml
 
-from oarepo_runtime.datastreams import StreamEntry
+from oarepo_runtime.datastreams import StreamBatch, StreamEntry
 
+from ..utils import attachments_requests
 from . import BaseWriter
 
 
-class AttachmentWriter(BaseWriter):
+class AttachmentsFileWriter(BaseWriter):
     """
     Writes the files and its metadata into subdirectories.
 
@@ -27,32 +27,34 @@ class AttachmentWriter(BaseWriter):
         self._grouping = 3
         self._min_padding = 3
         if base_path:
-            self._dir = base_path.joinpath(target)
+            self._dir = Path(base_path).joinpath(target)
         else:
             self._dir = Path(target)
 
-    def write(self, entry: StreamEntry, *args, **kwargs):
+    def write(self, batch: StreamBatch, *args, **kwargs):
         """Writes the input stream entry using a given service."""
         """
         context looks like: {
-            'serial_no': 2, 
             'files': [
             {'metadata': {'updated': '...', 'mimetype': 'image/png', 'storage_class': 'L', 'file_id': '', 
                           'links': {...}, 'size': 27, 'status': 'completed', 'version_id': '...', 
                           'bucket_id': '...', 'metadata': None, 'key': 'test.png', 
                           'checksum': 'md5:...', 'created': '...'}, 
-                          'content': b'test file content: test.png'}]}
+             'content': b'test file content: test.png'}]}
         """
-        if "serial_no" not in entry.context or not entry.context.get("files"):
-            return entry
+        for entry in batch.entries:
+            if entry.ok and entry.files:
+                self.write_entry(entry)
 
-        dirname = self._dir.joinpath(format_serial(entry.context["serial_no"])) / "data"
+    def write_entry(self, entry: StreamEntry):
+        dirname = self._dir.joinpath(format_serial(entry.seq)) / "data"
         dirname.mkdir(parents=True, exist_ok=False)
         file_keys = []
         files_metadata = []
-        for fn_idx, fn in enumerate(entry.context["files"]):
-            md = {**fn["metadata"]}
-            content = b64decode(fn["content"])
+        for fn_idx, fn in enumerate(entry.files):
+            md = {**fn.metadata}
+            content = attachments_requests.get(fn.content_url).content
+            # cleanup
             md.pop("storage_class", None)
             md.pop("file_id", None)
             md.pop("links", None)
@@ -69,9 +71,6 @@ class AttachmentWriter(BaseWriter):
         with open(dirname / metadata_key, "w") as f:
             yaml.safe_dump_all(files_metadata, f)
         return entry
-
-    def delete(self, stream_entry: StreamEntry):
-        """noop"""
 
     def finish(self):
         """Finalizes writing"""

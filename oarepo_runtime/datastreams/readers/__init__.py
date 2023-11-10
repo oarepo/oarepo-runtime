@@ -1,15 +1,15 @@
 import contextlib
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Union
 
-from ..datastreams import StreamEntry
+from ..types import StreamEntry
 
 
 class BaseReader(ABC):
     """Base reader."""
 
-    base_path: Path
+    base_path: Union[Path, None]
 
     def __init__(self, *, source=None, base_path=None, **kwargs):
         """Constructor.

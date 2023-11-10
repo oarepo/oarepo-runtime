@@ -1,3 +1,5 @@
 records2:
 - service: records2
+- writer: attachments_service
+  service: records2
 - source: records2.yaml
