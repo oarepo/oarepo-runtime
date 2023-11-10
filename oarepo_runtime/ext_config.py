@@ -1,6 +1,6 @@
 from invenio_records_resources.services.custom_fields import BooleanCF
 
-from oarepo_runtime.config.permissions_presets import (
+from oarepo_runtime.services.config.permissions_presets import (
     AuthenticatedPermissionPolicy,
     EveryonePermissionPolicy,
     OaiHarvesterPermissionPolicy,
