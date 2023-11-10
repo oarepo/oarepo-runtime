@@ -1,12 +1,21 @@
-from .base import (
+from oarepo_runtime.records.relations.base import (
     InvalidCheckValue,
     InvalidRelationValue,
     Relation,
     RelationResult,
     RelationsField,
 )
-from .internal import InternalRelation
-from .pid_relation import PIDRelation
+from oarepo_runtime.records.relations.internal import InternalRelation
+from oarepo_runtime.records.relations.pid_relation import PIDRelation
+
+import warnings
+
+
+
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.records.relations",
+    DeprecationWarning,
+)
 
 __all__ = (
     "Relation",
@@ -17,3 +26,6 @@ __all__ = (
     "InternalRelation",
     "PIDRelation",
 )
+
+
+
