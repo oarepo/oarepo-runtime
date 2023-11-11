@@ -135,6 +135,7 @@ class RelationResult:
 
     def _value_check(self, value_to_check, object):
         """Checks if the value is present in the object."""
+        # TODO: this is way too complicated, should refactor it (and look at the code coverage as well)
         for key, value in value_to_check.items():
             if key not in object:
                 raise InvalidCheckValue(f"Invalid key {key}.")
