@@ -25,16 +25,7 @@ class RelationResult:
         exceptions = []
         for relation in found:
             try:
-                if not isinstance(relation.value, dict):
-                    raise InvalidRelationValue(
-                        f"Value at path {relation.path} must be dict, found {relation.value}"
-                    )
-
-                relation_id = self._lookup_id(relation)
-
-                resolved_object = self.resolve(relation_id)
-                if not resolved_object:
-                    raise InvalidRelationValue(f"Invalid value {relation_id}.")
+                resolved_object = self._resolve_lookup_result(relation)
 
                 if self.field.value_check:
                     transformed_data = {}
@@ -48,6 +39,17 @@ class RelationResult:
                 exceptions.append((relation, e))
         if exceptions:
             raise MultipleInvalidRelationErrors(exceptions)
+
+    def _resolve_lookup_result(self, relation):
+        if not isinstance(relation.value, dict):
+            raise InvalidRelationValue(
+                f"Value at path {relation.path} must be dict, found {relation.value}"
+            )
+        relation_id = self._lookup_id(relation)
+        resolved_object = self.resolve(relation_id)
+        if not resolved_object:
+            raise InvalidRelationValue(f"Could not resolve relation id {relation_id}.")
+        return resolved_object
 
     def clean(self):
         """Clean the dereferenced attributes inside the record."""
@@ -90,8 +92,7 @@ class RelationResult:
             return
 
         data = relation.value
-        # Get related record
-        obj = self.resolve(self._lookup_id(relation))
+        obj = self._resolve_lookup_result(relation)
         self._get_dereferenced_value(data, obj, relation)
 
         return data

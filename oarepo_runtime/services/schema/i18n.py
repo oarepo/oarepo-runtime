@@ -27,16 +27,16 @@ def get_i18n_schema(lang_field, value_field):
     )
 
 
-def MultilingualField(  # NOSONAR
-    *args, lang_field="lang", value_field="value", **kwargs
-):
+def MultilingualField(lang_field="lang", value_field="value", **kwargs):  # noqa NOSONAR
     return fields.List(
         fields.Nested(get_i18n_schema(lang_field, value_field)),
         **kwargs,
     )
 
 
-def I18nStrField(*args, lang_field="lang", value_field="value", **kwargs):  # NOSONAR
+def I18nStrField(  # noqa NOSONAR
+    *args, lang_field="lang", value_field="value", **kwargs
+):
     return fields.Nested(
         get_i18n_schema(lang_field, value_field),
         *args,

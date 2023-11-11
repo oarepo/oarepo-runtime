@@ -58,8 +58,8 @@ class PIDRelation(Relation):
 
 
 class MetadataRelationResult(PIDRelationResult):
-    def _dereference_one(self, relation: LookupResult, keys, attrs):
-        ret = super()._dereference_one(relation, keys, attrs)
+    def _dereference_one(self, relation: LookupResult):
+        ret = super()._dereference_one(relation)
         if "metadata" in ret:
             ret.update(ret.pop("metadata"))
         return ret

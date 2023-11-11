@@ -41,8 +41,3 @@ class HasDraftCheckField(CustomFieldsMixin, SystemField):
 
     def pre_dump(self, record, data, **kwargs):
         dict_set(data, self.key, record.has_draft)
-
-    """
-    def post_load(self, record, data, **kwargs):
-        record.pop(self.key, None)
-    """

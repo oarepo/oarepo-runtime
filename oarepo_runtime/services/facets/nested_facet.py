@@ -27,6 +27,6 @@ class NestedLabeledFacet(dsl.Facet):
         """Get a labelled version of a bucket."""
         try:
             out = data["buckets"]
-        except:
+        except KeyError:
             out = []
         return {"buckets": out, "label": str(self._label)}

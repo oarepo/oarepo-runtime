@@ -50,8 +50,6 @@ class AutoDateHistogramFacet(dsl.DateHistogramFacet):
 class EDTFIntervalFacet(LabelledFacetMixin, AutoDateHistogramFacet):
     # auto_date_histogram
     def __init__(self, *args, **kwargs):
-        # if "interval" not in kwargs:
-        #     kwargs["interval"] = "year"
         super().__init__(*args, **kwargs)
 
     def localized_value_labels(self, values, locale):
