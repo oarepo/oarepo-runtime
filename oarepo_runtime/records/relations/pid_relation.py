@@ -10,16 +10,24 @@ class PIDRelationResult(RelationResult):
     def resolve(self, id_):
         """Resolve the value using the record class."""
         # TODO: handle permissions here !!!!!!
-        pid_field_context = self.field.pid_field
-        if hasattr(pid_field_context, "pid_type"):
-            pid_type = pid_field_context.pid_type
-        else:
-            pid_field = pid_field_context.field
-            pid_type = (
-                pid_field._provider.pid_type
-                if pid_field._provider
-                else pid_field._pid_type
-            )
+        try:
+            pid_field_context = self.field.pid_field
+            if hasattr(pid_field_context, "pid_type"):
+                pid_type = pid_field_context.pid_type
+            else:
+                pid_field = pid_field_context.field
+                pid_type = (
+                    pid_field._provider.pid_type
+                    if pid_field._provider
+                    else pid_field._pid_type
+                )
+        except Exception as e:
+            raise InvalidRelationError(
+                f"PID type for field {self.field.key} has not been found or there was an exception accessing it.",
+                related_id=id_,
+                location=self.field.key,
+            ) from e
+
         cache_key = (pid_type, id_)
         if cache_key in self.cache:
             obj = self.cache[cache_key]
