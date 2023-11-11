@@ -1,12 +1,10 @@
-from invenio_records_resources.services.records.facets import TermsFacet
+import warnings
 
+from oarepo_runtime.services.facets.base import LabelledValuesTermsFacet
 
-class LabelledValuesTermsFacet(TermsFacet):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **{"value_labels": self.value_labels, **kwargs})
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.facets.based.LabelledValuesTermsFacet",
+    DeprecationWarning,
+)
 
-    def localized_value_labels(self, values, locale):
-        return {val: val for val in values}
-
-    def value_labels(self, values):
-        return {val: val for val in values}
+__all__ = ("LabelledValuesTermsFacet",)

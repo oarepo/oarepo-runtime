@@ -1,13 +1,10 @@
-from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
-from opensearch_dsl import Facet
+import warnings
 
+from oarepo_runtime.services.facets.max_facet import MaxFacet
 
-class MaxFacet(LabelledFacetMixin, Facet):
-    agg_type = "max"
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.facets.max_facet.MaxFacet",
+    DeprecationWarning,
+)
 
-    def get_labelled_values(self, data, filter_values):
-        value = None
-        if "value_as_string" in data:
-            value = data["value_as_string"]
-
-        return {"label": str(self._label), "value": value}
+__all__ = ("MaxFacet",)

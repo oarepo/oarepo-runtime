@@ -203,13 +203,20 @@ def datastreams_error_callback(
 ):
     with allow_join_result():
         from celery import current_app
+
         result = current_app.AsyncResult(parent_task_id)
         result.get(propagate=False)
 
         callback = CelerySignature(callback)
         callback.apply(
-            kwargs=dict(batch={}, identity=identity, callback=callback_name,
-                        result=result.result, traceback=result.traceback, **kwargs)
+            kwargs=dict(
+                batch={},
+                identity=identity,
+                callback=callback_name,
+                result=result.result,
+                traceback=result.traceback,
+                **kwargs,
+            )
         )
 
 

@@ -1,16 +1,10 @@
-from invenio_records_resources.services.records.params import FacetsParam
+import warnings
 
+from oarepo_runtime.services.facets.params import FilteredFacetsParam
 
-class FilteredFacetsParam(FacetsParam):
-    def filter(self, search):
-        """Apply a post filter on the search."""
-        if not self._filters:
-            return search
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.facets.params.FilteredFacetsParam",
+    DeprecationWarning,
+)
 
-        filters = list(self._filters.values())
-
-        facet_filter = filters[0]
-        for f in filters[1:]:
-            facet_filter &= f
-
-        return search.filter(facet_filter)
+__all__ = ("FilteredFacetsParam",)

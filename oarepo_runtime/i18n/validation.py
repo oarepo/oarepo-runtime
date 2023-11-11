@@ -1,7 +1,10 @@
-import langcodes
-from marshmallow.exceptions import ValidationError
+import warnings
 
+from oarepo_runtime.services.schema.i18n_validation import lang_code_validator
 
-def lang_code_validator(value):
-    if value != "_" and not langcodes.Language.get(value).is_valid():
-        raise ValidationError(f"Invalid language code {value}")
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.schema.i18n_validation.lang_code_validator",
+    DeprecationWarning,
+)
+
+__all__ = ("lang_code_validator",)

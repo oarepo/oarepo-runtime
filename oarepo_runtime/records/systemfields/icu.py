@@ -4,8 +4,8 @@ from typing import Dict
 from flask import current_app
 from invenio_records.systemfields import SystemField
 
+from oarepo_runtime.records.relations.lookup import lookup_key
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
-from oarepo_runtime.relations.lookup import lookup_key
 
 
 class ICUField(SystemField):

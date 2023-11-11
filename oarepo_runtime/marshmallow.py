@@ -1,10 +1,10 @@
-import marshmallow as ma
-from invenio_records_resources.services.records.schema import (
-    BaseRecordSchema as InvenioBaseRecordSchema,
+import warnings
+
+from oarepo_runtime.services.schema.marshmallow import BaseRecordSchema
+
+warnings.warn(
+    "Deprecated, please use oarepo_runtime.services.schema.marshmallow.BaseRecordSchema",
+    DeprecationWarning,
 )
 
-
-class BaseRecordSchema(InvenioBaseRecordSchema):
-    """Base record schema - in addition to invenio exposes $schema as well."""
-
-    _schema = ma.fields.Str(attribute="$schema", data_key="$schema")
+__all__ = ("BaseRecordSchema",)

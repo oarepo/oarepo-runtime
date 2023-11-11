@@ -1,8 +1,7 @@
 from flask.cli import with_appcontext
 
 from oarepo_runtime.cli import oarepo
-
-from .mappings import prepare_cf_indices
+from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 
 @oarepo.group()

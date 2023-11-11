@@ -2,12 +2,12 @@ import threading
 from pathlib import Path
 
 import pytest
+from records2.proxies import current_service
+from records2.records.api import Records2Record
 
 from oarepo_runtime.datastreams import DataStreamCallback
 from oarepo_runtime.datastreams.fixtures import load_fixtures
 from oarepo_runtime.records import select_record_for_update
-from records2.records.api import Records2Record
-from records2.proxies import current_service
 
 
 @pytest.mark.xfail(reason="sqlite3 does not support locking")
