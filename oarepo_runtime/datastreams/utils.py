@@ -8,12 +8,23 @@ from requests.adapters import BaseAdapter
 
 
 def get_file_service_for_record_class(record_class):
+    if not record_class:
+        return None
+
     for svc in current_service_registry._services.values():
         if not isinstance(svc, FileService):
             continue
         if svc.record_cls != record_class:
             continue
         return svc
+
+
+def get_file_service_for_record_service(record_service):
+    if hasattr(record_service, "draft_files") and isinstance(record_service.draft_files, FileService):
+        return record_service.draft_files
+    if hasattr(record_service, "files") and isinstance(record_service.files, FileService):
+        return record_service.files
+    return get_file_service_for_record_class(getattr(record_service.config, "record_cls", None))
 
 
 class DataAdapter(BaseAdapter):

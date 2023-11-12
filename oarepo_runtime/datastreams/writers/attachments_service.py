@@ -6,7 +6,11 @@ from invenio_records_resources.services.uow import UnitOfWork
 
 from ...uow import BulkUnitOfWork
 from ..types import StreamBatch, StreamEntry
-from ..utils import attachments_requests, get_file_service_for_record_class
+from ..utils import (
+    attachments_requests,
+    get_file_service_for_record_class,
+    get_file_service_for_record_service,
+)
 from . import BaseWriter
 from .utils import record_invenio_exceptions
 
@@ -41,9 +45,7 @@ class AttachmentsServiceWriter(BaseWriter):
         self._file_service = None
         self._record_cls = getattr(service.config, "record_cls", None)
 
-        if self._record_cls:
-            # try to get file service
-            self._file_service = get_file_service_for_record_class(self._record_cls)
+        self._file_service = get_file_service_for_record_service(service)
 
     def _get_stream_entry_id(self, entry: StreamEntry):
         return entry.id
@@ -90,7 +92,11 @@ class AttachmentsServiceWriter(BaseWriter):
             metadata = f.metadata.get("metadata", {})
             if metadata:
                 self._file_service.update_file_metadata(
-                    self._identity, entry_id, metadata, **service_kwargs
+                    self._identity,
+                    entry_id,
+                    file_key=f.metadata["key"],
+                    data=metadata,
+                    **service_kwargs,
                 )
             self._file_service.set_file_content(
                 self._identity,
