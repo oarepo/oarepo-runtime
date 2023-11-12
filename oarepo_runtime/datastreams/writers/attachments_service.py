@@ -92,7 +92,11 @@ class AttachmentsServiceWriter(BaseWriter):
             metadata = f.metadata.get("metadata", {})
             if metadata:
                 self._file_service.update_file_metadata(
-                    self._identity, entry_id, metadata, **service_kwargs
+                    self._identity,
+                    entry_id,
+                    file_key=f.metadata["key"],
+                    data=metadata,
+                    **service_kwargs,
                 )
             self._file_service.set_file_content(
                 self._identity,
