@@ -8,6 +8,12 @@ from invenio_records_resources.services.uow import (
 from opensearchpy.helpers import BulkIndexError, bulk
 from opensearchpy.helpers import expand_action as default_expand_action
 
+import traceback
+
+import logging
+
+log = logging.getLogger("bulk_uow")
+
 
 class CachingUnitOfWork(UnitOfWork):
     def __init__(self, *args, **kwargs):
@@ -73,6 +79,9 @@ class BulkRecordDeleteOp(RecordDeleteOp):
 
 
 class BulkUnitOfWork(CachingUnitOfWork):
+    _last_stack_trace = None
+    _last_exception = None
+
     def register(self, op):
         if isinstance(op, RecordCommitOp):
             op = BulkRecordCommitOp(op)
@@ -105,6 +114,34 @@ class BulkUnitOfWork(CachingUnitOfWork):
                 )
             except BulkIndexError as e:
                 raise e
+
+    def _mark_dirty(self):
+        """Mark the unit of work as dirty."""
+        if self._dirty:
+            if self._last_stack_trace:
+                log.error(
+                    f"UnitOfWork already committed or rolled back at {self._last_stack_trace}. "
+                    f"Previous exception was {self._last_exception}"
+                )
+
+            raise RuntimeError(
+                f"The unit of work is already committed or rolledback. "
+                f"Set error level for logger 'bulk_uow' to at least WARNING "
+                f"to see the stack trace of the previous invocation."
+            )
+
+        self._dirty = True
+        if log.getEffectiveLevel() >= logging.WARNING:
+            try:
+                self._last_stack_trace = "\n"
+                self._last_stack_trace += "\n".join(traceback.format_stack())
+            except:
+                pass
+
+            try:
+                self._last_exception = traceback.format_exc()
+            except:
+                pass
 
 
 __all__ = ["BulkUnitOfWork"]
