@@ -27,7 +27,11 @@ def get_i18n_schema(lang_field, value_field):
     )
 
 
-def MultilingualField(lang_field="lang", value_field="value", **kwargs):  # noqa NOSONAR
+def MultilingualField(  # noqa NOSONAR
+    *args, lang_field="lang", value_field="value", **kwargs
+):
+    # TODO: args are not used but oarepo-model-builder-multilingual generates them
+    # should be fixed there and subsequently removed here
     return fields.List(
         fields.Nested(get_i18n_schema(lang_field, value_field)),
         **kwargs,
