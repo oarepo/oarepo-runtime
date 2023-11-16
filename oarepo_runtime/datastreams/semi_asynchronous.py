@@ -10,7 +10,7 @@ from celery.canvas import Signature as CelerySignature
 from .asynchronous import (
     AsynchronousDataStreamChain,
     deserialize_identity,
-    serialize_identity,
+    serialize_identity, AsynchronousDataStream,
 )
 from .datastreams import AbstractDataStream, DataStreamChain, Signature
 from .types import DataStreamCallback, StreamBatch, StreamEntryError, JSONObject
@@ -30,29 +30,8 @@ class SemiAsynchronousDataStreamChain(AsynchronousDataStreamChain):
         )
 
 
-class SemiAsynchronousDataStream(AbstractDataStream):
+class SemiAsynchronousDataStream(AsynchronousDataStream):
     """Data stream."""
-
-    def __init__(
-        self,
-        *,
-        readers: List[Union[Signature, Any]],
-        writers: List[Union[Signature, Any]],
-        transformers: List[Union[Signature, Any]] = None,
-        callback: Union[DataStreamCallback, Any],
-        batch_size=100,
-        on_background=True,
-        reader_callback=None,
-    ):
-        super().__init__(
-            readers=readers,
-            writers=writers,
-            transformers=transformers,
-            callback=callback,
-            batch_size=batch_size,
-            reader_callback=reader_callback,
-        )
-        self._on_background = on_background
 
     def build_chain(self, identity) -> DataStreamChain:
         return SemiAsynchronousDataStreamChain(
