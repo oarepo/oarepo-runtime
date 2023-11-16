@@ -1,3 +1,6 @@
+import logging
+import traceback
+
 from flask import current_app
 from invenio_indexer.api import bulk
 from invenio_records_resources.services.uow import (
@@ -7,10 +10,6 @@ from invenio_records_resources.services.uow import (
 )
 from opensearchpy.helpers import BulkIndexError, bulk
 from opensearchpy.helpers import expand_action as default_expand_action
-
-import traceback
-
-import logging
 
 log = logging.getLogger("bulk_uow")
 

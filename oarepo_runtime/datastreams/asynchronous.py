@@ -15,7 +15,9 @@ from flask_principal import (
     UserNeed,
 )
 
-from oarepo_runtime.datastreams import BaseWriter, DataStreamCallback, StreamBatch
+from .writers import BaseWriter
+from .datastreams import DataStreamCallback, StreamBatch
+
 from oarepo_runtime.datastreams.datastreams import (
     AbstractDataStream,
     DataStreamChain,
@@ -85,15 +87,13 @@ class AsynchronousDataStreamChain(DataStreamChain):
         chain = self._prepare_chain(callback)
         self._call(chain, batch=batch.json)
 
-        # callback.batch_finished(batch)
-
     def _prepare_chain(self, callback: CelerySignature):
         chain_def = [
             datastreams_call_callback.signature(
                 (), kwargs={"callback": callback, "callback_name": "batch_started"}
             )
         ]
-        serialized_identity = _serialize_identity(self._identity)
+        serialized_identity = serialize_identity(self._identity)
         if self._transformers:
             for transformer in self._transformers:
                 chain_def.append(
@@ -178,7 +178,7 @@ def run_datastream_processor(batch: Dict, *, processor: JSONObject, identity, ca
             (),
             {
                 "batch": deserialized_batch.json,
-                "identity": _serialize_identity(identity),
+                "identity": serialize_identity(identity),
                 "callback": f"{processor_signature.kind}_error",
                 "exception": err.json,
             },
@@ -220,7 +220,7 @@ def datastreams_error_callback(
         )
 
 
-def _serialize_identity(identity):
+def serialize_identity(identity):
     return {
         "id": identity.id,
         "auth_type": identity.auth_type,
