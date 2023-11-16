@@ -2,19 +2,20 @@
 # This package was taken from Invenio vocabularies and modified to be more universal
 #
 import logging
-from typing import Any, List, Union
+from typing import List
 
 from celery import shared_task
 from celery.canvas import Signature as CelerySignature
 
 from .asynchronous import (
+    AsynchronousDataStream,
     AsynchronousDataStreamChain,
     deserialize_identity,
-    serialize_identity, AsynchronousDataStream,
+    serialize_identity,
 )
-from .datastreams import AbstractDataStream, DataStreamChain, Signature
-from .types import DataStreamCallback, StreamBatch, StreamEntryError, JSONObject
+from .datastreams import DataStreamChain, Signature
 from .transformers import BaseTransformer
+from .types import JSONObject, StreamBatch, StreamEntryError
 
 log = logging.getLogger("datastreams")
 
@@ -87,4 +88,4 @@ def run_semi_asynchronous_datastream_processor(
 
     callback.apply(kwargs={"callback": "batch_finished", "batch": batch.json})
 
-    return None     # do not return anything to avoid redis pollution
+    return None  # do not return anything to avoid redis pollution

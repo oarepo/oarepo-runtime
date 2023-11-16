@@ -15,17 +15,16 @@ from flask_principal import (
     UserNeed,
 )
 
-from .writers import BaseWriter
-from .datastreams import DataStreamCallback, StreamBatch
-
 from oarepo_runtime.datastreams.datastreams import (
     AbstractDataStream,
     DataStreamChain,
     Signature,
 )
 
+from .datastreams import DataStreamCallback, StreamBatch
 from .json import JSONObject
 from .types import StreamEntryError
+from .writers import BaseWriter
 
 timing = logging.getLogger("oai.harvester.timing")
 log = logging.getLogger("datastreams")

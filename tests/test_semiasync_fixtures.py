@@ -3,13 +3,10 @@ from pathlib import Path
 
 from oarepo_runtime.datastreams import (
     JSONObject,
-    StreamBatch,
     SemiAsynchronousDataStream,
+    StreamBatch,
 )
-from oarepo_runtime.datastreams.asynchronous import (
-    AsynchronousDataStream,
-    deserialize_identity,
-)
+from oarepo_runtime.datastreams.asynchronous import deserialize_identity
 from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
 from oarepo_runtime.datastreams.types import StreamEntryError
 from records2.proxies import current_service
