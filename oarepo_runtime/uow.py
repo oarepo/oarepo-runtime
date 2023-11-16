@@ -1,3 +1,6 @@
+import logging
+import traceback
+
 from flask import current_app
 from invenio_indexer.api import bulk
 from invenio_records_resources.services.uow import (
@@ -7,10 +10,6 @@ from invenio_records_resources.services.uow import (
 )
 from opensearchpy.helpers import BulkIndexError, bulk
 from opensearchpy.helpers import expand_action as default_expand_action
-
-import traceback
-
-import logging
 
 log = logging.getLogger("bulk_uow")
 
@@ -97,7 +96,7 @@ class BulkUnitOfWork(CachingUnitOfWork):
         indexer = None
         for op in self._operations:
             if isinstance(op, BulkRecordCommitOp) or isinstance(op, BulkRecordDeleteOp):
-                indexer = op._indexer
+                indexer = indexer or op._indexer
                 index_action = op.get_index_action()
                 if index_action:
                     bulk_data.append(index_action)
