@@ -1,3 +1,4 @@
+from .asynchronous import AsynchronousDataStream
 from .catalogue import DataStreamCatalogue
 from .datastreams import AbstractDataStream
 from .errors import (
@@ -9,6 +10,7 @@ from .errors import (
 )
 from .json import JSON, JSONObject
 from .readers import BaseReader
+from .semi_asynchronous import SemiAsynchronousDataStream
 from .synchronous import SynchronousDataStream
 from .transformers import BaseTransformer
 from .types import DataStreamCallback, StreamBatch, StreamEntry
@@ -31,4 +33,6 @@ __all__ = [
     "DataStreamCallback",
     "SynchronousDataStream",
     "AbstractDataStream",
+    "AsynchronousDataStream",
+    "SemiAsynchronousDataStream",
 ]

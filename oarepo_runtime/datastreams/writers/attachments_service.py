@@ -6,11 +6,7 @@ from invenio_records_resources.services.uow import UnitOfWork
 
 from ...uow import BulkUnitOfWork
 from ..types import StreamBatch, StreamEntry
-from ..utils import (
-    attachments_requests,
-    get_file_service_for_record_class,
-    get_file_service_for_record_service,
-)
+from ..utils import attachments_requests, get_file_service_for_record_service
 from . import BaseWriter
 from .utils import record_invenio_exceptions
 
