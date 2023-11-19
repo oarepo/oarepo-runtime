@@ -44,7 +44,7 @@ def check(output_file):
 
 def check_database():
     if not has_database_connection():
-        return "connection-error"
+        return "connection_error"
     try:
         db.session.begin()
         try:
@@ -90,39 +90,39 @@ def check_opensearch():
             try:
                 indexer.client.indices.exists("test")
             except opensearchpy.exceptions.ConnectionError:
-                return "connection-error"
+                return "connection_error"
 
         index = indexer._prepare_index(indexer.record_to_index(record_class))
         try:
             service.indexer.client.indices.get(index=index)
         except TransportError:
-            return f"index-missing:{index}"
+            return f"index_missing:{index}"
     return "ok"
 
 
 def check_files():
     if not has_database_connection():
-        return "db-connection-error"
+        return "db_connection_error"
 
     try:
         db.session.begin()
         # check that there is the default location and that is readable
         default_location = Location.get_default()
         if not default_location:
-            return "default-location-missing"
-
-        try:
-            info = current_app.extensions["invenio-s3"].init_s3fs_info
-            fs = s3fs.S3FileSystem(default_block_size=4096, **info)
-            fs.ls(default_location.uri.replace("s3://", ""))
-        except:
-            return f"bucket-does-not-exist:{default_location.uri}"
-
-        return "ok"
+            return "default_location_missing"
     except:
-        return "db-error"
+        return "db_error"
     finally:
         db.session.rollback()
+
+    try:
+        info = current_app.extensions["invenio-s3"].init_s3fs_info
+        fs = s3fs.S3FileSystem(default_block_size=4096, **info)
+        fs.ls(default_location.uri.replace("s3://", ""))
+    except:
+        return f"bucket_does_not_exist:{default_location.uri}"
+
+    return "ok"
 
 
 def check_message_queue():
@@ -133,10 +133,10 @@ def check_message_queue():
         return "ok"
     except kombu.exceptions.OperationalError as e:
         if isinstance(e.__cause__, ConnectionRefusedError):
-            return "connection-error"
-        return "mq-error"
+            return "connection_error"
+        return "mq_error"
     except:
-        return "mq-error"
+        return "mq_error"
 
 
 def check_cache():
@@ -149,11 +149,11 @@ def check_cache():
         if current_cache.get("oarepo_check") == rnd:
             return "ok"
         else:
-            return "cache-error"
+            return "cache_error"
     except redis.exceptions.ConnectionError as e:
         if isinstance(e.__cause__, ConnectionRefusedError):
-            return "connection-error"
-        return "cache-exception"
+            return "connection_error"
+        return "cache_exception"
     except:
         traceback.print_exc()
-        return "cache-exception"
+        return "cache_exception"
