@@ -110,7 +110,7 @@ def check_files():
         default_location = Location.get_default()
         if not default_location:
             return "default_location_missing"
-    except:
+    except:  # NOSONAR - we are not interested what the exception is
         return "db_error"
     finally:
         db.session.rollback()
@@ -119,7 +119,7 @@ def check_files():
         info = current_app.extensions["invenio-s3"].init_s3fs_info
         fs = s3fs.S3FileSystem(default_block_size=4096, **info)
         fs.ls(default_location.uri.replace("s3://", ""))
-    except:
+    except:  # NOSONAR - we are not interested what the exception is
         return f"bucket_does_not_exist:{default_location.uri}"
 
     return "ok"
@@ -135,7 +135,7 @@ def check_message_queue():
         if isinstance(e.__cause__, ConnectionRefusedError):
             return "connection_error"
         return "mq_error"
-    except:
+    except:  # NOSONAR - we are not interested what the exception is
         return "mq_error"
 
 
@@ -143,7 +143,10 @@ def check_cache():
     try:
         from invenio_cache.proxies import current_cache
 
-        rnd = str(random.randint(0, 10000))
+        rnd = str(
+            random.randint(0, 10000)  # NOSONAR - this is not a cryptographic random
+        )
+        # it is here just to make sure that what we put to the cache is what we get back
 
         current_cache.set("oarepo_check", rnd)
         if current_cache.get("oarepo_check") == rnd:
@@ -154,6 +157,6 @@ def check_cache():
         if isinstance(e.__cause__, ConnectionRefusedError):
             return "connection_error"
         return "cache_exception"
-    except:
+    except:  # NOSONAR - we are not interested what the exception is
         traceback.print_exc()
         return "cache_exception"
