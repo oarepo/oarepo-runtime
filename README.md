@@ -128,13 +128,19 @@ and that they have been initialized correctly.
 Call as `invenio oarepo check -` or `invenio oarepo check <output-file>`.
 Will print/write to file a json with the following format:
 
-```json
+```json5
 {
   "db": "ok|connection_error|not_initialized|migration_pending",
   "opensearch": "ok|connection_error|index_missing:<index_name>",
   "files": "ok|db_connection_error|default_location_missing|bucket_does_not_exist:<bucket_name>|db_error",
   "mq": "ok|connection_error|mq_error",
-  "cache": "ok|connection_error|cache_error|cache_exception"
+  "cache": "ok|connection_error|cache_error|cache_exception", 
+  "configuration": {
+     // contains the configuration from the flask app
+     "key": "value",
+     "key2": "value2",
+     ...
+  }
 }
 ```
 ```json
