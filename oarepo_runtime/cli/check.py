@@ -21,7 +21,7 @@ from .base import oarepo
 
 
 @oarepo.command(name="check")
-@click.argument("output_file")
+@click.argument("output_file", default="-")
 @with_appcontext
 def check(output_file):
     status = {}
@@ -30,9 +30,6 @@ def check(output_file):
     status["files"] = check_files()
     status["mq"] = check_message_queue()
     status["cache"] = check_cache()
-    status["configuration"] = {
-        k: v for k, v in current_app.config.items() if not isinstance(v, LocalProxy)
-    }
     if output_file == "-":
         print(
             json.dumps(status, indent=4, ensure_ascii=False, default=lambda x: str(x))
