@@ -19,10 +19,14 @@ class SystemFieldDumperExt(SearchDumperExt):
         for cf in inspect.getmembers(
             record, lambda x: isinstance(x, MappingSystemFieldMixin)
         ):
+            if hasattr(cf[1], 'record'):
+                cf[1].record = record
+
             cf[1].search_dump(data)
 
     def load(self, data, record_cls):
         """Load custom fields."""
+        print("loud?")
         for cf in inspect.getmembers(
             record_cls, lambda x: isinstance(x, MappingSystemFieldMixin)
         ):
