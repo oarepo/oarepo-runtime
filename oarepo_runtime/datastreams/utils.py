@@ -19,12 +19,24 @@ def get_file_service_for_record_class(record_class):
         return svc
 
 
-def get_file_service_for_record_service(record_service):
-    if hasattr(record_service, "draft_files") and isinstance(record_service.draft_files, FileService):
+def get_file_service_for_record_service(
+    record_service, check_draft_files=True, record=None
+):
+    if record and getattr(record, "is_draft", False):
+        check_draft_files = False
+    if (
+        check_draft_files
+        and hasattr(record_service, "draft_files")
+        and isinstance(record_service.draft_files, FileService)
+    ):
         return record_service.draft_files
-    if hasattr(record_service, "files") and isinstance(record_service.files, FileService):
+    if hasattr(record_service, "files") and isinstance(
+        record_service.files, FileService
+    ):
         return record_service.files
-    return get_file_service_for_record_class(getattr(record_service.config, "record_cls", None))
+    return get_file_service_for_record_class(
+        getattr(record_service.config, "record_cls", None)
+    )
 
 
 class DataAdapter(BaseAdapter):

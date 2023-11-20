@@ -7,6 +7,14 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_search.proxies import current_search
 from werkzeug.utils import ImportStringError, import_string
 
+try:
+    from tqdm import tqdm
+except ImportError:
+
+    def tqdm(generator):
+        yield from generator
+
+
 from .base import oarepo
 
 
@@ -100,7 +108,8 @@ def model_records_generator(model_class):
 @index.command()
 @with_appcontext
 @click.argument("model", required=False)
-def reindex(model):
+@click.option("--bulk-size", required=False, default=5000, type=int)
+def reindex(model, bulk_size):
     if not model:
         services = current_service_registry._services.keys()
     else:
@@ -136,13 +145,28 @@ def reindex(model):
         click.secho(f"Indexing {service_id}", file=sys.stderr)
         count = 0
         for gen in id_generators:
-            for record in gen:
-                service.indexer.index(record)
-                count += 1
+            for bulk in generate_bulk_data(gen, service.indexer, bulk_size=bulk_size):
+                service.indexer.client.bulk(bulk)
+                count += len(bulk)
         if count:
             service.indexer.refresh()
 
         click.secho(
-            f"Indexing {service_id} finished, indexed {count} records",
+            f"Indexing {service_id} finished, indexed {count/2} records",
             file=sys.stderr,
         )
+
+
+def generate_bulk_data(record_generator, record_indexer, bulk_size):
+    data = []
+    for record in tqdm(record_generator):
+        index = record_indexer.record_to_index(record)
+        body = record_indexer._prepare_record(record, index)
+        index = record_indexer._prepare_index(index)
+        data.append({"index": {"_index": index, "_id": body["uuid"]}})
+        data.append(body)
+        if len(data) >= bulk_size:
+            yield data
+            data = []
+    if data:
+        yield data
