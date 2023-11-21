@@ -1,4 +1,11 @@
 from invenio_records_resources.services.records.params import FacetsParam
+import copy
+from typing import List
+
+from flask import current_app
+from flask_principal import Identity
+from invenio_app.helpers import obj_or_import_string
+from invenio_records_resources.services.records.facets import FacetsResponse
 
 
 class FilteredFacetsParam(FacetsParam):
@@ -14,3 +21,65 @@ class FilteredFacetsParam(FacetsParam):
             facet_filter &= f
 
         return search.filter(facet_filter)
+
+
+class GroupedFacetsParam(FacetsParam):
+    def __init__(self, config):
+        super().__init__(config)
+        self._facets = config.facets
+
+    @property
+    def facets(self):
+        return self._facets
+
+    def identity_facet_groups(self, identity: Identity) -> List[str]:
+        if "OAREPO_FACET_GROUP_NAME" in current_app.config:
+            find_facet_groups_func = obj_or_import_string(
+                current_app.config["OAREPO_FACET_GROUP_NAME"]
+            )
+            return find_facet_groups_func(identity, self.config, None)
+
+        if hasattr(identity, "provides"):
+            return [need.value for need in identity.provides if need.method == "role"]
+
+        return []
+
+    def identity_facets(self, identity: Identity):
+        user_facets = {}
+        if "default" not in self.config.facet_groups:
+            user_facets.update(self.facets)
+        else:
+            self.facets.clear()
+            user_facets.update(self.config.facet_groups["default"])
+
+        groups = self.identity_facet_groups(identity)
+        for group in groups:
+            user_facets.update(self.config.facet_groups.get(group, {}))
+
+        return user_facets
+
+    def aggregate(self, search, user_facets):
+        for name, facet in user_facets.items():
+            agg = facet.get_aggregation()
+            search.aggs.bucket(name, agg)
+
+        return search
+
+    def apply(self, identity, search, params):
+        """Evaluate the facets on the search."""
+        facets_values = params.pop("facets", {})
+        for name, values in facets_values.items():
+            if name in self.facets:
+                self.add_filter(name, values)
+
+        user_facets = self.identity_facets(identity)
+        self_copy = copy.copy(self)
+        self_copy._facets = user_facets
+        search = search.response_class(FacetsResponse.create_response_cls(self_copy))
+
+        search = self.aggregate(search, user_facets)
+        search = self.filter(search)
+
+        params.update(self.selected_values)
+
+        return search

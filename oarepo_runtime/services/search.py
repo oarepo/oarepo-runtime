@@ -12,6 +12,14 @@ from invenio_records_resources.services.records.queryparser import SuggestQueryP
 
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
+from invenio_records_resources.services.records.params import (
+    PaginationParam,
+    QueryStrParam,
+    SortParam,
+)
+
+from .facets.params import GroupedFacetsParam
+
 try:
     from invenio_i18n import get_locale
 except ImportError:
@@ -19,6 +27,13 @@ except ImportError:
 
 
 class SearchOptions(InvenioSearchOptions):
+    params_interpreters_cls = [
+        QueryStrParam,
+        PaginationParam,
+        SortParam,
+        GroupedFacetsParam,
+    ]
+
     sort_options = {
         "title": dict(
             title=_("By Title"),
