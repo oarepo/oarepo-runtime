@@ -46,6 +46,9 @@ class OARepoRuntime(object):
             elif k == "HAS_DRAFT_CUSTOM_FIELD":
                 app.config.setdefault(k, getattr(ext_config, k))
 
+            elif k == "OAREPO_FACET_GROUP_NAME":
+                app.config.setdefault(k, getattr(ext_config, k))
+
     def add_non_existing(self, target, source):
         for val_k, val_value in source.items():
             if val_k not in target:

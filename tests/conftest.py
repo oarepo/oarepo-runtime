@@ -14,15 +14,23 @@ fixtures are available.
 """
 import logging
 import os
-from typing import Union
-
-import pytest
-from flask_principal import Identity, Need, UserNeed
-from invenio_access.permissions import any_user, system_process
 from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
+
+from pathlib import Path
+from typing import Union
+from oarepo_runtime.datastreams.types import DataStreamCallback
+
+import pytest
+from flask_principal import Identity, Need, UserNeed
+from flask_security import login_user
+from flask_security.utils import hash_password
+from invenio_access import ActionUsers, current_access
+from invenio_access.permissions import any_user, system_process
+from invenio_accounts.proxies import current_datastore
+from invenio_accounts.testutils import login_user_via_session
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -129,3 +137,81 @@ def identity():
 @pytest.fixture()
 def custom_fields():
     prepare_cf_indices()
+
+
+@pytest.fixture()
+def user(app, db):
+    """Create example user."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        _user = datastore.create_user(
+            email="info@inveniosoftware.org",
+            password=hash_password("password"),
+            active=True,
+        )
+    db.session.commit()
+    return _user
+
+
+@pytest.fixture()
+def admin_role(app, db):
+    """Create some roles."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        role = datastore.create_role(name="admin", description="admin role")
+
+    db.session.commit()
+    return role
+
+
+@pytest.fixture()
+def curator_role(app, db):
+    """Create some roles."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        role = datastore.create_role(name="curator", description="curator role")
+
+    db.session.commit()
+    return role
+
+
+@pytest.fixture()
+def client_with_credentials_admin(db, client, user, admin_role):
+    """Log in a user to the client with admin role. This role does not have defined facets."""
+
+    current_datastore.add_role_to_user(user, admin_role)
+    action = current_access.actions["superuser-access"]
+    db.session.add(ActionUsers.allow(action, user_id=user.id))
+
+    login_user(user, remember=True)
+    login_user_via_session(client, email=user.email)
+
+    return client
+
+
+@pytest.fixture()
+def client_with_credentials_curator(db, client, user, curator_role):
+    """Log in a user to the client with curator role. This role has defined facets."""
+
+    current_datastore.add_role_to_user(user, curator_role)
+    action = current_access.actions["superuser-access"]
+    db.session.add(ActionUsers.allow(action, user_id=user.id))
+
+    login_user(user, remember=True)
+    login_user_via_session(client, email=user.email)
+
+    return client
+
+
+@pytest.fixture()
+def sample_data(db, app, identity, search_clear, location):
+    from oarepo_runtime.datastreams.fixtures import load_fixtures
+    from records2.proxies import current_service
+    from records2.records.api import Records2Record
+
+    load_fixtures(Path(__file__).parent / "data", callback=DataStreamCallback())
+    Records2Record.index.refresh()
+    titles = set()
+    for rec in current_service.scan(identity):
+        titles.add(rec["metadata"]["title"])
+    assert titles == {"record 1", "record 2"}
