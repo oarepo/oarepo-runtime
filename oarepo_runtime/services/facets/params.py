@@ -1,4 +1,5 @@
 import copy
+import logging
 from typing import List
 
 from flask import current_app
@@ -6,6 +7,8 @@ from flask_principal import Identity
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
 from invenio_records_resources.services.records.params import FacetsParam
+
+log = logging.getLogger(__name__)
 
 
 class FilteredFacetsParam(FacetsParam):
@@ -44,17 +47,29 @@ class GroupedFacetsParam(FacetsParam):
 
         return []
 
+    @property
+    def facet_groups(self):
+        if hasattr(self.config, "facet_groups"):
+            return self.config.facet_groups
+        return None
+
     def identity_facets(self, identity: Identity):
+        if not self.facet_groups:
+            log.warning(
+                "No facet groups defined on the service config %s", type(self.config)
+            )
+            return self.facets
+
         user_facets = {}
-        if "default" not in self.config.facet_groups:
+        if "default" not in self.facet_groups:
             user_facets.update(self.facets)
         else:
-            self.facets.clear()
-            user_facets.update(self.config.facet_groups["default"])
+            self.facets.clear()  # TODO: why is this needed?
+            user_facets.update(self.facet_groups["default"])
 
         groups = self.identity_facet_groups(identity)
         for group in groups:
-            user_facets.update(self.config.facet_groups.get(group, {}))
+            user_facets.update(self.facet_groups.get(group, {}))
 
         return user_facets
 
