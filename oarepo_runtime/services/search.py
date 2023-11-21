@@ -8,15 +8,14 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
 )
-from invenio_records_resources.services.records.queryparser import SuggestQueryParser
-
-from oarepo_runtime.records.systemfields.icu import ICUSuggestField
-
 from invenio_records_resources.services.records.params import (
     PaginationParam,
     QueryStrParam,
     SortParam,
 )
+from invenio_records_resources.services.records.queryparser import SuggestQueryParser
+
+from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
 from .facets.params import GroupedFacetsParam
 

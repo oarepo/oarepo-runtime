@@ -1,4 +1,3 @@
-from invenio_records_resources.services.records.params import FacetsParam
 import copy
 from typing import List
 
@@ -6,6 +5,7 @@ from flask import current_app
 from flask_principal import Identity
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
+from invenio_records_resources.services.records.params import FacetsParam
 
 
 class FilteredFacetsParam(FacetsParam):

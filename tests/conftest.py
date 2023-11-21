@@ -14,14 +14,8 @@ fixtures are available.
 """
 import logging
 import os
-from invenio_app.factory import create_api as _create_api
-
-from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
-from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
-
 from pathlib import Path
 from typing import Union
-from oarepo_runtime.datastreams.types import DataStreamCallback
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -31,6 +25,11 @@ from invenio_access import ActionUsers, current_access
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
+from invenio_app.factory import create_api as _create_api
+
+from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
+from oarepo_runtime.datastreams.types import DataStreamCallback
+from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 pytest_plugins = ("celery.contrib.pytest",)
 

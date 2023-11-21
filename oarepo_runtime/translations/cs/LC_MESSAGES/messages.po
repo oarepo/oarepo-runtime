@@ -38,3 +38,11 @@ msgstr "Kontakt"
 #: oarepo_runtime/ui/marshmallow.py:81
 msgid "True"
 msgstr "Ano"
+
+#: oarepo_runtime/services/search.py:39 oarepo_runtime/services/search.py:127
+msgid "By Title"
+msgstr "Dle názvu"
+
+#: oarepo_runtime/services/schema/ui.py:114
+msgid "False"
+msgstr "Ne"
