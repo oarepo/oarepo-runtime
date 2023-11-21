@@ -124,7 +124,7 @@ class ICUSuggestParser:
 class SortField:
     option_name: str = "title"
     icu_sort_field: str = "sort"
-    title: str = "Title"
+    title: str = _("By Title")
 
 
 class ICUSortOptions:
