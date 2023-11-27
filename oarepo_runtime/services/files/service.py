@@ -53,8 +53,7 @@ class FeaturedFileServiceMixin:
         #
         # :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
         # """
-        record = self._get_record(id_, identity, "commit_files", file_key=file_key)
-        print(record)
+        # record = self._get_record(id_, identity, "commit_files", file_key=file_key)
         reindex()
-        print("jej")
+
 

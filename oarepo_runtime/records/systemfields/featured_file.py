@@ -18,24 +18,23 @@ class FeaturedFileFieldResult(MappingSystemFieldMixin):
         for service in current_service_registry._services:
             #get_file_service_for_record_service
             if getattr(current_service_registry._services[service], 'record_cls') == type(self.record):
-                file_service = get_file_service_for_record_service(current_service_registry._services[service]) #par
-            if hasattr(current_service_registry._services[service], "_get_record") \
-                    and self.record == current_service_registry._services[service]._get_record(self.record["id"],
-                                                                                               system_identity, "read"):
-                files = current_service_registry._services[service].list_files(system_identity,
-                                                                                       self.record['id'])
+                file_service = get_file_service_for_record_service(record_service=current_service_registry._services[service], record=self.record) #par
+            # if hasattr(current_service_registry._services[service], "_get_record") \
+            #         and self.record == current_service_registry._services[service]._get_record(self.record["id"],
+            #                                                                                    system_identity, "read"):
+            #     files = current_service_registry._services[service].list_files(system_identity,
+            #                                                                            self.record['id'])
+                files = file_service.list_files(system_identity,
+                                                                               self.record['id'])
                 file_list = list(files.entries)
-                print("file_list: ",file_list)
-                print(files.to_dict())
+                # print("file_list: ",file_list)
+                # print(files.to_dict())
                 for file in file_list:
                     if file['metadata'] and 'featured' in file['metadata'] and file['metadata']['featured']:
-                        data['metadata']['featured'] = file
                         self.record.update({'metadata':{"featured": file}})
                         self.record.commit()
 
-    def search_load(self, data):
-        print("louuuud")
-        pass
+
 
 
 class FeaturedFileField(SystemField):
@@ -45,12 +44,6 @@ class FeaturedFileField(SystemField):
 
     def __get__(self, instance, owner):
         if instance is None:
-            return self
-        result = FeaturedFileFieldResult()
+            return None
+        result = FeaturedFileFieldResult(record=instance)
         return result
-
-    def dump(self):
-        print('dump2')
-
-    def load(self):
-        print('load2')

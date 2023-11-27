@@ -55,7 +55,8 @@ def test_create_rec_with_files(db, app, identity, search_clear, location):
     # current_service.scan(system_identity)
     # current_service.read(system_identity, rec.id)
 
-    Records2Record.index.refresh()
+    # Records2Record.index.refresh()
     res = current_service.read(system_identity, rec.id)
+    assert 'featured' in res.data["metadata"]
     print('record', res.data["metadata"])
 
