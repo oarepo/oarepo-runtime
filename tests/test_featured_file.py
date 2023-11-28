@@ -1,25 +1,22 @@
-import tempfile
 from io import BytesIO
 from pathlib import Path
 
-import pytest
 from invenio_access.permissions import system_identity
-from records2.proxies import current_service
-from records2.records.api import Records2Record
 
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
-from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
-from oarepo_runtime.datastreams.utils import get_file_service_for_record_class
-from tests.test_fixtures import read_yaml
+from records2.proxies import current_service
+
 
 # taken from https://github.com/inveniosoftware/invenio-records-resources/blob/master/tests/services/files/files_utils.py
-def add_file_to_record(file_service, recid, file_id, identity, data=None, featured=None):
+def add_file_to_record(
+    file_service, recid, file_id, identity, data=None, featured=None
+):
     """Add a file to the record."""
     if featured:
-        file_service.init_files(identity, recid, data=[{"key": file_id, "featured": True}])
+        file_service.init_files(
+            identity, recid, data=[{"key": file_id, "featured": True}]
+        )
 
     else:
-
         file_service.init_files(identity, recid, data=[{"key": file_id}])
     file_service.set_file_content(
         identity,
@@ -42,7 +39,6 @@ def test_create_rec_with_files(db, app, identity, search_clear, location):
         "test.png",
         identity,
         data=data,
-
     )
     add_file_to_record(
         app.extensions["records2"].service_files,
@@ -50,13 +46,12 @@ def test_create_rec_with_files(db, app, identity, search_clear, location):
         "another.png",
         identity,
         data=data,
-        featured=True
+        featured=True,
     )
     # current_service.scan(system_identity)
     # current_service.read(system_identity, rec.id)
 
     # Records2Record.index.refresh()
     res = current_service.read(system_identity, rec.id)
-    assert 'featured' in res.data["metadata"]
-    print('record', res.data["metadata"])
-
+    assert "featured" in res.data["metadata"]
+    print("record", res.data["metadata"])
