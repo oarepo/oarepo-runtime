@@ -130,3 +130,67 @@ class ICUSuggestField(MappingSystemFieldMixin, ICUField):
                 }
             }
         }
+
+
+class ICUSearchField(MappingSystemFieldMixin, ICUField):
+    """
+    A field that adds stemming-aware search field
+    """
+
+    default_stemming_analyzers = {
+        "stemming_analyzer_cs": {
+            "tokenizer": "standard",
+            "filter": ["stemming_filter_cs"],
+        },
+        "stemming_analyzer_en": {
+            "tokenizer": "standard",
+            "filter": ["stemming_filter_en"],
+        },
+    }
+
+    default_stemming_filters = {
+        "stemming_filter_cs": {
+            "type": "stemmer",
+            "name": "czech",
+            "language": "czech",
+        },
+        "stemming_filter_en": {
+            "type": "stemmer",
+            "name": "english",
+            "language": "english",
+        },
+    }
+
+    def __init__(self, source_field, key=None):
+        super().__init__(source_field=source_field, key=key)
+
+    @property
+    def mapping(self):
+        return {
+            self.attr_name: {
+                "type": "object",
+                "properties": {
+                    lang: setting.get(
+                        "search",
+                        {
+                            "type": "text",
+                            "analyzer": f"stemming_analyzer_{lang}",
+                        },
+                    )
+                    for lang, setting in self.languages.items()
+                },
+            },
+        }
+
+    @property
+    def mapping_settings(self):
+        return {
+            "analysis": {
+                "analyzer": current_app.config.get(
+                    "OAREPO_ICU_SEARCH_ANALYZERS", self.default_stemming_analyzers
+                ),
+                "filter": current_app.config.get(
+                    "OAREPO_ICU_SEARCH_FILTERS", self.default_stemming_filters
+                ),
+            }
+        }
