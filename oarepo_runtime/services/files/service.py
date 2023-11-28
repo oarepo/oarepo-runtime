@@ -5,6 +5,7 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.uow import unit_of_work
 from oarepo_runtime.cli import index
 from oarepo_runtime.cli.index import  model_records_generator
+from oarepo_runtime.datastreams.utils import get_file_service_for_record_service
 
 
 def reindex():
@@ -46,9 +47,11 @@ def reindex():
 
 
 
+
 class FeaturedFileServiceMixin:
     @unit_of_work()
     def commit_file(self, identity, id_, file_key, uow=None):
+
         # """Commit a file upload.
         #
         # :raises FileKeyNotFoundError: If the record has no file for the ``file_key``
