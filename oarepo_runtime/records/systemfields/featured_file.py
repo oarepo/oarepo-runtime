@@ -13,30 +13,25 @@ class FeaturedFileFieldResult(MappingSystemFieldMixin):
 
     def search_dump(self, data):
         for service in current_service_registry._services:
-            # get_file_service_for_record_service
+
             if getattr(
                 current_service_registry._services[service], "record_cls"
             ) == type(self.record):
                 file_service = get_file_service_for_record_service(
                     record_service=current_service_registry._services[service],
                     record=self.record,
-                )  # par
-                # if hasattr(current_service_registry._services[service], "_get_record") \
-                #         and self.record == current_service_registry._services[service]._get_record(self.record["id"],
-                #                                                                                    system_identity, "read"):
-                #     files = current_service_registry._services[service].list_files(system_identity,
-                #                                                                            self.record['id'])
+                )
+
                 files = file_service.list_files(system_identity, self.record["id"])
                 file_list = list(files.entries)
-                # print("file_list: ",file_list)
-                # print(files.to_dict())
+
                 for file in file_list:
                     if (
                         file["metadata"]
                         and "featured" in file["metadata"]
                         and file["metadata"]["featured"]
                     ):
-                        self.record.update({"metadata": {"featured": file}})
+                        self.record["metadata"].update({"featured": file})
                         self.record.commit()
 
 

@@ -41,9 +41,12 @@ def get_file_service_for_record_service(
 
 
 def get_record_service_for_file_service(file_service, record=None):
+
     if record and getattr(record, "is_draft", False):
+        record_name = "draft_cls"
         expect_draft_service = True
     else:
+        record_name = "record_cls"
         expect_draft_service = False
     for svc in current_service_registry._services.values():
         if not isinstance(svc, RecordService):
@@ -51,8 +54,10 @@ def get_record_service_for_file_service(file_service, record=None):
         is_draft_service = isinstance(svc, DraftRecordService)
         if is_draft_service != expect_draft_service:
             continue
-        if svc.record_cls == file_service.record_cls:
+        service_record = getattr(svc, record_name, None)
+        if service_record == file_service.record_cls:
             return svc
+
     raise KeyError(
         f"Could not get service for file service {file_service}, draft {expect_draft_service}"
     )
