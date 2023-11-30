@@ -61,11 +61,11 @@ class GroupedFacetsParam(FacetsParam):
             return self.facets
 
         user_facets = {}
-        if "default" not in self.facet_groups:
+        if "_default" not in self.facet_groups:
             user_facets.update(self.facets)
         else:
             self.facets.clear()  # TODO: why is this needed?
-            user_facets.update(self.facet_groups["default"])
+            user_facets.update(self.facet_groups["_default"])
 
         groups = self.identity_facet_groups(identity)
         for group in groups:
