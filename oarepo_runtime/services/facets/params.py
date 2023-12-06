@@ -29,7 +29,7 @@ class FilteredFacetsParam(FacetsParam):
 class GroupedFacetsParam(FacetsParam):
     def __init__(self, config):
         super().__init__(config)
-        self._facets = config.facets
+        self._facets = {**config.facets}
 
     @property
     def facets(self):
@@ -70,7 +70,6 @@ class GroupedFacetsParam(FacetsParam):
         groups = self.identity_facet_groups(identity)
         for group in groups:
             user_facets.update(self.facet_groups.get(group, {}))
-
         return user_facets
 
     def aggregate(self, search, user_facets):
