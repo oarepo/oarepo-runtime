@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Show oarepo version
         run: |
-          echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<<"
+          echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v3
