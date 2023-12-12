@@ -10,7 +10,7 @@ on:
         type: string
 
 env:
-  OAREPO_VERSION: ${{ github.event.inputs.oarepo }}
+  OAREPO_VERSION: ${{ inputs.oarepo }}
 
 jobs:
   build:
