@@ -31,6 +31,7 @@ def clear_babel_context():
 
 
 def test_localized_date(app):
+    clear_babel_context()
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         assert current_i18n.language == "en"
         input_data = {"dt": "2020-01-31", "tm": "12:21", "dtm": "2020-01-31T12:21"}
@@ -60,6 +61,7 @@ class EnumSchema(ma.Schema):
 
 
 def test_localized_enum(app):
+    clear_babel_context()
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         assert current_i18n.language == "en"
         input_data = {"e": "PCR"}
