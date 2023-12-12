@@ -35,6 +35,7 @@ pip install -U setuptools pip wheel
 pip install "oarepo==${OAREPO_VERSION}.*"
 pip install -e ".[tests]"
 pip install -e records2
+pip install pytest-invenio
 # pip install -e records
 
 pip uninstall -y uritemplate
