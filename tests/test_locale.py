@@ -1,5 +1,7 @@
 import marshmallow as ma
-from flask_babelex import get_locale
+from flask import g
+
+from oarepo_runtime.i18n import get_locale
 from invenio_i18n.ext import current_i18n
 
 from oarepo_runtime.services.schema.ui import (
@@ -19,6 +21,14 @@ class TestSchema(ma.Schema):
 def replace_ws(d):
     return {k: v.replace("\u202f", " ") for k, v in d.items()}
 
+def clear_babel_context():
+    # for invenio 12
+    try:
+        from flask_babel import SimpleNamespace
+    except ImportError:
+        return
+    g._flask_babel = SimpleNamespace()
+
 
 def test_localized_date(app):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
@@ -31,6 +41,9 @@ def test_localized_date(app):
             "tm": "12:21:00 PM",
             "dtm": "Jan 31, 2020, 12:21:00 PM",
         }
+
+    input_data = {"dt": "2020-01-31", "tm": "12:21", "dtm": "2020-01-31T12:21"}
+    clear_babel_context()
     with app.test_request_context(headers=[("Accept-Language", "cs")]):
         assert current_i18n.language == "cs"
         assert replace_ws(
@@ -53,6 +66,7 @@ def test_localized_enum(app):
         assert EnumSchema().dump(input_data) == {
             "e": "PCR Method",
         }
+    clear_babel_context()
     with app.test_request_context(headers=[("Accept-Language", "cs")]):
         assert current_i18n.language == "cs"
         assert EnumSchema().dump(input_data) == {

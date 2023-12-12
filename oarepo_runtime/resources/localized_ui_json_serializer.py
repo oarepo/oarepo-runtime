@@ -1,4 +1,4 @@
-from flask_babelex import get_locale
+from oarepo_runtime.i18n import get_locale
 from flask_resources import MarshmallowSerializer
 
 
