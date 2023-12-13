@@ -2,8 +2,6 @@ import dataclasses
 import inspect
 from typing import List
 
-# TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
-from oarepo_runtime.i18n import lazy_gettext as _
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
@@ -15,6 +13,8 @@ from invenio_records_resources.services.records.params import (
 )
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
 
+# TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
+from oarepo_runtime.i18n import lazy_gettext as _
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
 from .facets.params import GroupedFacetsParam

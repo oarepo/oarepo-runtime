@@ -41,7 +41,6 @@ def get_file_service_for_record_service(
 
 
 def get_record_service_for_file_service(file_service, record=None):
-
     if record and getattr(record, "is_draft", False):
         record_name = "draft_cls"
         expect_draft_service = True

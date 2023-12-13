@@ -13,7 +13,6 @@ class FeaturedFileFieldResult(MappingSystemFieldMixin):
 
     def search_dump(self, data):
         for service in current_service_registry._services:
-
             if getattr(
                 current_service_registry._services[service], "record_cls"
             ) == type(self.record):
