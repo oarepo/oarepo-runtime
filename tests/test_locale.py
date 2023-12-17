@@ -1,9 +1,8 @@
 import marshmallow as ma
 from flask import g
-
-from oarepo_runtime.i18n import get_locale
 from invenio_i18n.ext import current_i18n
 
+from oarepo_runtime.i18n import get_locale
 from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
@@ -20,6 +19,7 @@ class TestSchema(ma.Schema):
 
 def replace_ws(d):
     return {k: v.replace("\u202f", " ") for k, v in d.items()}
+
 
 def clear_babel_context():
     # for invenio 12

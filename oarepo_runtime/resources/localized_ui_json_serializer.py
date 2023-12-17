@@ -1,6 +1,7 @@
-from oarepo_runtime.i18n import get_locale
-from flask_resources import MarshmallowSerializer
 import marshmallow
+from flask_resources import MarshmallowSerializer
+
+from oarepo_runtime.i18n import get_locale
 
 
 class LocalizedUIJSONSerializer(MarshmallowSerializer):

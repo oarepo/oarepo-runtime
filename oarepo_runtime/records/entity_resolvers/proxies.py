@@ -1,5 +1,15 @@
 from invenio_pidstore.errors import PIDUnregistered
-from invenio_records_resources.references.resolvers.records import RecordProxy
+from oarepo import __version__ as oarepo_version
+
+# compatibility setting between invenio rdm 11 and invenio rdm 12
+# can be removed when invenio rdm 11 is no longer supported
+if oarepo_version.split(".")[0] == "11":
+    from invenio_records_resources.references.resolvers.records import RecordProxy
+else:
+    from invenio_records_resources.references.entity_resolvers.records import (
+        RecordProxy,
+    )
+
 from sqlalchemy.exc import NoResultFound
 
 
