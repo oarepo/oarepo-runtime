@@ -5,7 +5,6 @@ import marshmallow as ma
 from babel.dates import format_date
 from babel_edtf import format_edtf
 from flask import current_app
-from oarepo_runtime.i18n import gettext
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
@@ -14,6 +13,8 @@ from marshmallow_utils.fields import (
     FormatTime,
 )
 from marshmallow_utils.fields.babel import BabelFormatField
+
+from oarepo_runtime.i18n import gettext
 
 
 def current_default_locale():

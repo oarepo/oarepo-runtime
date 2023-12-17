@@ -46,6 +46,7 @@ def test_localized_date_with_app(app):
             "a": "1. 1. 1990"
         }
 
+
 def normalize_whitespace(s):
     if isinstance(s, str):
         return " ".join(s.split())
@@ -60,25 +61,48 @@ def test_localized_edtf():
     # LocalizedEDTF only outputs dates, not times
     assert LocalizedEDTF().format_value("2000") == "2000"
     assert normalize_whitespace(LocalizedEDTF().format_value("2000-01")) == "Jan 2000"
-    assert normalize_whitespace(LocalizedEDTF().format_value("2000-01-15")) == "Jan 15, 2000"
-    assert normalize_whitespace(LocalizedEDTF().format_value("2000-02-15T12:20:15")) == "Feb 15, 2000"
-    assert normalize_whitespace(LocalizedEDTF().format_value("2000-02-15T12:20:15+05:00")) == "Feb 15, 2000"
     assert (
-        normalize_whitespace(LocalizedEDTF().format_value("1979-08-28/1979-09-25")) == "Aug 28 – Sep 25, 1979"
+        normalize_whitespace(LocalizedEDTF().format_value("2000-01-15"))
+        == "Jan 15, 2000"
+    )
+    assert (
+        normalize_whitespace(LocalizedEDTF().format_value("2000-02-15T12:20:15"))
+        == "Feb 15, 2000"
+    )
+    assert (
+        normalize_whitespace(LocalizedEDTF().format_value("2000-02-15T12:20:15+05:00"))
+        == "Feb 15, 2000"
+    )
+    assert (
+        normalize_whitespace(LocalizedEDTF().format_value("1979-08-28/1979-09-25"))
+        == "Aug 28 – Sep 25, 1979"
     )
 
     assert LocalizedEDTF(locale="cs").format_value("2000") == "2000"
-    assert normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-01")) == "leden 2000"
-    assert normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-01-15")) == "15. 1. 2000"
     assert (
-        normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-02-15T12:20:15")) == "15. 2. 2000"
+        normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-01"))
+        == "leden 2000"
     )
     assert (
-        normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-02-15T12:20:15+05:00"))
+        normalize_whitespace(LocalizedEDTF(locale="cs").format_value("2000-01-15"))
+        == "15. 1. 2000"
+    )
+    assert (
+        normalize_whitespace(
+            LocalizedEDTF(locale="cs").format_value("2000-02-15T12:20:15")
+        )
         == "15. 2. 2000"
     )
     assert (
-        normalize_whitespace(LocalizedEDTF(locale="cs").format_value("1979-08-28/1979-09-25"))
+        normalize_whitespace(
+            LocalizedEDTF(locale="cs").format_value("2000-02-15T12:20:15+05:00")
+        )
+        == "15. 2. 2000"
+    )
+    assert (
+        normalize_whitespace(
+            LocalizedEDTF(locale="cs").format_value("1979-08-28/1979-09-25")
+        )
         == "28. 8. – 25. 9. 1979"
     )
 
@@ -86,36 +110,46 @@ def test_localized_edtf():
 def test_localized_datetime():
     # current default locale
     value = "2000-02-15T12:20:15+02:00"
-    assert normalize_whitespace(LocalizedDateTime().format_value(value)) == "Feb 15, 2000, 12:20:15 PM"
+    assert (
+        normalize_whitespace(LocalizedDateTime().format_value(value))
+        == "Feb 15, 2000, 12:20:15 PM"
+    )
     assert (
         normalize_whitespace(LocalizedDateTime(locale="en").format_value(value))
         == "Feb 15, 2000, 12:20:15 PM"
     )
-    assert normalize_whitespace(LocalizedDateTime(locale="cs").format_value(value)) == "15. 2. 2000 12:20:15"
-    assert normalize_whitespace(LocalizedSchema("en", LocalizedDateTime).dump({"a": value})) == {
-        "a": "Feb 15, 2000, 12:20:15 PM"
-    }
-    assert normalize_whitespace(LocalizedSchema("cs", LocalizedDateTime).dump({"a": value})) == {
-        "a": "15. 2. 2000 12:20:15"
-    }
+    assert (
+        normalize_whitespace(LocalizedDateTime(locale="cs").format_value(value))
+        == "15. 2. 2000 12:20:15"
+    )
+    assert normalize_whitespace(
+        LocalizedSchema("en", LocalizedDateTime).dump({"a": value})
+    ) == {"a": "Feb 15, 2000, 12:20:15 PM"}
+    assert normalize_whitespace(
+        LocalizedSchema("cs", LocalizedDateTime).dump({"a": value})
+    ) == {"a": "15. 2. 2000 12:20:15"}
 
 
 def test_localized_edtf_interval():
     value = "1979-08-28/1979-09-25"
-    assert normalize_whitespace(LocalizedEDTFInterval().format_value(value)) == "Aug 28 – Sep 25, 1979"
+    assert (
+        normalize_whitespace(LocalizedEDTFInterval().format_value(value))
+        == "Aug 28 – Sep 25, 1979"
+    )
     assert (
         normalize_whitespace(LocalizedEDTFInterval(locale="en").format_value(value))
         == "Aug 28 – Sep 25, 1979"
     )
     assert (
-        normalize_whitespace(LocalizedEDTFInterval(locale="cs").format_value(value)) == "28. 8. – 25. 9. 1979"
+        normalize_whitespace(LocalizedEDTFInterval(locale="cs").format_value(value))
+        == "28. 8. – 25. 9. 1979"
     )
-    assert normalize_whitespace(LocalizedSchema("en", LocalizedEDTFInterval).dump({"a": value})) == {
-        "a": "Aug 28 – Sep 25, 1979"
-    }
-    assert normalize_whitespace(LocalizedSchema("cs", LocalizedEDTFInterval).dump({"a": value}) )== {
-        "a": "28. 8. – 25. 9. 1979"
-    }
+    assert normalize_whitespace(
+        LocalizedSchema("en", LocalizedEDTFInterval).dump({"a": value})
+    ) == {"a": "Aug 28 – Sep 25, 1979"}
+    assert normalize_whitespace(
+        LocalizedSchema("cs", LocalizedEDTFInterval).dump({"a": value})
+    ) == {"a": "28. 8. – 25. 9. 1979"}
 
 
 def test_localized_enum():
