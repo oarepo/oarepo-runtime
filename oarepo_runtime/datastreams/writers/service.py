@@ -87,10 +87,11 @@ class ServiceWriter(BaseWriter):
                 self._identity, entry, **service_kwargs
             )
 
-        stream_entry.entry = repository_entry.data
-        stream_entry.id = repository_entry.id
+        if repository_entry:
+            stream_entry.entry = repository_entry.data
+            stream_entry.id = repository_entry.id
 
-        stream_entry.context["revision_id"] = repository_entry._record.revision_id
+            stream_entry.context["revision_id"] = repository_entry._record.revision_id
 
     def try_update(self, entry_id, entry, **service_kwargs):
         current = self._resolve(entry_id)
