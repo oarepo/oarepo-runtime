@@ -72,20 +72,26 @@ class ServiceWriter(BaseWriter):
 
         entry_id = self._get_stream_entry_id(stream_entry)
 
-        if entry_id and self._update:
-            repository_entry = self.try_update(entry_id, entry, **service_kwargs)
-            if repository_entry:
-                do_create = False
+        if entry_id:
+            if self._update:
+                repository_entry = self.try_update(entry_id, entry, **service_kwargs)
+                if repository_entry:
+                    do_create = False
+            else:
+                current = self._resolve(entry_id)
+                if current:
+                    do_create = False
 
         if do_create:
             repository_entry = self._service.create(
                 self._identity, entry, **service_kwargs
             )
 
-        stream_entry.entry = repository_entry.data
-        stream_entry.id = repository_entry.id
+        if repository_entry:
+            stream_entry.entry = repository_entry.data
+            stream_entry.id = repository_entry.id
 
-        stream_entry.context["revision_id"] = repository_entry._record.revision_id
+            stream_entry.context["revision_id"] = repository_entry._record.revision_id
 
     def try_update(self, entry_id, entry, **service_kwargs):
         current = self._resolve(entry_id)
