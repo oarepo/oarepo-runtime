@@ -32,7 +32,7 @@ $PYTHON -m venv $VENV
 . $VENV/bin/activate
 pip install -U setuptools pip wheel
 
-pip install "oarepo==${OAREPO_VERSION}.*"
+pip install "oarepo[tests]==${OAREPO_VERSION}.*"
 pip install -e ".[tests]"
 pip install -e records2
 pip install pytest-invenio

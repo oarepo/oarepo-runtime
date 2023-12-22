@@ -79,6 +79,5 @@ def collect(output_file, repository_dir, assets_dir):
 @with_appcontext
 def less_components(output_file):
     with open(output_file, "w") as f:
-        json.dump(
-            {"components": current_app.config.get("OAREPO_UI_LESS_COMPONENTS", [])}, f
-        )
+        components = list(set(current_app.config.get("OAREPO_UI_LESS_COMPONENTS", [])))
+        json.dump({"components": components}, f)
