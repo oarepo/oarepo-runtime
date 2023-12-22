@@ -1,13 +1,11 @@
 import json
 import random
-import sys
 import traceback
 
 import click
 import kombu.exceptions
 import opensearchpy
 import redis
-import s3fs
 from flask import current_app
 from flask.cli import with_appcontext
 from invenio_db import db
@@ -111,6 +109,11 @@ def check_files():
         return "db_error"
     finally:
         db.session.rollback()
+
+    try:
+        import s3fs
+    except ImportError:
+        return f"s3_support_not_installed"
 
     try:
         info = current_app.extensions["invenio-s3"].init_s3fs_info
