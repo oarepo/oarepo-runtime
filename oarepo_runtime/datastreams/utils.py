@@ -4,6 +4,7 @@ import requests
 from invenio_drafts_resources.services import RecordService as DraftRecordService
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services import FileService, RecordService
+from invenio_records_resources.services.records.results import RecordItem
 from requests import PreparedRequest, Response
 from requests.adapters import BaseAdapter
 
@@ -23,7 +24,9 @@ def get_file_service_for_record_class(record_class):
 def get_file_service_for_record_service(
     record_service, check_draft_files=True, record=None
 ):
-    if record and getattr(record, "is_draft", False):
+    if isinstance(record, RecordItem):
+        record = record._record
+    if record and getattr(record, "is_draft") is False:
         check_draft_files = False
     if (
         check_draft_files
