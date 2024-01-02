@@ -26,7 +26,7 @@ def get_file_service_for_record_service(
 ):
     if isinstance(record, RecordItem):
         record = record._record
-    if record and getattr(record, "is_draft") is False:
+    if record and getattr(record, "is_draft", False) is False:
         check_draft_files = False
     if (
         check_draft_files
