@@ -1,10 +1,10 @@
 from .assets import assets
 from .base import as_command, oarepo
 from .check import check
+from .configuration import configuration_command
 from .fixtures import fixtures
 from .index import index
 from .validate import validate
-from .configuration import configuration_command
 
 __all__ = (
     "oarepo",
