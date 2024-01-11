@@ -12,8 +12,8 @@ class AdditonalDataProcessingMixin:
     def _additional_processing(self, projection, record, *args, **kwargs):
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name, method in methods:
-            if name.startswith("_process_"):
-                method(projection, record, *args, **kwargs)
+            if name.startswith("_additional_process_"):
+                method(self._identity, projection, record, *args, **kwargs)
 
 
 class RecordItem(BaseRecordItem, AdditonalDataProcessingMixin):
@@ -29,11 +29,6 @@ class RecordItem(BaseRecordItem, AdditonalDataProcessingMixin):
 
 
 class RecordList(BaseRecordList, AdditonalDataProcessingMixin):
-    def _additional_processing(self, projection, record, *args, **kwargs):
-        methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        for name, method in methods:
-            if name.startswith("_process_"):
-                method(projection, record, *args, **kwargs)
 
     @property
     def hits(self):
