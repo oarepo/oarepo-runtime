@@ -3,7 +3,7 @@ import logging
 from typing import List
 
 from flask import current_app
-from flask_principal import Identity, RoleNeed
+from flask_principal import Identity, Need
 from invenio_access.permissions import system_user_id
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
@@ -63,9 +63,7 @@ class GroupedFacetsParam(FacetsParam):
 
         has_system_user_id = identity.id == system_user_id
         has_system_process_need = any(
-            need.value == "system_process"
-            for need in identity.provides
-            if isinstance(need, RoleNeed)
+            need.method == "system_process" for need in identity.provides
         )
         if has_system_user_id or has_system_process_need:
             return self.facets
