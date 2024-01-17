@@ -7,29 +7,20 @@ from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
-
-class AdditonalDataProcessingMixin:
-    def _additional_processing(self, projection, record, *args, **kwargs):
-        methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        for name, method in methods:
-            if name.startswith("_additional_process_"):
-                method(self._identity, projection, record, *args, **kwargs)
-
-
-class RecordItem(BaseRecordItem, AdditonalDataProcessingMixin):
+class RecordItem(BaseRecordItem):
     """Single record result."""
-
+    components = []
     @property
     def data(self):
         if self._data:
             return self._data
-        ret_data = super().data
-        self._additional_processing(ret_data, self._record)
-        return ret_data
+        _data = super().data
+        for c in self.components:
+            c.update_data(self._identity, self._record, _data)
+        return _data
 
-
-class RecordList(BaseRecordList, AdditonalDataProcessingMixin):
-
+class RecordList(BaseRecordList):
+    components = []
     @property
     def hits(self):
         """Iterator over the hits."""
@@ -53,5 +44,6 @@ class RecordList(BaseRecordList, AdditonalDataProcessingMixin):
                 projection["links"] = self._links_item_tpl.expand(
                     self._identity, record
                 )
-            self._additional_processing(projection, record)
+            for c in self.components:
+                c.update_data(self._identity, record, projection)
             yield projection
