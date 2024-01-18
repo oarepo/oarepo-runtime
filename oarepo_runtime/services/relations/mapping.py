@@ -30,7 +30,7 @@ class RelationsMapping:
             getattr(self, name).clean()
 
     def set_cache(self, cache):
-        from oarepo_runtime.relations import PIDRelation
+        from oarepo_runtime.records.relations import PIDRelation
 
         for key, fld in self._fields.items():
             if isinstance(fld, PIDRelation):
