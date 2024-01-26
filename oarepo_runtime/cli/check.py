@@ -13,7 +13,6 @@ from invenio_files_rest.models import Location
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_resources.proxies import current_service_registry
 from opensearchpy import TransportError
-from werkzeug.local import LocalProxy
 
 from .base import oarepo
 

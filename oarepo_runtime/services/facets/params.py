@@ -3,7 +3,7 @@ import logging
 from typing import List
 
 from flask import current_app
-from flask_principal import Identity, Need
+from flask_principal import Identity
 from invenio_access.permissions import system_user_id
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
