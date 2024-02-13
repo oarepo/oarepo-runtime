@@ -1,9 +1,26 @@
+import inspect
+
+from invenio_records_resources.services.records.results import (
+    RecordItem as BaseRecordItem,
+)
 from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
+class RecordItem(BaseRecordItem):
+    """Single record result."""
+    components = []
+    @property
+    def data(self):
+        if self._data:
+            return self._data
+        _data = super().data
+        for c in self.components:
+            c.update_data(self._identity, self._record, _data)
+        return _data
 
 class RecordList(BaseRecordList):
+    components = []
     @property
     def hits(self):
         """Iterator over the hits."""
@@ -27,5 +44,6 @@ class RecordList(BaseRecordList):
                 projection["links"] = self._links_item_tpl.expand(
                     self._identity, record
                 )
-
+            for c in self.components:
+                c.update_data(self._identity, record, projection)
             yield projection
