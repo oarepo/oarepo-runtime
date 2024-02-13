@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 
 import click
@@ -21,15 +22,7 @@ def assets():
 @click.option("--assets-dir", default=".assets")
 @with_appcontext
 def collect(output_file, repository_dir, assets_dir):
-    asset_deps = []
-    aliases = {}
-    theme = (current_app.config["APP_THEME"] or ["semantic-ui"])[0]
-
-    for ep in entry_points(group="invenio_assets.webpack"):
-        webpack = ep.load()
-        if theme in webpack.themes:
-            asset_deps.append(webpack.themes[theme].path)
-            aliases.update(webpack.themes[theme].aliases)
+    aliases, asset_dirs = enumerate_assets()
 
     app_and_blueprints = [current_app] + list(current_app.blueprints.values())
 
@@ -47,7 +40,7 @@ def collect(output_file, repository_dir, assets_dir):
             static_deps.append(bp.static_folder)
 
     root_aliases = {}
-    asset_paths = [Path(x) for x in asset_deps]
+    asset_paths = [Path(x) for x in asset_dirs]
     for alias, path in aliases.items():
         for pth in asset_paths:
             possible_path = pth / path
@@ -63,7 +56,7 @@ def collect(output_file, repository_dir, assets_dir):
     with open(output_file, "w") as f:
         json.dump(
             {
-                "assets": asset_deps,
+                "assets": asset_dirs,
                 "static": static_deps,
                 "@aliases": aliases,
                 "@root_aliases": root_aliases,
@@ -74,10 +67,54 @@ def collect(output_file, repository_dir, assets_dir):
         )
 
 
+def enumerate_assets():
+    asset_dirs = []
+    aliases = {}
+    theme = (current_app.config["APP_THEME"] or ["semantic-ui"])[0]
+    for ep in entry_points(group="invenio_assets.webpack"):
+        webpack = ep.load()
+        if theme in webpack.themes:
+            asset_dirs.append(webpack.themes[theme].path)
+            aliases.update(webpack.themes[theme].aliases)
+    return aliases, asset_dirs
+
+
+COMPONENT_RE = re.compile(
+    r"""
+^
+\s*
+&        # start of import statement & { import "blah"; }
+\s*
+{    
+\s*
+@import\s+["'](.*?)["']
+\s*
+;
+\s*
+}""",
+    re.MULTILINE | re.DOTALL | re.VERBOSE,
+)
+
+
 @assets.command(name="less-components")
-@click.argument("output_file")
+@click.argument("output_file", default="-")
 @with_appcontext
 def less_components(output_file):
-    with open(output_file, "w") as f:
-        components = list(set(current_app.config.get("OAREPO_UI_LESS_COMPONENTS", [])))
-        json.dump({"components": components}, f)
+    aliases, asset_dirs = enumerate_assets()
+    asset_dirs = [Path(x) for x in asset_dirs]
+    less_component_files = []
+    for asset_dir in asset_dirs:
+        less_dir = asset_dir / "less"
+        if less_dir.exists():
+            for f in less_dir.glob("**/custom-components.less"):
+                less_component_files.append(f)
+    components = set()
+    for cmp_file in less_component_files:
+        for s in COMPONENT_RE.findall(cmp_file.read_text()):
+            components.add(Path(s).stem)
+    data = {"components": list(sorted(components))}
+    if output_file == "-":
+        print(json.dumps(data, indent=4, ensure_ascii=False))
+    else:
+        with open(output_file, "w") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
