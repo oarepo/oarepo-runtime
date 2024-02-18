@@ -48,6 +48,9 @@ def load(
     else:
         callback = fixtures_asynchronous_callback.s()
 
+    if fixture_dir:
+        system_fixtures = False
+
     with current_app.wsgi_app.mounts["/api"].app_context():
         load_fixtures(
             fixture_dir,
@@ -56,9 +59,9 @@ def load(
             system_fixtures=system_fixtures,
             callback=callback,
             batch_size=bulk_size,
-            datastreams_impl=AsynchronousDataStream
-            if on_background
-            else SynchronousDataStream,
+            datastreams_impl=(
+                AsynchronousDataStream if on_background else SynchronousDataStream
+            ),
         )
         if not on_background:
             _show_stats(callback, "Load fixtures")
