@@ -161,7 +161,6 @@ class InfoResource(Resource):
   module |
   generate |
   imports |
-  schema-class |
   extra-code |
   components |
   .*-args
