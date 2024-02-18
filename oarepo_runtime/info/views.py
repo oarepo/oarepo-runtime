@@ -207,7 +207,7 @@ class InfoResource(Resource):
         try:
             alias = model["api-blueprint"]["alias"]
             return api_url_for(f"{alias}.search", _external=True)
-        except:
+        except:  # noqa
             logger.exception("Failed to get model api endpoint")
             return None
 
@@ -215,7 +215,7 @@ class InfoResource(Resource):
         try:
             alias = model["api-blueprint"]["alias"]
             return api_url_for(f"{alias}.search_user_records", _external=True)
-        except:
+        except:  # noqa
             logger.exception("Failed to get model draft endpoint")
             return None
 
@@ -225,7 +225,7 @@ class InfoResource(Resource):
                 self._get_model_api_endpoint(model),
                 model["resource-config"]["base-html-url"],
             )
-        except:
+        except:  # noqa
             logger.exception("Failed to get model html endpoint")
             return None
 
@@ -236,14 +236,14 @@ class InfoResource(Resource):
                 schema=model["json-schema-settings"]["name"],
                 _external=True,
             )
-        except:
+        except:  # noqa
             logger.exception("Failed to get model schema endpoint")
             return None
 
     def _get_model_model_endpoint(self, model):
         try:
             return url_for("oarepo_runtime_info.model", model=model, _external=True)
-        except:
+        except:  # noqa
             logger.exception("Failed to get model model endpoint")
             return None
 
@@ -253,7 +253,7 @@ class InfoResource(Resource):
             schema = getattr(record_cls, "schema", None)
             if schema is not None:
                 return [schema.value]
-        except:
+        except:  # noqa
             logger.exception("Failed to get model schemas")
         return []
 
@@ -280,7 +280,7 @@ def get_package_version(package_name):
 
     try:
         return re.sub(r"\+.*", "", get_distribution(package_name).version)
-    except Exception:
+    except Exception:  # noqa
         logger.exception(f"Failed to get package version for {package_name}")
         return None
 
