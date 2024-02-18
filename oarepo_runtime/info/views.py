@@ -171,22 +171,28 @@ class InfoResource(Resource):
 
     def _remove_implementation_details_from_model(self, model):
         if isinstance(model, dict):
-            ret = {}
-            for k, v in model.items():
-                if not self.IMPLEMENTATION_DETAILS.match(k):
-                    new_value = self._remove_implementation_details_from_model(v)
-                    if new_value is not None and new_value != {} and new_value != []:
-                        ret[k] = new_value
-            return ret
+            return self._remove_implementation_details_from_model_dict(model)
         elif isinstance(model, list):
-            ret = []
-            for v in model:
-                new_value = self._remove_implementation_details_from_model(v)
-                if new_value is not None and new_value != {} and new_value != []:
-                    ret.append(new_value)
-            return ret
+            return self._remove_implementation_details_from_model_list(model)
         else:
             return model
+
+    def _remove_implementation_details_from_model_dict(self, model):
+        ret = {}
+        for k, v in model.items():
+            if not self.IMPLEMENTATION_DETAILS.match(k):
+                new_value = self._remove_implementation_details_from_model(v)
+                if new_value is not None and new_value != {} and new_value != []:
+                    ret[k] = new_value
+        return ret
+
+    def _remove_implementation_details_from_model_list(self, model):
+        ret = []
+        for v in model:
+            new_value = self._remove_implementation_details_from_model(v)
+            if new_value is not None and new_value != {} and new_value != []:
+                ret.append(new_value)
+        return ret
 
     def call_components(self, method_name, **kwargs):
         for component in self.config.components:
