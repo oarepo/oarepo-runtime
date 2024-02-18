@@ -75,7 +75,7 @@ def load_fixtures(
             if pkg_fixture_dir.is_file():
                 pkg_fixture_dir = pkg_fixture_dir.parent
             catalogue = DataStreamCatalogue(pkg_fixture_dir / "catalogue.yaml")
-            processed_streams = _load_fixtures_from_catalogue(
+            _load_fixtures_from_catalogue(
                 catalogue,
                 fixtures,
                 include,
@@ -89,7 +89,6 @@ def load_fixtures(
 def _load_fixtures_from_catalogue(
     catalogue, fixtures, include, exclude, callback, batch_size, datastreams_impl
 ):
-    processed_streams = []
     for catalogue_datastream in catalogue.get_datastreams():
         if catalogue_datastream.stream_name in fixtures:
             continue
@@ -110,8 +109,6 @@ def _load_fixtures_from_catalogue(
             batch_size=batch_size,
         )
         datastream.process()
-        processed_streams.append(catalogue_datastream.stream_name)
-    return processed_streams
 
 
 def dump_fixtures(
