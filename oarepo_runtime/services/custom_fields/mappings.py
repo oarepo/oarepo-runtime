@@ -80,6 +80,7 @@ def prepare_cf_index(config: RecordServiceConfig):
         # get mapping
         mapping = fld.mapping
         settings = fld.mapping_settings
+        dynamic_templates = fld.dynamic_templates
 
         # upload mapping
         try:
@@ -98,20 +99,25 @@ def prepare_cf_index(config: RecordServiceConfig):
                     ),
                     using=current_search_client,
                 )
-                update_index(draft_index, settings, mapping)
+                update_index(draft_index, settings, mapping, dynamic_templates)
 
         except search.RequestError as e:
             click.secho("An error occurred while creating custom fields.", fg="red")
             click.secho(e.info["error"]["reason"], fg="red")
 
 
-def update_index(record_index, settings, mapping):
+def update_index(record_index, settings, mapping, dynamic_templates=None):
     if settings:
         record_index.close()
         record_index.put_settings(body=settings)
         record_index.open()
+    body = {}
     if mapping:
-        record_index.put_mapping(body={"properties": mapping})
+        body["properties"] = mapping
+    if dynamic_templates:
+        body["dynamic_templates"] = dynamic_templates
+    if body:
+        record_index.put_mapping(body=body)
 
 
 def get_mapping_fields(record_class) -> Iterable[MappingSystemFieldMixin]:
