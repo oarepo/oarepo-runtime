@@ -64,11 +64,10 @@ class InfoResource(Resource):
     def repository(self):
         """Repository endpoint."""
         ret = {
-            "name": current_app.config.get("REPOSITORY_NAME", ""),
+            "name": current_app.config.get("THEME_SITENAME", ""),
             "description": current_app.config.get("REPOSITORY_DESCRIPTION", ""),
             "version": get_package_version("repo"),
             "invenio_version": get_package_version("oarepo"),
-            "features": ["drafts", "communities", "requests", "custom_fields"],
             "transfers": [
                 "local-file",
                 "url-fetch",
