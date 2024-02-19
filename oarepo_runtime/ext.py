@@ -28,9 +28,9 @@ class OARepoRuntime(object):
 
         for k in ext_config.OAREPO_PERMISSIONS_PRESETS:
             if k not in app.config["OAREPO_PERMISSIONS_PRESETS"]:
-                app.config["OAREPO_PERMISSIONS_PRESETS"][
-                    k
-                ] = ext_config.OAREPO_PERMISSIONS_PRESETS[k]
+                app.config["OAREPO_PERMISSIONS_PRESETS"][k] = (
+                    ext_config.OAREPO_PERMISSIONS_PRESETS[k]
+                )
 
         for k in dir(ext_config):
             if k == "DEFAULT_DATASTREAMS_EXCLUDES":
@@ -53,5 +53,3 @@ class OARepoRuntime(object):
         for val_k, val_value in source.items():
             if val_k not in target:
                 target[val_k] = val_value
-
-

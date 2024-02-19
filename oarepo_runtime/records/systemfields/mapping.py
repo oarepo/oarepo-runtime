@@ -12,6 +12,10 @@ class MappingSystemFieldMixin:
     def mapping_settings(self):
         return {}
 
+    @property
+    def dynamic_templates(self):
+        return []
+
 
 class SystemFieldDumperExt(SearchDumperExt):
     def dump(self, record, data):
