@@ -21,7 +21,7 @@ class SystemFieldDumperExt(SearchDumperExt):
     def dump(self, record, data):
         """Dump custom fields."""
         for cf in inspect.getmembers(
-            record, lambda x: isinstance(x, MappingSystemFieldMixin)
+            type(record), lambda x: isinstance(x, MappingSystemFieldMixin)
         ):
             cf[1].search_dump(data)
 
