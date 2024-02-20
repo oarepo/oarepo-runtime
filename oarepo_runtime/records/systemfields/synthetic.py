@@ -68,7 +68,7 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
             data[self.key] = dt
 
     def search_load(self, data):
-        data.pop(self.key)
+        data.pop(self.key, None)
 
     def __get__(self, record, owner=None):
         if record is None:
