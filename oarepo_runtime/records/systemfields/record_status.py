@@ -3,16 +3,10 @@ from invenio_records.systemfields import SystemField
 from .mapping import MappingSystemFieldMixin
 
 
-class RecordStatusResult(MappingSystemFieldMixin):
+class RecordStatusResult:
     def __init__(self, record, attr_name):
         self.record = record
         self.attr_name = attr_name
-
-    def search_dump(self, data):
-        if getattr(self.record, "is_draft"):
-            data[self.attr_name] = "draft"
-        else:
-            data[self.attr_name] = "published"
 
 
 class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
@@ -24,8 +18,14 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
             },
         }
 
-    def search_load(self, data):
+    def search_load(self, data, record_cls):
         data.pop(self.attr_name, None)
+
+    def search_dump(self, data, record):
+        if getattr(record, "is_draft"):
+            data[self.attr_name] = "draft"
+        else:
+            data[self.attr_name] = "published"
 
     def __get__(self, record, owner=None):
         """Accessing the attribute."""

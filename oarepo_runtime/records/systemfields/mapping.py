@@ -16,6 +16,16 @@ class MappingSystemFieldMixin:
     def dynamic_templates(self):
         return []
 
+    @classmethod
+    def search_dump(cls, data, record):
+        """Dump custom field."""
+        pass
+
+    @classmethod
+    def search_load(cls, data, record_cls):
+        """Load custom field."""
+        pass
+
 
 class SystemFieldDumperExt(SearchDumperExt):
     def dump(self, record, data):
@@ -23,11 +33,11 @@ class SystemFieldDumperExt(SearchDumperExt):
         for cf in inspect.getmembers(
             type(record), lambda x: isinstance(x, MappingSystemFieldMixin)
         ):
-            cf[1].search_dump(data)
+            cf[1].search_dump(data, record=record)
 
     def load(self, data, record_cls):
         """Load custom fields."""
         for cf in inspect.getmembers(
             record_cls, lambda x: isinstance(x, MappingSystemFieldMixin)
         ):
-            cf[1].search_load(data)
+            cf[1].search_load(data, record_cls=record_cls)

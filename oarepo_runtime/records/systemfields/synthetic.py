@@ -62,12 +62,12 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
            ```
     """
 
-    def search_dump(self, data):
+    def search_dump(self, data, record):
         dt = self._value(data)
         if dt:
             data[self.key] = dt
 
-    def search_load(self, data):
+    def search_load(self, data, record_cls):
         data.pop(self.key, None)
 
     def __get__(self, record, owner=None):

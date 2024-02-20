@@ -21,14 +21,14 @@ class CustomFieldsMixin(MappingSystemFieldMixin):
     def mapping_settings(self):
         return {}
 
-    def search_dump(self, data):
+    def search_dump(self, data, record):
         custom_fields = current_app.config.get(self.config_key, {})
 
         for cf in custom_fields:
             cf.dump(data, cf_key=self.key)
         return data
 
-    def search_load(self, data):
+    def search_load(self, data, record_cls):
         custom_fields = current_app.config.get(self.config_key, {})
 
         for cf in custom_fields:

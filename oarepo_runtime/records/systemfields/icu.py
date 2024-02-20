@@ -8,7 +8,7 @@ from oarepo_runtime.records.relations.lookup import lookup_key
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 
 
-class ICUField(SystemField):
+class ICUField(MappingSystemFieldMixin, SystemField):
     """
     A system field that acts as an opensearch "proxy" to another field.
     It creates a top-level mapping field with the same name and copies
@@ -44,20 +44,20 @@ class ICUField(SystemField):
                     ret.append(val)
         return ret
 
-    def search_dump(self, data):
+    def search_dump(self, data, record):
         ret = {}
         for lang in self.languages:
             ret[lang] = self.get_values(data, lang)
         data[self.attr_name] = ret
 
-    def search_load(self, data):
+    def search_load(self, data, record_cls):
         data.pop(self.attr_name, None)
 
     def __get__(self, instance, owner):
         return self
 
 
-class ICUSortField(MappingSystemFieldMixin, ICUField):
+class ICUSortField(ICUField):
     """
     A field that adds icu sorting field
     """
@@ -83,7 +83,7 @@ class ICUSortField(MappingSystemFieldMixin, ICUField):
         }
 
 
-class ICUSuggestField(MappingSystemFieldMixin, ICUField):
+class ICUSuggestField(ICUField):
     """
     A field that adds icu-aware suggestion field
     """
@@ -132,7 +132,7 @@ class ICUSuggestField(MappingSystemFieldMixin, ICUField):
         }
 
 
-class ICUSearchField(MappingSystemFieldMixin, ICUField):
+class ICUSearchField(ICUField):
     """
     A field that adds stemming-aware search field
     """
