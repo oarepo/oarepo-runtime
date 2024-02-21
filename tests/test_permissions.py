@@ -20,7 +20,6 @@ def test_permissions_with_config_key(app, db, non_system_identity, search_clear,
         permission_policy = permission_class("create")
         assert not permission_policy.allows(non_system_identity)
     finally:
-        setattr(Records2ServiceConfig, f"__cached__permission_policy_cls", None)
         del current_app.config['RECORDS2_SERVICE_PERMISSIONS_PRESETS']
 
 def test_permissions_without_config_key(app, db, non_system_identity, search_clear, location):
