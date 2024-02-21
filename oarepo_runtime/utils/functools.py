@@ -18,14 +18,16 @@ class class_property:
         self.__get = getter
         self.__set = setter
 
+        assert getter is not None
+
         info = getter.__get__(object)  # just need the info attrs.
         self.__doc__ = info.__doc__
         self.__name__ = info.__name__
         self.__module__ = info.__module__
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj, type=None):      # NOSONAR - this is a descriptor
         if obj and type is None:
-            type = obj.__class__
+            type = obj.__class__            # NOSONAR - this is a descriptor
         return self.__get.__get__(obj, type)()
 
     def __set__(self, obj, value):
