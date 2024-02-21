@@ -133,6 +133,15 @@ def identity():
     return i
 
 
+@pytest.fixture(scope="module")
+def non_system_identity():
+    """Simple identity to interact with the service."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(any_user)
+    return i
+
+
 @pytest.fixture()
 def custom_fields():
     prepare_cf_indices()
