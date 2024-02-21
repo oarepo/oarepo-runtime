@@ -9,15 +9,12 @@ def test_permissions_with_config_key(app, db, non_system_identity, search_clear,
     and checking that the identity is not allowed
     to create a record.
     """
+    # just to check that the cache invalidation below works
+    print(Records2ServiceConfig.permission_policy_cls)
     try:
         current_app.config['RECORDS2_SERVICE_PERMISSIONS_PRESETS'] = [
             "read_only"
         ]
-        # remove the previous value from the cache
-        try:
-            del Records2ServiceConfig.permission_policy_cls
-        except AttributeError:
-            pass
 
         permission_class = Records2ServiceConfig().permission_policy_cls
         permission_policy = permission_class("create")
@@ -29,12 +26,6 @@ def test_permissions_without_config_key(app, db, non_system_identity, search_cle
     """
     Default setting is everyone, so the identity should be able to create a record
     """
-
-    # remove the previous value from the cache
-    try:
-        del Records2ServiceConfig.permission_policy_cls
-    except AttributeError:
-        pass
 
     permission_class = Records2ServiceConfig().permission_policy_cls
     permission_policy = permission_class("create")
