@@ -12,20 +12,23 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
         the record is being indexed.
 
         Usage:
-
-        1. Create a new class that inherits from SyntheticSystemField
-        2. Implement the _value method that returns the value of the field from a data (
-           either a dictionary or an instance of the record class)
-        3. Put the class onto the record. If you use oarepo-model-builder, add it to the model
+        1. Check if any of the provided selectors (oarepo_runtime.records.systemfields.selectors)
+           are usable for your use case. If not, create a subclass of Selector class.
+        2. Put this class onto the record. If you use oarepo-model-builder, add it to the model
            like:
            ```yaml
     record:
       record:
-        extra-code: |-2
-              # extra custom fields for facets
-              faculty = {{common.theses.synthetic_fields.FacultySystemField}}()
-              department = {{common.theses.synthetic_fields.DepartmentSystemField}}()
-              defenseYear = {{common.theses.synthetic_fields.DefenseYearSystemField}}()
+        imports:
+          - oarepo_runtime.records.systemfields.SyntheticSystemField
+          - oarepo_vocabularies.records.selectors.LevelSelector
+        fields:
+          faculty = SyntheticSystemField(selector=LevelSelector("metadata.thesis.degreeGrantors", level=1))
+          department = SyntheticSystemField(selector=LevelSelector("metadata.thesis.degreeGrantors", level=2))
+          defenseYear = |
+            SyntheticSystemField(selector=PathSelector("metadata.thesis.dateDefended"),
+                transformer=lambda x: x[:4]
+            )
            ```
 
         4. Add the extra fields to the mapping and facets. If using oarepo-model-builder, add it to the
@@ -62,10 +65,20 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
            ```
     """
 
+    def __init__(self, key=None, selector=None, filter=None, transformer=None, **kwargs):
+        self.selector = selector
+        self.transformer = transformer
+        self.filter = filter
+        super().__init__(key=key, **kwargs)
+
     def search_dump(self, data, record):
         dt = self._value(data)
         if dt:
-            data[self.key] = dt
+            key = self.key.split(".")
+            d = data
+            for k in key[:-1]:
+                d = d.setdefault(k, {})
+            data[key[-1]] = dt
 
     def search_load(self, data, record_cls):
         data.pop(self.key, None)
@@ -76,4 +89,12 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
         return self._value(record)
 
     def _value(self, data):
-        raise NotImplementedError("You must implement the _value method")
+        if self.selector:
+            value = list(self.selector.select(data))
+            if self.filter:
+                value = [x for x in value if self.filter(x)]
+            if self.transformer:
+                value = [x for x in self.transformer(value)]
+                value = [x for x in value if x is not None]
+            return value
+        raise ValueError("Please either provide a selector or subclass this class and implement a _value method")
