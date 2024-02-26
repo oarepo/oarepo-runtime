@@ -65,9 +65,9 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
            ```
     """
 
-    def __init__(self, key=None, selector=None, filter=None, transformer=None, **kwargs):
+    def __init__(self, selector=None, filter=None, map=None, key=None, **kwargs):
         self.selector = selector
-        self.transformer = transformer
+        self.map = map
         self.filter = filter
         super().__init__(key=key, **kwargs)
 
@@ -78,10 +78,19 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
             d = data
             for k in key[:-1]:
                 d = d.setdefault(k, {})
-            data[key[-1]] = dt
+            d[key[-1]] = dt
 
     def search_load(self, data, record_cls):
-        data.pop(self.key, None)
+        def remove_key(d, key):
+            if len(key) == 1:
+                d.pop(key[0], None)
+            else:
+                if not isinstance(d, dict) or key[0] not in d:
+                    return
+                remove_key(d[key[0]], key[1:])
+                if not d[key[0]]:
+                    d.pop(key[0])
+        remove_key(data, self.key.split("."))
 
     def __get__(self, record, owner=None):
         if record is None:
@@ -93,8 +102,10 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
             value = list(self.selector.select(data))
             if self.filter:
                 value = [x for x in value if self.filter(x)]
-            if self.transformer:
-                value = [x for x in self.transformer(value)]
+            if self.map:
+                value = [self.map(x) for x in value]
                 value = [x for x in value if x is not None]
             return value
-        raise ValueError("Please either provide a selector or subclass this class and implement a _value method")
+        raise ValueError(
+            "Please either provide a selector or subclass this class and implement a _value method"
+        )

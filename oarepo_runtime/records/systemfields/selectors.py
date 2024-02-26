@@ -7,22 +7,23 @@ class Selector:
 
 
 class PathSelector:
-    def __init__(self, *paths, max_count=None):
-        self.paths = [x.split('.') for x in paths]
-        self.max_count = max_count
+    def __init__(self, *paths):
+        self.paths = [x.split(".") for x in paths]
 
     def select(self, record):
         ret = []
         for path in self.paths:
             for rec in getter(record, path):
                 ret.append(rec)
-                if len(ret) == self.max_count:
-                    return ret
         return ret
 
-class LanguageSelector(PathSelector):
-    def __init__(self, ):
-        pass
+
+class FirstItemSelector(PathSelector):
+    def select(self, record):
+        for rec in super().select(record):
+            return [rec]
+
+
 def getter(data, path: List):
     if len(path) == 0:
         yield data
@@ -32,4 +33,3 @@ def getter(data, path: List):
     elif isinstance(data, list):
         for item in data:
             yield from getter(item, path)
-

@@ -54,8 +54,7 @@ class PermissionsPresetsConfigMixin:
         """
         registered_preset_classes = current_app.config["OAREPO_PERMISSIONS_PRESETS"]
         preset_classes = [
-            registered_preset_classes[x]
-            for x in cls._get_permissions_presets()
+            registered_preset_classes[x] for x in cls._get_permissions_presets()
         ]
         if hasattr(cls, "base_permission_policy_cls"):
             preset_classes.insert(0, cls.base_permission_policy_cls)
@@ -72,7 +71,9 @@ class PermissionsPresetsConfigMixin:
         config_key = cls._get_presents_config_key()
         if config_key in current_app.config:
             return current_app.config[config_key]
-        return cls.PERMISSIONS_PRESETS  # noqa (omitted here because of the order of mixins)
+        return (
+            cls.PERMISSIONS_PRESETS
+        )  # noqa (omitted here because of the order of mixins)
 
     @classmethod
     def _get_presents_config_key(cls):
@@ -93,5 +94,5 @@ class PermissionsPresetsConfigMixin:
         name = cls.__name__
         if name.endswith("Config"):
             name = name[:-6]
-        name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).upper()
+        name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).upper()
         return f"{name}_PERMISSIONS_PRESETS"
