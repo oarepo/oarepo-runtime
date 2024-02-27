@@ -19,12 +19,10 @@ class MappingSystemFieldMixin:
     @classmethod
     def search_dump(cls, data, record):
         """Dump custom field."""
-        pass
 
     @classmethod
     def search_load(cls, data, record_cls):
         """Load custom field."""
-        pass
 
 
 class SystemFieldDumperExt(SearchDumperExt):
