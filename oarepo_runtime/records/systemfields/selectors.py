@@ -26,7 +26,10 @@ class FirstItemSelector(PathSelector):
 
 def getter(data, path: List):
     if len(path) == 0:
-        yield data
+        if isinstance(data, list):
+            yield from data
+        else:
+            yield data
     elif isinstance(data, dict):
         if path[0] in data:
             yield from getter(data[path[0]], path[1:])
