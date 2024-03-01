@@ -111,7 +111,8 @@ def _load_fixtures_from_catalogue(
 
         fixtures.add(catalogue_datastream.stream_name)
 
-        callback.fixture_started(catalogue_datastream.stream_name)
+        if hasattr(callback, "fixture_started"):
+            callback.fixture_started(catalogue_datastream.stream_name)
         datastream = datastreams_impl(
             readers=catalogue_datastream.readers,
             writers=catalogue_datastream.writers,
@@ -120,7 +121,8 @@ def _load_fixtures_from_catalogue(
             batch_size=batch_size,
         )
         datastream.process()
-        callback.fixture_finished(catalogue_datastream.stream_name)
+        if hasattr(callback, "fixture_finished"):
+            callback.fixture_finished(catalogue_datastream.stream_name)
 
 
 def dump_fixtures(
@@ -167,7 +169,8 @@ def dump_fixtures(
 
             for stream_name in catalogue:
                 catalogue_datastream = catalogue.get_datastream(stream_name)
-                callback.fixture_started(stream_name)
+                if hasattr(callback, "fixture_started"):
+                    callback.fixture_started(stream_name)
                 datastream = datastream_impl(
                     readers=catalogue_datastream.readers,
                     writers=catalogue_datastream.writers,
@@ -176,7 +179,8 @@ def dump_fixtures(
                     batch_size=batch_size,
                 )
                 datastream.process()
-                callback.fixture_finished(stream_name)
+                if hasattr(callback, "fixture_finished"):
+                    callback.fixture_finished(stream_name)
 
     with open(catalogue_path, "w") as f:
         yaml.dump(catalogue_data, f)
