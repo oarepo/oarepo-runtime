@@ -100,11 +100,18 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
     def _value(self, data):
         if self.selector:
             value = list(self.selector.select(data))
+            value = [x for x in value if x is not None]
             if self.filter:
                 value = [x for x in value if self.filter(x)]
             if self.map:
-                value = [self.map(x) for x in value]
-                value = [x for x in value if x is not None]
+                ret = []
+                for x in value:
+                    mapped = self.map(x)
+                    if isinstance(mapped, list):
+                        ret.extend(mapped)
+                    elif mapped is not None:
+                        ret.append(mapped)
+                value = ret
             return value
         raise ValueError(
             "Please either provide a selector or subclass this class and implement a _value method"
