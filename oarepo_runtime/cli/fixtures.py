@@ -29,8 +29,14 @@ def fixtures():
 @click.option(
     "--bulk-size",
     default=100,
+    type=int,
     help="Size for bulk indexing - this number of records "
     "will be committed in a single transaction and indexed together",
+)
+@click.option(
+    "--batch-size",
+    help="Alias for --bulk-size",
+    type=int
 )
 @with_appcontext
 def load(
@@ -41,9 +47,11 @@ def load(
     verbose=False,
     bulk_size=100,
     on_background=False,
+    batch_size=None
 ):
     """Loads fixtures"""
-
+    if batch_size:
+        bulk_size = batch_size
     if not on_background:
         callback = TQDMCallback(verbose=verbose)
     else:
@@ -90,6 +98,7 @@ def _make_list(lst):
 
 
 def _show_stats(callback: StatsKeepingDataStreamCallback, title: str):
+    print("\n\n")
     print(f"{title} stats:")
     print(callback.stats())
 
@@ -97,12 +106,11 @@ def _show_stats(callback: StatsKeepingDataStreamCallback, title: str):
 class TQDMCallback(FixturesCallback):
     def __init__(self, message_prefix = 'Loading ', verbose=False):
         super().__init__()
-        self._tqdm = tqdm.tqdm(unit="batches")
+        self._tqdm = tqdm.tqdm(unit=" item(s)")
         self._message_prefix = message_prefix
         self._verbose = verbose
 
     def fixture_started(self, fixture_name):
-        self._tqdm.n = 0
         self._tqdm.set_description(f"{self._message_prefix}{fixture_name} running")
 
     def fixture_finished(self, fixture_name):
@@ -110,7 +118,7 @@ class TQDMCallback(FixturesCallback):
 
     def batch_finished(self, batch):
         super().batch_finished(batch)
-        self._tqdm.update(1)
+        self._tqdm.update(len(batch.entries))
         for err in batch.errors:
             self._tqdm.write("Failed batch: {}: {}".format(err, batch))
         if self._verbose:
