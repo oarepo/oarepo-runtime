@@ -9,6 +9,29 @@ from requests import PreparedRequest, Response
 from requests.adapters import BaseAdapter
 
 
+def get_record_service_for_record(record):
+    if not record:
+        return None
+
+    if getattr(record, "is_draft", False):
+        record_name = "draft_cls"
+        expect_draft_service = True
+    else:
+        record_name = "record_cls"
+        expect_draft_service = False
+
+    for svc in current_service_registry._services.values():
+        if not isinstance(svc, RecordService):
+            continue
+        if isinstance(svc, FileService):
+            continue
+        is_draft_service = isinstance(svc, DraftRecordService)
+        if is_draft_service != expect_draft_service:
+            continue
+        service_record = getattr(svc, record_name, None)
+        if service_record == type(record):
+            return svc
+
 def get_file_service_for_record_class(record_class):
     if not record_class:
         return None
