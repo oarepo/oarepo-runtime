@@ -15,13 +15,14 @@ from oarepo_runtime.datastreams import (
     TransformerError,
     WriterError,
 )
+from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.datastreams.synchronous import log
 from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
 process = psutil.Process(os.getpid())
 
 
-class MemoryKeepingCallback(StatsKeepingDataStreamCallback):
+class MemoryKeepingCallback(FixturesCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.baseline_size = process.memory_info().rss
