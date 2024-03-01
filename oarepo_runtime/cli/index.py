@@ -194,13 +194,6 @@ def generate_bulk_data(record_generator, record_indexer, bulk_size):
         body = record_indexer._prepare_record(record, index)
         index = record_indexer._prepare_index(index)
         data.append({"index": {"_index": index, "_id": body["uuid"]}})
-
-        if n % 2:
-            body['extra-wrong'] = {"aaa": 1}
-        else:
-            body['extra-wrong'] = "1"
-        n += 1
-
         data.append(body)
         if len(data) >= bulk_size:
             yield data
