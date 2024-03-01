@@ -6,6 +6,8 @@ from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 from invenio_search.proxies import current_search
 from werkzeug.utils import ImportStringError, import_string
+from io import StringIO
+import yaml
 
 try:
     from tqdm import tqdm
@@ -109,7 +111,8 @@ def model_records_generator(model_class):
 @with_appcontext
 @click.argument("model", required=False)
 @click.option("--bulk-size", required=False, default=5000, type=int)
-def reindex(model, bulk_size):
+@click.option("--verbose/--no-verbose", default=False)
+def reindex(model, bulk_size, verbose):
     if not model:
         services = current_service_registry._services.keys()
     else:
@@ -144,29 +147,69 @@ def reindex(model, bulk_size):
 
         click.secho(f"Indexing {service_id}", file=sys.stderr)
         count = 0
+        errors = 0
         for gen in id_generators:
             for bulk in generate_bulk_data(gen, service.indexer, bulk_size=bulk_size):
-                service.indexer.client.bulk(bulk)
-                count += len(bulk)
+                index_result = service.indexer.client.bulk(bulk)
+                count += len(bulk) // 2
+
+                for index_item_result in index_result['items']:
+                    result = index_item_result['index']
+                    if result['status'] != 200:
+                        errors += 1
+                        click.secho(f"Error indexing record with id {result['_id']}", fg="red", file=sys.stderr)
+                        click.secho(dump_yaml(result.get('error')), fg="red", file=sys.stderr)
+                        if verbose:
+                            click.secho("Record:", file=sys.stderr)
+                            rec = [bulk[idx+1] for idx in range(0, len(bulk), 2) if bulk[idx]['index']['_id'] == result['_id']]
+                            if rec:
+                                click.secho(dump_yaml(rec[0]))
+                            else:
+                                click.secho("<no record found>")
+
         if count:
             service.indexer.refresh()
 
-        click.secho(
-            f"Indexing {service_id} finished, indexed {count/2} records",
-            file=sys.stderr,
-        )
+        if errors:
+            click.secho(
+                f"Indexing {service_id} failed, indexed {count - errors} records, failed {errors} records.",
+                fg="red",
+                file=sys.stderr,
+            )
+            if not verbose:
+                click.secho("Run with --verbose to see information about the errors")
+        else:
+            click.secho(
+                f"Indexing {service_id} finished, indexed {count} records",
+                fg="green",
+                file=sys.stderr,
+            )
 
 
 def generate_bulk_data(record_generator, record_indexer, bulk_size):
     data = []
+    n = 0
     for record in tqdm(record_generator):
         index = record_indexer.record_to_index(record)
         body = record_indexer._prepare_record(record, index)
         index = record_indexer._prepare_index(index)
         data.append({"index": {"_index": index, "_id": body["uuid"]}})
+
+        if n % 2:
+            body['extra-wrong'] = {"aaa": 1}
+        else:
+            body['extra-wrong'] = "1"
+        n += 1
+
         data.append(body)
         if len(data) >= bulk_size:
             yield data
             data = []
     if data:
         yield data
+
+
+def dump_yaml(data):
+    io = StringIO()
+    yaml.dump(data, io, allow_unicode=True)
+    return io.getvalue()
