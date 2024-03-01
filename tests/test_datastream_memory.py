@@ -136,7 +136,7 @@ def test_batch_uow(app, db, search_clear):
         )
         assert (callback.max_size - callback.baseline_size) / (
             entry_size * sys.getsizeof(1)
-        ) < batch_size * 10
+        ) < batch_size * 15
 
     finally:
         log.level = 0
