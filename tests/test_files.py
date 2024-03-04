@@ -2,7 +2,7 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
+from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures, FixturesCallback
 from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 from oarepo_runtime.datastreams.utils import get_file_service_for_record_class
 from records2.proxies import current_service
@@ -41,7 +41,7 @@ def test_dump_with_files(db, app, identity, search_clear, location):
     Records2Record.index.refresh()
 
     with tempfile.TemporaryDirectory() as fixture_dir:
-        callback = StatsKeepingDataStreamCallback()
+        callback = FixturesCallback()
         dump_fixtures(fixture_dir, use_files=True, callback=callback)
         assert callback.ok_entries_count == 2
         assert callback.failed_entries_count == 0
@@ -78,7 +78,7 @@ def add_file_to_record(file_service, recid, file_id, identity, data=None):
 
 
 def test_load_with_files(db, app, identity, search_clear, location):
-    callback = StatsKeepingDataStreamCallback(log_error_entry=True)
+    callback = FixturesCallback(log_error_entry=True)
     load_fixtures(Path(__file__).parent / "file_data", callback=callback)
     assert callback.ok_entries_count == 2
     assert callback.failed_entries_count == 0

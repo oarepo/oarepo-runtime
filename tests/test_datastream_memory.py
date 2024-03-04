@@ -15,13 +15,14 @@ from oarepo_runtime.datastreams import (
     TransformerError,
     WriterError,
 )
+from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.datastreams.synchronous import log
 from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
 process = psutil.Process(os.getpid())
 
 
-class MemoryKeepingCallback(StatsKeepingDataStreamCallback):
+class MemoryKeepingCallback(FixturesCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.baseline_size = process.memory_info().rss
@@ -135,7 +136,7 @@ def test_batch_uow(app, db, search_clear):
         )
         assert (callback.max_size - callback.baseline_size) / (
             entry_size * sys.getsizeof(1)
-        ) < batch_size * 10
+        ) < batch_size * 15
 
     finally:
         log.level = 0

@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from oarepo_runtime.datastreams import DataStreamCallback
-from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures
+from oarepo_runtime.datastreams.fixtures import dump_fixtures, load_fixtures, FixturesCallback
 from records2.proxies import current_service
 from records2.records.api import Records2Record
 
@@ -18,7 +18,7 @@ def read_yaml(fp):
 
 
 def test_pkg_fixtures(db, app, identity, search_clear, location):
-    load_fixtures(callback=DataStreamCallback())
+    load_fixtures(callback=FixturesCallback())
 
     Records2Record.index.refresh()
     titles = set()
@@ -28,7 +28,7 @@ def test_pkg_fixtures(db, app, identity, search_clear, location):
 
 
 def test_extra_fixtures(db, app, identity, search_clear, location):
-    load_fixtures(Path(__file__).parent / "data", callback=DataStreamCallback())
+    load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
@@ -37,10 +37,10 @@ def test_extra_fixtures(db, app, identity, search_clear, location):
 
 
 def test_load_dump(db, app, identity, search_clear, location):
-    load_fixtures(callback=DataStreamCallback())
+    load_fixtures(callback=FixturesCallback())
     Records2Record.index.refresh()
     with tempfile.TemporaryDirectory() as fixture_dir:
-        dump_fixtures(fixture_dir, callback=DataStreamCallback())
+        dump_fixtures(fixture_dir, callback=FixturesCallback())
 
         fixture_dir = Path(fixture_dir)
 
