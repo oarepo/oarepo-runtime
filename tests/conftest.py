@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
+from flask_principal import Identity, Need, UserNeed, RoleNeed
 from flask_security import login_user
 from flask_security.utils import hash_password
 from invenio_access import ActionUsers, current_access
@@ -120,6 +120,16 @@ def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
     i.provides.add(UserNeed(1))
+    i.provides.add(Need(method="system_role", value="any_user"))
+    return i
+
+
+@pytest.fixture(scope="module")
+def identity_with_role():
+    """Simple identity fixture."""
+    i = Identity(1)
+    i.provides.add(UserNeed(1))
+    i.provides.add(RoleNeed("myrole"))
     i.provides.add(Need(method="system_role", value="any_user"))
     return i
 
