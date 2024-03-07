@@ -1,0 +1,51 @@
+record:
+  use:
+    - invenio
+  module:
+    qualified: thesis
+  permissions:
+    presets: [ 'everyone' ]
+
+  record:
+    imports:
+      - import: oarepo_runtime.records.systemfields.SyntheticSystemField
+      - import: oarepo_runtime.records.systemfields.PathSelector
+    fields:
+      sort: "{{oarepo_runtime.records.systemfields.icu.ICUSortField}}(source_field='metadata.title')"
+      suggest: "{{oarepo_runtime.records.systemfields.icu.ICUSuggestField}}(source_field='metadata.title')"
+      num_increased: "{{SyntheticSystemField}}(PathSelector('metadata.num'), key='metadata.num_increased', map=lambda x: x + 1)"
+  search-options:
+    base-classes: [ oarepo_runtime.services.search.SearchOptions ]
+    sort-options-field: extra_sort_options
+    fields:
+      suggest_parser_cls: "{{oarepo_runtime.services.search.ICUSuggestParser}}('thesis')"
+      sort_options: "{{oarepo_runtime.services.search.ICUSortOptions}}('thesis')"
+
+  record-dumper:
+    extensions:
+      - "{{oarepo_runtime.records.systemfields.SystemFieldDumperExt}}()"
+
+  properties:
+    metadata:
+     properties:
+      featured: flat_object
+      title:
+       type: keyword
+       facets:
+        facet-groups: [ 'curator' ]
+      num:
+       type: integer
+       facets:
+        facet-groups: [ 'default', 'curator' ]
+      num_increased:
+       type: integer
+       facets:
+        facet-groups: [ 'default', 'curator' ]
+
+  draft: {}
+
+
+
+profiles:
+  - record
+  - draft

@@ -28,7 +28,6 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
-from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.datastreams.types import DataStreamCallback
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
@@ -133,6 +132,20 @@ def identity():
     i.provides.add(system_process)
     return i
 
+@pytest.fixture(scope="module")
+def more_identities():
+    """Simple identity to interact with the service."""
+    i2 = Identity(2)
+    i2.provides.add(UserNeed(2))
+    i2.provides.add(any_user)
+    i2.provides.add(system_process)
+
+    i3 = Identity(3)
+    i3.provides.add(UserNeed(3))
+    i3.provides.add(any_user)
+    i3.provides.add(system_process)
+    return [i2, i3]
+
 
 @pytest.fixture(scope="module")
 def non_system_identity():
@@ -160,6 +173,25 @@ def user(app, db):
         )
     db.session.commit()
     return _user
+
+@pytest.fixture()
+def more_users(app, db):
+    """Create example user."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        user1 = datastore.create_user(
+            email="user_two@inveniosoftware.org",
+            password=hash_password("password"),
+            active=True,
+        )
+        datastore = app.extensions["security"].datastore
+        user2 = datastore.create_user(
+            email="user_three@inveniosoftware.org",
+            password=hash_password("password"),
+            active=True,
+        )
+    db.session.commit()
+    return [user1, user2]
 
 
 @pytest.fixture()
@@ -218,7 +250,7 @@ def sample_data(db, app, identity, search_clear, location):
     from records2.proxies import current_service
     from records2.records.api import Records2Record
 
-    load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
+    load_fixtures(Path(__file__).parent / "data", callback=DataStreamCallback())
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
@@ -233,7 +265,7 @@ def sample_data_system_field(db, app, identity, search_clear, location):
     from records2.records.api import Records2Record
 
     load_fixtures(
-        Path(__file__).parent / "data_system_field", callback=FixturesCallback()
+        Path(__file__).parent / "data_system_field", callback=DataStreamCallback()
     )
     Records2Record.index.refresh()
     titles = set()

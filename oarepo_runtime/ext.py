@@ -1,3 +1,7 @@
+from functools import cached_property
+
+from invenio_base.utils import obj_or_import_string
+
 import oarepo_runtime.cli.cf  # noqa, just to register
 
 from .cli import oarepo as oarepo_cmd
@@ -15,9 +19,16 @@ class OARepoRuntime(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
+        self.app = app
         app.extensions["oarepo-runtime"] = self
         app.extensions["oarepo-datastreams"] = OARepoDataStreamsExt(app)
         app.cli.add_command(oarepo_cmd)
+
+    @cached_property
+    def owner_entity_resolvers(self):
+        return [
+            obj_or_import_string(x) for x in self.app.config["OWNER_ENTITY_RESOLVERS"]
+        ]
 
     def init_config(self, app):
         """Initialize configuration."""
@@ -48,6 +59,9 @@ class OARepoRuntime(object):
 
             elif k == "OAREPO_FACET_GROUP_NAME":
                 app.config.setdefault(k, getattr(ext_config, k))
+
+            elif k == "OWNER_ENTITY_RESOLVERS":
+                app.config.setdefault(k, []).extend(getattr(ext_config, k))
 
     def add_non_existing(self, target, source):
         for val_k, val_value in source.items():
