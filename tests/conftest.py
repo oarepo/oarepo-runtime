@@ -124,11 +124,12 @@ def identity_simple():
     return i
 
 
-@pytest.fixture(scope="module")
-def identity_with_role():
+@pytest.fixture()
+def identity_with_role(app, db, user):
     """Simple identity fixture."""
     i = Identity(1)
-    i.provides.add(UserNeed(1))
+
+    i.provides.add(UserNeed(user.id))
     i.provides.add(RoleNeed("myrole"))
     i.provides.add(Need(method="system_role", value="any_user"))
     return i

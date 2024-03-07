@@ -114,15 +114,9 @@ class UserWithRole(Generator):
         return [RoleNeed(role) for role in self.roles]
 
     def query_filter(self, identity=None, **kwargs):
-        if not hasattr(identity, "user"):
+        if not identity:
             return dsl.Q("match_none")
-        user = identity.user
-        if not isinstance(user, User):
-            return dsl.Q("match_none")
-        roles = user.roles
-        if not roles:
-            return dsl.Q("match_none")
-        for role in roles:
-            if role.name in self.roles:
+        for provide in identity.provides:
+            if provide.method == "role" and provide.value in self.roles:
                 return dsl.Q("match_all")
         return dsl.Q("match_none")

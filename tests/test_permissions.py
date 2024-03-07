@@ -44,3 +44,9 @@ def test_role_generator(app, identity, identity_with_role):
     pc = PC("blah")
     assert not pc.allows(identity)
     assert pc.allows(identity_with_role)
+
+    f = UserWithRole("myrole").query_filter(identity)
+    assert f.to_dict() == {"match_none": {}}
+
+    f = UserWithRole("myrole").query_filter(identity_with_role)
+    assert f.to_dict() == {"match_all": {}}
