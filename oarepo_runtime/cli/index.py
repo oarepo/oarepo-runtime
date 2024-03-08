@@ -103,8 +103,7 @@ def model_records_generator(model_class):
             rec_id = x[0]
             yield model_class.get_record(rec_id)
     except Exception as e:
-        if "Column expression or FROM clause expected" not in str(e):
-            raise
+        click.secho(f"Could not index {model_class}: {e}", fg="red", file=sys.stderr)
 
 
 @index.command()

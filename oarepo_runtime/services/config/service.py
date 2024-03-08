@@ -3,9 +3,13 @@ import re
 from typing import List, Type
 
 from flask import current_app
+from flask_principal import RoleNeed
+from invenio_accounts.models import User
 from invenio_records_permissions import BasePermissionPolicy
+from invenio_records_permissions.generators import Generator
 
 from oarepo_runtime.utils.functools import class_property
+from invenio_search.engine import dsl
 
 
 class PermissionsPresetsConfigMixin:
@@ -53,9 +57,13 @@ class PermissionsPresetsConfigMixin:
         the default value from the class attribute PERMISSIONS_PRESETS.
         """
         registered_preset_classes = current_app.config["OAREPO_PERMISSIONS_PRESETS"]
-        preset_classes = [
-            registered_preset_classes[x] for x in cls._get_permissions_presets()
-        ]
+        preset_classes = []
+        for x in cls._get_permissions_presets():
+            if isinstance(x, str):
+                preset_classes.append(registered_preset_classes[x])
+            else:
+                preset_classes.append(x)
+
         if hasattr(cls, "base_permission_policy_cls"):
             preset_classes.insert(0, cls.base_permission_policy_cls)
         return preset_classes
@@ -96,3 +104,19 @@ class PermissionsPresetsConfigMixin:
             name = name[:-6]
         name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).upper()
         return f"{name}_PERMISSIONS_PRESETS"
+
+
+class UserWithRole(Generator):
+    def __init__(self, *roles):
+        self.roles = roles
+
+    def needs(self, **kwargs):
+        return [RoleNeed(role) for role in self.roles]
+
+    def query_filter(self, identity=None, **kwargs):
+        if not identity:
+            return dsl.Q("match_none")
+        for provide in identity.provides:
+            if provide.method == "role" and provide.value in self.roles:
+                return dsl.Q("match_all")
+        return dsl.Q("match_none")

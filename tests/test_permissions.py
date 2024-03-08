@@ -1,5 +1,7 @@
 from flask import current_app
+from invenio_records_permissions import RecordPermissionPolicy
 
+from oarepo_runtime.services.config import UserWithRole
 from records2.services.records.config import Records2ServiceConfig
 
 
@@ -33,3 +35,18 @@ def test_permissions_without_config_key(
     permission_class = Records2ServiceConfig().permission_policy_cls
     permission_policy = permission_class("create")
     assert permission_policy.allows(non_system_identity)
+
+
+def test_role_generator(app, identity, identity_with_role):
+    class PC(RecordPermissionPolicy):
+        can_blah = [UserWithRole("myrole")]
+
+    pc = PC("blah")
+    assert not pc.allows(identity)
+    assert pc.allows(identity_with_role)
+
+    f = UserWithRole("myrole").query_filter(identity)
+    assert f.to_dict() == {"match_none": {}}
+
+    f = UserWithRole("myrole").query_filter(identity_with_role)
+    assert f.to_dict() == {"match_all": {}}
