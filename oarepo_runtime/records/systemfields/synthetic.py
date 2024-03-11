@@ -2,6 +2,10 @@ from invenio_records.systemfields import SystemField
 
 from .mapping import MappingSystemFieldMixin
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
     """
@@ -99,20 +103,24 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
 
     def _value(self, data):
         if self.selector:
-            value = list(self.selector.select(data))
-            value = [x for x in value if x is not None]
-            if self.filter:
-                value = [x for x in value if self.filter(x)]
-            if self.map:
-                ret = []
-                for x in value:
-                    mapped = self.map(x)
-                    if isinstance(mapped, list):
-                        ret.extend(mapped)
-                    elif mapped is not None:
-                        ret.append(mapped)
-                value = ret
-            return value
+            try:
+                value = list(self.selector.select(data))
+                value = [x for x in value if x is not None]
+                if self.filter:
+                    value = [x for x in value if self.filter(x)]
+                if self.map:
+                    ret = []
+                    for x in value:
+                        mapped = self.map(x)
+                        if isinstance(mapped, list):
+                            ret.extend(mapped)
+                        elif mapped is not None:
+                            ret.append(mapped)
+                    value = ret
+                return value
+            except:
+                log.exception(f"Error in selector {self.selector} for {self.key}")
+                return []
         raise ValueError(
             "Please either provide a selector or subclass this class and implement a _value method"
         )
