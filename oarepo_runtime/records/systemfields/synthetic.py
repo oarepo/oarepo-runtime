@@ -104,7 +104,7 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
     def _value(self, data):
         if self.selector:
             try:
-                value = list(self.selector.select(data))
+                value = list(self.selector.select(data) or [])
                 value = [x for x in value if x is not None]
                 if self.filter:
                     value = [x for x in value if self.filter(x)]
