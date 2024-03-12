@@ -9,7 +9,6 @@ def try_sequence(*funcs, ignored_exceptions=(), raised_exception=Exception):
 
 
 class class_property:
-
     def __init__(self, getter=None, setter=None):
         if getter is not None and not isinstance(getter, classmethod):
             getter = classmethod(getter)

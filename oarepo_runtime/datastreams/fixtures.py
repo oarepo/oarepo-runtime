@@ -27,7 +27,6 @@ class FixturesCallback(StatsKeepingDataStreamCallback):
         pass
 
 
-
 def load_fixtures(
     fixture_dir=None,
     include=None,

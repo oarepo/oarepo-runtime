@@ -94,6 +94,7 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
                 remove_key(d[key[0]], key[1:])
                 if not d[key[0]]:
                     d.pop(key[0])
+
         remove_key(data, self.key.split("."))
 
     def __get__(self, record, owner=None):
