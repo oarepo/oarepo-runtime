@@ -87,14 +87,18 @@ class LocalizedTime(LocalizedMixin, FormatTimeString):
 class LocalizedEDTF(LocalizedMixin, MultilayerFormatEDTF):
     pass
 
+
 class LocalizedEDTFTime(LocalizedMixin, MultilayerFormatEDTF):
     pass
+
 
 class LocalizedEDTFInterval(LocalizedMixin, FormatEDTF):
     pass
 
+
 class LocalizedEDTFTimeInterval(LocalizedMixin, FormatEDTF):
     pass
+
 
 class PrefixedGettextField(BabelGettextDictField):
     def __init__(self, *, value_prefix, locale, default_locale, **kwargs):

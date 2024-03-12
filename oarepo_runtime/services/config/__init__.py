@@ -1,5 +1,9 @@
-from .permissions_presets import (OaiHarvesterPermissionPolicy, ReadOnlyPermissionPolicy, EveryonePermissionPolicy,
-                                  AuthenticatedPermissionPolicy)
+from .permissions_presets import (
+    AuthenticatedPermissionPolicy,
+    EveryonePermissionPolicy,
+    OaiHarvesterPermissionPolicy,
+    ReadOnlyPermissionPolicy,
+)
 from .service import PermissionsPresetsConfigMixin, UserWithRole
 
 __all__ = (

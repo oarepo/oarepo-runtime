@@ -7,9 +7,10 @@ from oarepo_runtime.cli import oarepo
 from oarepo_runtime.datastreams import SynchronousDataStream
 from oarepo_runtime.datastreams.asynchronous import AsynchronousDataStream
 from oarepo_runtime.datastreams.fixtures import (
+    FixturesCallback,
     dump_fixtures,
     fixtures_asynchronous_callback,
-    load_fixtures, FixturesCallback,
+    load_fixtures,
 )
 from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
@@ -33,11 +34,7 @@ def fixtures():
     help="Size for bulk indexing - this number of records "
     "will be committed in a single transaction and indexed together",
 )
-@click.option(
-    "--batch-size",
-    help="Alias for --bulk-size",
-    type=int
-)
+@click.option("--batch-size", help="Alias for --bulk-size", type=int)
 @with_appcontext
 def load(
     fixture_dir=None,
@@ -47,7 +44,7 @@ def load(
     verbose=False,
     bulk_size=100,
     on_background=False,
-    batch_size=None
+    batch_size=None,
 ):
     """Loads fixtures"""
     if batch_size:
@@ -104,7 +101,7 @@ def _show_stats(callback: StatsKeepingDataStreamCallback, title: str):
 
 
 class TQDMCallback(FixturesCallback):
-    def __init__(self, message_prefix = 'Loading ', verbose=False):
+    def __init__(self, message_prefix="Loading ", verbose=False):
         super().__init__()
         self._tqdm = tqdm.tqdm(unit=" item(s)")
         self._message_prefix = message_prefix

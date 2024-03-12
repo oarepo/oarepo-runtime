@@ -7,9 +7,9 @@ from flask_principal import RoleNeed
 from invenio_accounts.models import User
 from invenio_records_permissions import BasePermissionPolicy
 from invenio_records_permissions.generators import Generator
+from invenio_search.engine import dsl
 
 from oarepo_runtime.utils.functools import class_property
-from invenio_search.engine import dsl
 
 
 class PermissionsPresetsConfigMixin:
