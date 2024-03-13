@@ -9,7 +9,6 @@ from flask import current_app
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.datastreams import (
-    DataStreamCallback,
     DataStreamCatalogue,
     StreamBatch,
     SynchronousDataStream,
@@ -25,7 +24,6 @@ class FixturesCallback(StatsKeepingDataStreamCallback):
 
     def fixture_finished(self, fixture_name):
         pass
-
 
 
 def load_fixtures(

@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from oarepo_runtime.datastreams import DataStreamCallback
-from oarepo_runtime.datastreams.fixtures import load_fixtures, FixturesCallback
+from oarepo_runtime.datastreams.fixtures import FixturesCallback, load_fixtures
 from records2.proxies import current_service
 from records2.records.api import Records2Record
 

@@ -1,13 +1,13 @@
 import sys
+from io import StringIO
 
 import click
+import yaml
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 from invenio_search.proxies import current_search
 from werkzeug.utils import ImportStringError, import_string
-from io import StringIO
-import yaml
 
 try:
     from tqdm import tqdm
@@ -153,15 +153,25 @@ def reindex(model, bulk_size, verbose):
                 index_result = service.indexer.client.bulk(bulk)
                 count += len(bulk) // 2
 
-                for index_item_result in index_result['items']:
-                    result = index_item_result['index']
-                    if result['status'] != 200:
+                for index_item_result in index_result["items"]:
+                    result = index_item_result["index"]
+                    if result["status"] != 200:
                         errors += 1
-                        click.secho(f"Error indexing record with id {result['_id']}", fg="red", file=sys.stderr)
-                        click.secho(dump_yaml(result.get('error')), fg="red", file=sys.stderr)
+                        click.secho(
+                            f"Error indexing record with id {result['_id']}",
+                            fg="red",
+                            file=sys.stderr,
+                        )
+                        click.secho(
+                            dump_yaml(result.get("error")), fg="red", file=sys.stderr
+                        )
                         if verbose:
                             click.secho("Record:", file=sys.stderr)
-                            rec = [bulk[idx+1] for idx in range(0, len(bulk), 2) if bulk[idx]['index']['_id'] == result['_id']]
+                            rec = [
+                                bulk[idx + 1]
+                                for idx in range(0, len(bulk), 2)
+                                if bulk[idx]["index"]["_id"] == result["_id"]
+                            ]
                             if rec:
                                 click.secho(dump_yaml(rec[0]))
                             else:

@@ -12,7 +12,10 @@ class RecordOwners(Generator):
             # 'record' is required, so if not passed we default to empty array,
             # i.e. superuser-access.
             return []
-        return [UserNeed(owner.id) for owner in record.parent.owners]
+        owners = getattr(record.parent, "owners", None)
+        if owners is not None:
+            return [UserNeed(owner.id) for owner in record.parent.owners]
+        return []
 
     def query_filter(self, identity=None, **kwargs):
         """Filters for current identity as owner."""

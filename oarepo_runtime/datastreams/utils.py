@@ -32,6 +32,7 @@ def get_record_service_for_record(record):
         if service_record == type(record):
             return svc
 
+
 def get_file_service_for_record_class(record_class):
     if not record_class:
         return None
