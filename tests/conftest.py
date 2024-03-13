@@ -28,6 +28,7 @@ from invenio_accounts.testutils import login_user_via_session
 from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
+from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.datastreams.types import DataStreamCallback
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
@@ -271,7 +272,7 @@ def sample_data(db, app, identity, search_clear, location):
     from records2.proxies import current_service
     from records2.records.api import Records2Record
 
-    load_fixtures(Path(__file__).parent / "data", callback=DataStreamCallback())
+    load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
@@ -286,7 +287,7 @@ def sample_data_system_field(db, app, identity, search_clear, location):
     from records2.records.api import Records2Record
 
     load_fixtures(
-        Path(__file__).parent / "data_system_field", callback=DataStreamCallback()
+        Path(__file__).parent / "data_system_field", callback=FixturesCallback()
     )
     Records2Record.index.refresh()
     titles = set()
