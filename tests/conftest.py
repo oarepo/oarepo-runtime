@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
-from flask_principal import Identity, Need, UserNeed
+from flask_principal import Identity, Need, RoleNeed, UserNeed
 from flask_security import login_user
 from flask_security.utils import hash_password
 from invenio_access import ActionUsers, current_access
@@ -76,12 +76,12 @@ class FailingWriter(BaseWriter):
 def app_config(app_config):
     """Mimic an instance's configuration."""
     app_config["JSONSCHEMAS_HOST"] = "localhost"
-    app_config["RECORDS_REFRESOLVER_CLS"] = (
-        "invenio_records.resolver.InvenioRefResolver"
-    )
-    app_config["RECORDS_REFRESOLVER_STORE"] = (
-        "invenio_jsonschemas.proxies.current_refresolver_store"
-    )
+    app_config[
+        "RECORDS_REFRESOLVER_CLS"
+    ] = "invenio_records.resolver.InvenioRefResolver"
+    app_config[
+        "RECORDS_REFRESOLVER_STORE"
+    ] = "invenio_jsonschemas.proxies.current_refresolver_store"
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
 
@@ -119,6 +119,17 @@ def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
     i.provides.add(UserNeed(1))
+    i.provides.add(Need(method="system_role", value="any_user"))
+    return i
+
+
+@pytest.fixture()
+def identity_with_role(app, db, user):
+    """Simple identity fixture."""
+    i = Identity(1)
+
+    i.provides.add(UserNeed(user.id))
+    i.provides.add(RoleNeed("myrole"))
     i.provides.add(Need(method="system_role", value="any_user"))
     return i
 

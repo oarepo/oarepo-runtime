@@ -88,7 +88,15 @@ class LocalizedEDTF(LocalizedMixin, MultilayerFormatEDTF):
     pass
 
 
+class LocalizedEDTFTime(LocalizedMixin, MultilayerFormatEDTF):
+    pass
+
+
 class LocalizedEDTFInterval(LocalizedMixin, FormatEDTF):
+    pass
+
+
+class LocalizedEDTFTimeInterval(LocalizedMixin, FormatEDTF):
     pass
 
 

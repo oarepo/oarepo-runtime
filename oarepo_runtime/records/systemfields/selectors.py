@@ -22,6 +22,7 @@ class FirstItemSelector(PathSelector):
     def select(self, record):
         for rec in super().select(record):
             return [rec]
+        return []
 
 
 def getter(data, path: List):
