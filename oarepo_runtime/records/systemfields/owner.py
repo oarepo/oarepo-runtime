@@ -17,15 +17,54 @@ from oarepo_runtime.records.systemfields import MappingSystemFieldMixin
 
 
 class OwnerRelationManager(set):
-    """Manager for a record's community relations."""
 
     def __init__(self, record_id, serialized_owners):
-        """Constructor."""
         self._serialized_owners = serialized_owners
         self._owners_initialized = False
         self._resolve()
         for name, function in inspect.getmembers(set, predicate=callable):
             self._create_wrapper(name, function)
+
+    def _create_wrapper(self, name, function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            self._resolve()
+            return function(self, *args, **kwargs)
+
+        try:
+            setattr(self, name, wrapper)
+        except TypeError as e:
+            pass
+
+    # from oarepo_requests utils, dependancy on that would be wrong here, right?
+    # invenio_requests is ok<
+
+    #
+    # API
+    #
+
+    def to_dict(self):
+        if self._serialized_owners is not None:
+            return self._serialized_owners
+        return [OwnerEntityResolverRegistry.reference_entity(x) for x in self]
+
+    def _resolve(self):
+        if not self._owners_initialized:
+            self._owners_initialized = True
+            for ref in self._serialized_owners or []:
+                self.add(OwnerEntityResolverRegistry.resolve_reference(ref))
+            self._serialized_owners = None
+
+
+"""
+class OwnerRelationManager(set):
+
+
+    def __init__(self, record_id, serialized_owners):
+        for name, function in inspect.getmembers(set, predicate=callable):
+            self._create_wrapper(name, function)
+        self._owners_initialized = False
+        self._serialized_owners = serialized_owners
 
     def _create_wrapper(self, name, function):
         @functools.wraps(function)
@@ -45,18 +84,18 @@ class OwnerRelationManager(set):
     #
 
     def to_dict(self):
-        """Get the dictionary which will be stored in the record."""
         if self._serialized_owners is not None:
             return self._serialized_owners
-        return [OwnerEntityResolverRegistry.reference_entity(x) for x in self]
-
+        serialized_owners = [OwnerEntityResolverRegistry.reference_entity(x) for x in self]
+        return serialized_owners
 
     def _resolve(self):
         if not self._owners_initialized:
             self._owners_initialized = True
-            for ref in self._serialized_owners or []:
-                self.add(OwnerEntityResolverRegistry.resolve_reference(ref))
+            for element in self._serialized_owners or []:
+                self.add(OwnerEntityResolverRegistry.resolve_reference(element))
             self._serialized_owners = None
+"""
 
 
 class OwnersField(MappingSystemFieldMixin, SystemField):
@@ -79,14 +118,12 @@ class OwnersField(MappingSystemFieldMixin, SystemField):
         """Commit the communities field."""
         manager = self.obj(record)
         self.set_dictkey(record, manager.to_dict())
-        print()
 
     def pre_dump(self, record, data, dumper=None):
         """Called before a record is dumped."""
-        #parent record commit op is not called during update, resulting in the parent not being converted correctly into 'dict', ie. the dict() function in invenio_records.dumpers.base #36 works incorrectly
+        # parent record commit op is not called during update, resulting in the parent not being converted correctly into 'dict', ie. the dict() function in invenio_records.dumpers.base #36 works incorrectly
         manager = self.obj(record)
         self.set_dictkey(record, manager.to_dict())
-        print()
 
     def obj(self, record):
         """Get or crate the communities manager."""

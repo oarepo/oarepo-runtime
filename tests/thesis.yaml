@@ -1,6 +1,7 @@
 record:
   use:
     - invenio
+    - ./thesis_files.yaml
   module:
     qualified: thesis
   permissions:
@@ -43,9 +44,20 @@ record:
         facet-groups: [ 'default', 'curator' ]
 
   draft: {}
+  draft-files: {}
+
+  files:
+    properties:
+      file_title: keyword
+    service:
+      base-classes: [ oarepo_runtime.services.files.service.FeaturedFileServiceMixin, invenio_records_resources.services.files.service.FileService ]
+
+
 
 
 
 profiles:
   - record
   - draft
+  - files
+  - draft_files
