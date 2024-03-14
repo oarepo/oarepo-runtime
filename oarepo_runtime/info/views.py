@@ -8,6 +8,8 @@ import importlib_metadata
 import importlib_resources
 import marshmallow as ma
 from flask import current_app, request, url_for
+from flask.ctx import RequestContext
+from flask.globals import _cv_request
 from flask_resources import (
     Resource,
     ResourceConfig,
@@ -91,12 +93,13 @@ class InfoResource(Resource):
             model_data = json.loads(
                 importlib_resources.files(package_name).joinpath(file_name).read_text()
             )
-            model_data = model_data["model"]
-            if model_data["type"] != "model":
+            model_data = model_data.get("model", {})
+            if model_data.get("type") != "model":
                 continue
 
             service = self._get_service(model_data)
-            if not service:
+            service_class = self._get_service_class(model_data)
+            if not service or type(service) != service_class:
                 continue
 
             model_features = self._get_model_features(model_data)
@@ -271,6 +274,11 @@ class InfoResource(Resource):
         return service
 
 
+    def _get_service_class(self, model_data):
+        service_id = model_data["service"]["class"]
+        return obj_or_import_string(service_id)
+
+
 def create_wellknown_blueprint(app):
     """Create blueprint."""
     config_class = obj_or_import_string(
@@ -292,11 +300,23 @@ def get_package_version(package_name):
 
 def api_url_for(endpoint, _external=True, **values):
     """API url_for."""
+    try:
+        api_app = current_app.wsgi_app.mounts['/api']
+    except:
+        api_app = current_app
+
     site_api_url = current_app.config["SITE_API_URL"]
     site_url = current_app.config["SITE_UI_URL"]
-    base_url = url_for(endpoint, **values, _external=_external)
-    if base_url.startswith(site_api_url):
-        return base_url
-    if base_url.startswith(site_url):
-        return base_url.replace(site_url, site_api_url)
-    raise ValueError(f"URL {base_url} does not start with {site_url} or {site_api_url}")
+    current_request_context = _cv_request.get()
+    try:
+        new_context = RequestContext(app=api_app,
+                                     environ=request.environ)
+        _cv_request.set(new_context)
+        base_url = api_app.url_for(endpoint, **values, _external=_external)
+        if base_url.startswith(site_api_url):
+            return base_url
+        if base_url.startswith(site_url):
+            return base_url.replace(site_url, site_api_url)
+        raise ValueError(f"URL {base_url} does not start with {site_url} or {site_api_url}")
+    finally:
+        _cv_request.set(current_request_context)
