@@ -31,7 +31,13 @@ class OwnerRelationManager:
 
     def to_dict(self):
         if self._serialized_owners is None:
-            self._serialized_owners = [OwnerEntityResolverRegistry.reference_entity(x) for x in self._deserialized_owners or []]
+            deserialized_owners = []
+            for deserialized_owner in self._deserialized_owners or []:
+                serialized_owner = OwnerEntityResolverRegistry.reference_entity(deserialized_owner)
+                if serialized_owner is None:
+                    raise ValueError('failed serialize owner')
+                deserialized_owners.append(serialized_owner)
+            self._serialized_owners = deserialized_owners
         return self._serialized_owners
 
     def _resolve(self):
@@ -42,10 +48,14 @@ class OwnerRelationManager:
             self._serialized_owners = None
 
     def add(self, owner):
+        if owner is None:
+            return
         self._resolve()
         self._deserialized_owners.add(owner)
 
     def remove(self, owner):
+        if owner is None:
+            return
         self._resolve()
         self._deserialized_owners.remove(owner)
 
