@@ -82,22 +82,23 @@ def logged_client_post(client_logged_as):
 
 
 def test_owners(
-    db, app, service, identity, more_users, more_identities, search_clear, location
+    db, app, service, identity, more_users, more_identities, search_clear
 ):
     rec = service.create(identity, data={"metadata": {"title": "blah"}})
-    assert len(rec.data["parent"]["owners"]) == 1
-    print(rec._obj.parent.owners)
+    assert len(rec._obj.parent.owners.to_dict()) == 1
+    assert "owners" not in rec.data["parent"]
+    print(rec._obj.parent.owners.to_dict())
     record_id = rec.data["id"]
     updated_rec1 = service.update_draft(
         more_identities[0], id_=record_id, data={"metadata": {"title": "blahblah"}}
     )
-    assert len(updated_rec1._obj.parent.owners) == 2
+    assert len(updated_rec1._obj.parent.owners.to_dict()) == 2
     updated_read = service.read_draft(identity, id_=record_id)
-    assert len(updated_read._obj.parent.owners) == 2
+    assert len(updated_read._obj.parent.owners.to_dict()) == 2
     updated_rec2 = service.update_draft(
         more_identities[0], id_=record_id, data={"metadata": {"title": "blahblah"}}
     )
-    assert len(updated_rec2._obj.parent.owners) == 2
+    assert len(updated_rec2._obj.parent.owners.to_dict()) == 2
     # publish
     data = (
         Path(__file__).parent / "file_data" / "files" / "001" / "data" / "test.png"
@@ -111,15 +112,15 @@ def test_owners(
     )
     publish_res = service.publish(system_identity, id_=record_id)
     published = service.read(identity, id_=record_id)
-    assert len(published._obj.parent.owners) == 2
+    assert len(published._obj.parent.owners.to_dict()) == 2
     updated_rec = service.new_version(more_identities[1], id_=record_id)
-    assert len(updated_rec._obj.parent.owners) == 2
+    assert len(updated_rec._obj.parent.owners.to_dict()) == 2
     updated_rec = service.update_draft(
         more_identities[1],
         id_=updated_rec.data["id"],
         data={"metadata": {"title": "blahblah"}},
     )
-    assert len(updated_rec._obj.parent.owners) == 3
+    assert len(updated_rec._obj.parent.owners.to_dict()) == 3
 
 
 # it's prob the location fixture doing database problems in debug mode for some reason

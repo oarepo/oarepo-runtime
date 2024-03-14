@@ -16,24 +16,11 @@ from oarepo_runtime.records.owners import OwnerEntityResolverRegistry
 from oarepo_runtime.records.systemfields import MappingSystemFieldMixin
 
 
-class OwnerRelationManager(set):
+class OwnerRelationManager:
 
     def __init__(self, record_id, serialized_owners):
         self._serialized_owners = serialized_owners
-        self._owners_initialized = False
-        for name, function in inspect.getmembers(set, predicate=callable):
-            self._create_wrapper(name, function)
-
-    def _create_wrapper(self, name, function):
-        @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            self._resolve()
-            return function(self, *args, **kwargs)
-
-        try:
-            setattr(self, name, wrapper)
-        except TypeError as e:
-            pass
+        self._deserialized_owners = None
 
     # from oarepo_requests utils, dependancy on that would be wrong here, right?
     # invenio_requests is ok<
@@ -44,15 +31,27 @@ class OwnerRelationManager(set):
 
     def to_dict(self):
         if self._serialized_owners is None:
-            self._serialized_owners = [OwnerEntityResolverRegistry.reference_entity(x) for x in self]
+            self._serialized_owners = [OwnerEntityResolverRegistry.reference_entity(x) for x in self._deserialized_owners or []]
         return self._serialized_owners
 
     def _resolve(self):
-        if not self._owners_initialized:
-            self._owners_initialized = True
+        if self._deserialized_owners is None:
+            self._deserialized_owners = set()
             for ref in self._serialized_owners or []:
-                self.add(OwnerEntityResolverRegistry.resolve_reference(ref))
+                self._deserialized_owners.add(OwnerEntityResolverRegistry.resolve_reference(ref))
             self._serialized_owners = None
+
+    def add(self, owner):
+        self._resolve()
+        self._deserialized_owners.add(owner)
+
+    def remove(self, owner):
+        self._resolve()
+        self._deserialized_owners.remove(owner)
+
+    def __iter__(self):
+        self._resolve()
+        return iter(self._deserialized_owners)
 
 class OwnersField(MappingSystemFieldMixin, SystemField):
     """Communites system field for managing relations to communities."""

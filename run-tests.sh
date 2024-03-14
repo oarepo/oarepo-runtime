@@ -22,6 +22,12 @@ fi
 
 oarepo-compile-model ./tests/records2.yaml --output-directory records2 --profile record,files -vvv
 
+pip install -U oarepo-model-builder-drafts oarepo-model-builder-drafts-files
+if test -d thesis ; then
+  rm -rf thesis
+fi
+oarepo-compile-model ./tests/thesis.yaml --output-directory thesis -vvv
+
 VENV=".venv"
 
 if test -d $VENV ; then
@@ -37,6 +43,7 @@ pip install -e ".[tests]"
 pip install -e records2
 pip install pytest-invenio
 # pip install -e records
+pip install -e thesis
 
 pip uninstall -y uritemplate
 pip install uritemplate

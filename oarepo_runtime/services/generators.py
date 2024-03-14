@@ -14,7 +14,7 @@ class RecordOwners(Generator):
             return []
         owners = getattr(record.parent, "owners", None)
         if owners is not None:
-            return [UserNeed(owner.id) for owner in record.parent.owners]
+            return [UserNeed(owner.id) for owner in owners]
         return []
 
     def query_filter(self, identity=None, **kwargs):
