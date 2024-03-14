@@ -1,5 +1,8 @@
 from invenio_accounts.models import User
-from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
+try:
+    from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
+except ImportError:
+    from invenio_records_resources.services.uow import RecordCommitOp as ParentRecordCommitOp
 from invenio_records_resources.services.records.components import ServiceComponent
 
 
