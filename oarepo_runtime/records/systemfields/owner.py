@@ -35,7 +35,7 @@ class OwnerRelationManager:
             for deserialized_owner in self._deserialized_owners or []:
                 serialized_owner = OwnerEntityResolverRegistry.reference_entity(deserialized_owner)
                 if serialized_owner is None:
-                    raise ValueError('failed serialize owner')
+                    raise ValueError(f'failed serialize owner; owner - {deserialized_owner}')
                 deserialized_owners.append(serialized_owner)
             self._serialized_owners = deserialized_owners
         return self._serialized_owners
