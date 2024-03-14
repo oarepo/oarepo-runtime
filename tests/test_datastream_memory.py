@@ -17,7 +17,6 @@ from oarepo_runtime.datastreams import (
 )
 from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.datastreams.synchronous import log
-from oarepo_runtime.datastreams.types import StatsKeepingDataStreamCallback
 
 process = psutil.Process(os.getpid())
 

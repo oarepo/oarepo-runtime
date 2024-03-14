@@ -22,7 +22,7 @@ from flask_principal import Identity, Need, RoleNeed, UserNeed
 from flask_security import login_user
 from flask_security.utils import hash_password
 from invenio_access import ActionUsers, current_access
-from invenio_access.permissions import any_user, system_process
+from invenio_access.permissions import any_user, authenticated_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
 from invenio_app.factory import create_api as _create_api
@@ -146,6 +146,22 @@ def identity():
 
 
 @pytest.fixture(scope="module")
+def more_identities():
+    """Simple identity to interact with the service."""
+    i2 = Identity(2)
+    i2.provides.add(UserNeed(2))
+    i2.provides.add(any_user)
+    i2.provides.add(authenticated_user)
+
+    i3 = Identity(3)
+    i3.provides.add(UserNeed(3))
+    i3.provides.add(any_user)
+    i3.provides.add(authenticated_user)
+
+    return [i2, i3]
+
+
+@pytest.fixture(scope="module")
 def non_system_identity():
     """Simple identity to interact with the service."""
     i = Identity(1)
@@ -171,6 +187,33 @@ def user(app, db):
         )
     db.session.commit()
     return _user
+
+
+"""
+@pytest.fixture(scope="module", autouse=True)
+def location(location):
+    return location
+"""
+
+
+@pytest.fixture()
+def more_users(app, db, user):
+    """Create example user."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        user2 = datastore.create_user(
+            email="user_two@cesnet.cz",
+            password=hash_password("password"),
+            active=True,
+        )
+        datastore = app.extensions["security"].datastore
+        user3 = datastore.create_user(
+            email="user_three@cesnet.cz",
+            password=hash_password("password"),
+            active=True,
+        )
+    db.session.commit()
+    return [user, user2, user3]
 
 
 @pytest.fixture()

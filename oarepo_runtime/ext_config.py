@@ -11,6 +11,7 @@ from oarepo_runtime.datastreams.writers.attachments_service import (
 )
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
+from oarepo_runtime.records.entity_resolvers import UserResolver
 from oarepo_runtime.services.config.permissions_presets import (
     AuthenticatedPermissionPolicy,
     EveryonePermissionPolicy,
@@ -58,3 +59,7 @@ DATASTREAMS_CONFIG_GENERATOR = default_config_generator
 HAS_DRAFT_CUSTOM_FIELD = [BooleanCF("has_draft")]
 
 OAREPO_FACET_GROUP_NAME = facet_groups_names
+
+OWNER_ENTITY_RESOLVERS = [
+    UserResolver(),
+]
