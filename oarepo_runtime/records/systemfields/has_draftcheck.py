@@ -1,3 +1,5 @@
+from inspect import isfunction
+
 from invenio_records.dictutils import dict_set
 from invenio_records.systemfields import SystemField
 from sqlalchemy.orm.exc import NoResultFound
@@ -34,6 +36,8 @@ class HasDraftCheckField(CustomFieldsMixin, SystemField):
             return False
 
         try:
+            if isfunction(self.draft_cls):
+                self.draft_cls = self.draft_cls()
             self.draft_cls.get_record(record.id)
             return True
         except NoResultFound:
