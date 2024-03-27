@@ -11,15 +11,18 @@ def select_record_for_update(record_cls: Type[Record], persistent_identifier):
     return record_cls(obj.data, model=obj)
 
 
-def is_record(record, ctx):
-    """Shortcut for links to determine if record is a record."""
-    if not getattr(record, "is_draft", False):
-        return True
-    return not record.is_draft
+def is_published_record(record, ctx):
+    """Shortcut for links to determine if record is a published record."""
+    return not getattr(record, "is_draft", False)
+
+
+def is_draft_record(record, ctx):
+    """Shortcut for links to determine if record is a draft record."""
+    return getattr(record, "is_draft", False)
 
 
 def has_draft(record, ctx):
-    """Shortcut for links to determine if record is a draft or a published one with a draft associated."""
+    """Shortcut for links to determine if record is either a draft or a published one with a draft associated."""
     if getattr(record, "is_draft", False):
         return True
     if getattr(record, 'has_draft', False):
