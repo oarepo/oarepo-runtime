@@ -35,11 +35,6 @@ class OwnersComponent(ServiceComponent):
 
     def search_drafts(self, identity, search, params, **kwargs):
         new_term = RecordOwners().query_filter(identity)
-        search.query.filter = []
         if new_term:
-            if getattr(search.query, "filter", []):
-                new_filter = new_term & search.query.filter[0]
-                search.query.filter[0] = new_filter
-            else:
-                search.query.filter = [new_term]
+            return search.filter(new_term)
         return search
