@@ -12,6 +12,9 @@ class OwnersComponent(ServiceComponent):
         self.add_owner(identity, record)
 
     def add_owner(self, identity, record, commit=False):
+        if not isinstance(identity.id, int):
+            return
+        
         owners = getattr(record.parent, "owners", None)
         if owners is not None:
             user = User.query.filter_by(id=identity.id).first()
