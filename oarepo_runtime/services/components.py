@@ -1,5 +1,6 @@
 from invenio_accounts.models import User
-from invenio_search.engine import dsl
+
+from oarepo_runtime.services.generators import RecordOwners
 
 try:
     from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
@@ -7,6 +8,7 @@ except ImportError:
     from invenio_records_resources.services.uow import (
         RecordCommitOp as ParentRecordCommitOp,
     )
+
 from invenio_records_resources.services.records.components import ServiceComponent
 
 
@@ -32,11 +34,12 @@ class OwnersComponent(ServiceComponent):
         self.add_owner(identity, record, commit=True)
 
     def search_drafts(self, identity, search, params, **kwargs):
-        users = [n.value for n in identity.provides if n.method == "id"]
-        if users:
-            term = dsl.Q("terms", **{"parent.owners.user": users})
-            if hasattr(search.query, "filter"):
-                search.query.filter.append(term)
+        new_term = RecordOwners().query_filter(identity)
+        search.query.filter = []
+        if new_term:
+            if getattr(search.query, "filter", []):
+                new_filter = new_term & search.query.filter[0]
+                search.query.filter[0] = new_filter
             else:
-                search.query.filter = [term]
+                search.query.filter = [new_term]
         return search
