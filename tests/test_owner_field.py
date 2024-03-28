@@ -9,7 +9,7 @@ from invenio_records_resources.services.errors import PermissionDeniedError
 
 from oarepo_runtime.services.generators import RecordOwners
 from tests.test_files import add_file_to_record
-from thesis.records.api import ThesisDraft
+from thesis.records.api import ThesisDraft, ThesisRecord
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -73,7 +73,7 @@ def client_logged_as(client, more_users):
 
 
 @pytest.fixture()
-def logged_client_post(client_logged_as):
+def logged_client_request(client_logged_as):
     def _logged_client_post(user, method, *args, **kwargs):
         applied_client = client_logged_as(user.email)
         return getattr(applied_client, method)(*args, **kwargs)
@@ -81,9 +81,7 @@ def logged_client_post(client_logged_as):
     return _logged_client_post
 
 
-def test_owners(
-    db, app, service, identity, more_users, more_identities, search_clear
-):
+def test_owners(db, app, service, identity, more_users, more_identities, search_clear):
     rec = service.create(identity, data={"metadata": {"title": "blah"}})
     assert len(rec._obj.parent.owners.to_dict()) == 1
     assert "owners" not in rec.data["parent"]
@@ -160,7 +158,6 @@ def test_search(
     service,
     more_users,
     more_identities,
-    patch_owner_permissions,
     search_clear,
     location,
 ):
@@ -179,20 +176,18 @@ def test_search(
     print()
 
 
-def test_search_resource(
-    more_users, logged_client_post, patch_owner_permissions, search_clear
-):
+def test_search_resource(more_users, logged_client_request, search_clear):
     BASE_URL = "/thesis/"
     user1 = more_users[1]
     user2 = more_users[2]
 
-    draft1 = logged_client_post(
+    draft1 = logged_client_request(
         user1, "post", BASE_URL, json={"metadata": {"title": "draft1-1"}}
     )
-    draft2 = logged_client_post(
+    draft2 = logged_client_request(
         user1, "post", BASE_URL, json={"metadata": {"title": "draft1-2"}}
     )
-    draft3 = logged_client_post(
+    draft3 = logged_client_request(
         user2, "post", BASE_URL, json={"metadata": {"title": "draft2-1"}}
     )
 
@@ -200,9 +195,9 @@ def test_search_resource(
         return [x["id"] for x in result["hits"]["hits"]]
 
     ThesisDraft.index.refresh()
-    search_1 = logged_client_post(user1, "get", f"/user{BASE_URL}")
-    search_2 = logged_client_post(user2, "get", f"/user{BASE_URL}")
-
+    search_1 = logged_client_request(user1, "get", f"/user{BASE_URL}")
+    search_2 = logged_client_request(user2, "get", f"/user{BASE_URL}")
+    search_1 = logged_client_request(user1, "get", f"/user{BASE_URL}")
     assert len(search_1.json["hits"]["hits"]) == 2
     search_1_ids = get_ids(search_1.json)
     assert draft1.json["id"] in search_1_ids
@@ -211,4 +206,36 @@ def test_search_resource(
     assert len(search_2.json["hits"]["hits"]) == 1
     search_2_ids = get_ids(search_2.json)
     assert draft3.json["id"] in search_2_ids
-    print()
+
+
+def test_mixed_published_drafts_records(
+    more_users, logged_client_request, search_clear
+):
+    BASE_URL = "/thesis/"
+    user1 = more_users[0]
+    user2 = more_users[1]
+
+    draft1 = logged_client_request(
+        user1,
+        "post",
+        BASE_URL,
+        json={"metadata": {"title": "draft1-1"}, "files": {"enabled": False}},
+    )
+    draft2 = logged_client_request(
+        user1, "post", BASE_URL, json={"metadata": {"title": "draft1-2"}}
+    )
+    draft3 = logged_client_request(
+        user2, "post", BASE_URL, json={"metadata": {"title": "draft2-1"}}
+    )
+    publish1 = logged_client_request(
+        user1, "post", f"{BASE_URL}{draft1.json['id']}/draft/actions/publish"
+    )
+    ThesisRecord.index.refresh()
+    ThesisDraft.index.refresh()
+    search_2 = logged_client_request(user1, "get", f"/user{BASE_URL}").json["hits"][
+        "hits"
+    ]
+    assert set([obj["id"] for obj in search_2]) == {draft1["id"], draft2["id"]}
+    assert (
+        len([obj for obj in search_2 if obj["links"]["self"].endswith("/draft")]) == 1
+    )
