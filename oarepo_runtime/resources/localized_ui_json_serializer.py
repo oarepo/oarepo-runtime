@@ -27,19 +27,24 @@ class LocalizedUIJSONSerializer(MarshmallowSerializer):
         self.object_schema_cls = object_schema_cls
         self.list_schema_cls = list_schema_cls
 
-    def dump_obj(self, obj):
+    def dump_obj(self, obj, *args, **kwargs):
         """Dump the object using object schema class."""
-        return self.object_schema_cls(
-            context={**self.schema_context, "locale": get_locale()}
-        ).dump(obj)
+        ctx = {**self.schema_context, "locale": get_locale()}
+        if "extra_context" in kwargs:
+            ctx |= kwargs["extra_context"]
 
-    def dump_list(self, obj_list):
+        return self.object_schema_cls(context=ctx).dump(obj)
+
+    def dump_list(self, obj_list, *args, **kwargs):
         """Dump the list of objects."""
         ctx = {
             "object_schema_cls": self.object_schema_cls,
         }
         ctx.update(self.schema_context)
         ctx["locale"] = get_locale()
+
+        if "extra_context" in kwargs:
+            ctx |= kwargs["extra_context"]
 
         if self.list_schema_cls is None:
             return self.object_schema_cls(context=self.schema_context).dump(
