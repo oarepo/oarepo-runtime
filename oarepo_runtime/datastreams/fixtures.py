@@ -6,6 +6,7 @@ import pkg_resources
 import yaml
 from celery import shared_task
 from flask import current_app
+from invenio_access.permissions import system_identity
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.datastreams import (
@@ -34,6 +35,7 @@ def load_fixtures(
     callback: FixturesCallback = None,
     batch_size=100,
     datastreams_impl=SynchronousDataStream,
+    identity=system_identity
 ):
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
@@ -62,6 +64,7 @@ def load_fixtures(
             callback,
             batch_size=batch_size,
             datastreams_impl=datastreams_impl,
+            identity=identity
         )
 
     if system_fixtures:
@@ -91,11 +94,13 @@ def load_fixtures(
                 callback,
                 batch_size=batch_size,
                 datastreams_impl=datastreams_impl,
+                identity=identity
             )
 
 
 def _load_fixtures_from_catalogue(
-    catalogue, fixtures, include, exclude, callback, batch_size, datastreams_impl
+    catalogue, fixtures, include, exclude, callback, batch_size, datastreams_impl,
+        identity=system_identity
 ):
     for catalogue_datastream in catalogue.get_datastreams():
         if catalogue_datastream.stream_name in fixtures:
@@ -118,7 +123,7 @@ def _load_fixtures_from_catalogue(
             callback=callback,
             batch_size=batch_size,
         )
-        datastream.process()
+        datastream.process(identity=identity)
         if hasattr(callback, "fixture_finished"):
             callback.fixture_finished(catalogue_datastream.stream_name)
 

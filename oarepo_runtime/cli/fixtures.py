@@ -2,6 +2,10 @@ import click
 import tqdm
 from flask import current_app
 from flask.cli import with_appcontext
+from flask_login import login_user
+from flask_principal import Identity, identity_changed, identity_loaded, UserNeed, RoleNeed
+from invenio_access.permissions import system_identity, any_user, authenticated_user
+from invenio_accounts.models import User
 
 from oarepo_runtime.cli import oarepo
 from oarepo_runtime.datastreams import SynchronousDataStream
@@ -35,6 +39,7 @@ def fixtures():
     "will be committed in a single transaction and indexed together",
 )
 @click.option("--batch-size", help="Alias for --bulk-size", type=int)
+@click.option("--identity", help="Email of the identity that will be used to import the data")
 @with_appcontext
 def load(
     fixture_dir=None,
@@ -45,6 +50,7 @@ def load(
     bulk_size=100,
     on_background=False,
     batch_size=None,
+        identity=None
 ):
     """Loads fixtures"""
     if batch_size:
@@ -57,7 +63,26 @@ def load(
     if fixture_dir:
         system_fixtures = False
 
+    if not identity:
+        user = None
+        identity = system_identity
+    else:
+        # identity is user email
+        user = User.query.filter_by(email=identity).one()
+        identity = Identity(user.id)
+
+        # TODO: add provides. How to do it better? It seems that we can not use
+        # flask signals to add these, as they depend on request context that is
+        # not available here
+        identity.provides.add(any_user)
+        identity.provides.add(authenticated_user)
+        identity.provides.add(UserNeed(user.id))
+        for role in getattr(user, 'roles', []):
+            identity.provides.add(RoleNeed(role.name))
+        # TODO: community roles ...
+
     with current_app.wsgi_app.mounts["/api"].app_context():
+
         load_fixtures(
             fixture_dir,
             _make_list(include),
@@ -68,6 +93,7 @@ def load(
             datastreams_impl=(
                 AsynchronousDataStream if on_background else SynchronousDataStream
             ),
+            identity=identity
         )
         if not on_background:
             _show_stats(callback, "Load fixtures")
