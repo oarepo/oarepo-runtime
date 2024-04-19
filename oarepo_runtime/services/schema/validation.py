@@ -26,6 +26,16 @@ def validate_datetime(value):
             f"Invalid datetime format, expecting iso format, got {value}"
         ) from e
 
+def validate_date_or_year(value):
+    try:
+        validate_date("%Y-%m-%d")(value)
+    except ValidationError:
+        try:
+            validate_date("%Y")(value)
+        except ValidationError as e:
+            raise ValidationError(
+                f"Invalid date/time format, expecting , %Y-%m-%d or %Y got {value}"
+            ) from e
 
 class CachedMultilayerEDTFValidator(EDTFValidator):
     @functools.lru_cache(maxsize=1024)
