@@ -68,11 +68,14 @@ def prepare_cf_indices():
     service: RecordService
     for service in current_service_registry._services.values():
         config: RecordServiceConfig = service.config
-        prepare_cf_index(config)
+        record_class = getattr(config, "record_cls", None)
+        if record_class:
+            parent_class = getattr(record_class, "parent_record_cls", None)
+            prepare_cf_index(record_class, config)
+            prepare_cf_index(parent_class, config)
 
 
-def prepare_cf_index(config: RecordServiceConfig):
-    record_class = getattr(config, "record_cls", None)
+def prepare_cf_index(record_class, config):
     if not record_class:
         return
 
