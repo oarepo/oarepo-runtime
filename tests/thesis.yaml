@@ -16,7 +16,7 @@ record:
       suggest: "{{oarepo_runtime.records.systemfields.icu.ICUSuggestField}}(source_field='metadata.title')"
       num_increased: "{{SyntheticSystemField}}(PathSelector('metadata.num'), key='metadata.num_increased', map=lambda x: x + 1)"
   search-options:
-#    base-classes: [ oarepo_runtime.services.search.SearchOptions ]
+    base-classes: [ oarepo_runtime.services.search.SearchOptions ]
     sort-options-field: extra_sort_options
     fields:
       suggest_parser_cls: "{{oarepo_runtime.services.search.ICUSuggestParser}}('thesis')"
@@ -43,7 +43,9 @@ record:
        facets:
         facet-groups: [ 'default', 'curator' ]
 
-  draft: {}
+  draft:
+    search-options:
+      base-classes: [ oarepo_runtime.services.search.SearchOptions ]
   draft-files: {}
 
   files:
