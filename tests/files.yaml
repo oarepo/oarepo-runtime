@@ -4,12 +4,14 @@ files:
   module:
     qualified: records2
   properties:
-    fileType:
-      type: keyword
-      enum:
-        - photo
-        - document
-    featured:
-      type: boolean
-    caption:
-      type: keyword
+    metadata:
+      properties:
+        fileType:
+          type: keyword
+          enum:
+            - photo
+            - document
+        featured:
+          type: boolean
+        caption:
+          type: keyword

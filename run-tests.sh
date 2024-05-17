@@ -1,10 +1,10 @@
 #!/bin/bash
 
-PYTHON=python3
+PYTHON=python3.10
 
 set -e
 
-OAREPO_VERSION="${OAREPO_VERSION:-11}"
+OAREPO_VERSION="${OAREPO_VERSION:-12}"
 
 BUILDER_VENV=.venv-builder
 if test -d $BUILDER_VENV ; then
@@ -75,6 +75,6 @@ trap "kill $CELERY_PID" EXIT
 
 sleep 5
 
-python tests/records2_async_data/generate_async_data_for_import.py /tmp/sample-records-for-import 100
+python3.10 tests/records2_async_data/generate_async_data_for_import.py /tmp/sample-records-for-import 100
 invenio oarepo fixtures load --no-system-fixtures /tmp/sample-records-for-import --on-background --bulk-size 10
-python tests/records2_async_data/check_async_data_loaded.py 100
+python3.10 tests/records2_async_data/check_async_data_loaded.py 100

@@ -13,7 +13,7 @@ def add_file_to_record(
     """Add a file to the record."""
     if featured:
         file_service.init_files(
-            identity, recid, data=[{"key": file_id, "featured": True}]
+            identity, recid, data=[{"key": file_id, "metadata": {"featured": True}}]
         )
 
     else:
