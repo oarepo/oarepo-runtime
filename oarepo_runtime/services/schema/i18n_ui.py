@@ -57,7 +57,7 @@ def get_i18n_localized_ui_schema(lang_name, value_name):
 
 
 def MultilingualLocalizedUIField(  # noqa NOSONAR
-    *args, lang_name="lang", value_name="value", value_field="marshmallow_utils.fields.SanitizedHTML", **kwargs
+    *args, lang_name="lang", value_name="value", **kwargs
 ):
     return fields.Nested(
         get_i18n_localized_ui_schema(lang_name, value_name), **kwargs
@@ -68,7 +68,7 @@ def I18nStrLocalizedUIField(  # noqa NOSONAR
     *args, lang_name="lang", value_name="value", **kwargs
 ):
     return fields.Nested(
-        get_i18n_ui_schema(lang_name, value_name, value_field),
+        get_i18n_ui_schema(lang_name, value_name),
         *args,
         **kwargs,
     )
