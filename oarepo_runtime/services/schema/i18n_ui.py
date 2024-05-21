@@ -5,7 +5,7 @@ from marshmallow_utils.fields import SanitizedHTML
 from invenio_base.utils import obj_or_import_string
 
 @lru_cache
-def get_i18n_ui_schema(lang_name, value_name, value_field):
+def get_i18n_ui_schema(lang_name, value_name, value_field="marshmallow_utils.fields.SanitizedHTML"):
     value_field_class = obj_or_import_string(value_field)
     return type(
         f"I18nUISchema_{lang_name}_{value_name}",
