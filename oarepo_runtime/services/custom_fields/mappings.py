@@ -70,8 +70,8 @@ def prepare_cf_indices():
         config: RecordServiceConfig = service.config
         record_class = getattr(config, "record_cls", None)
         if record_class:
-            parent_class = getattr(record_class, "parent_record_cls", None)
             prepare_cf_index(record_class, config)
+            parent_class = getattr(record_class, "parent_record_cls", None)
             prepare_cf_index(parent_class, config)
 
 
