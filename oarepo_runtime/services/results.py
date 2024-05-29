@@ -6,6 +6,11 @@ from invenio_records_resources.services.records.results import (
 )
 
 
+class ResultsComponent:
+    def update_data(self, identity, record, projection, expand):
+        raise NotImplementedError
+
+
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
@@ -17,7 +22,12 @@ class RecordItem(BaseRecordItem):
             return self._data
         _data = super().data
         for c in self.components:
-            c.update_data(self._identity, self._record, _data)
+            c.update_data(
+                identity=self._identity,
+                record=self._record,
+                projection=_data,
+                expand=self._expand,
+            )
         return _data
 
 
@@ -47,6 +57,12 @@ class RecordList(BaseRecordList):
                 projection["links"] = self._links_item_tpl.expand(
                     self._identity, record
                 )
+            # todo optimization viz FieldsResolver
             for c in self.components:
-                c.update_data(self._identity, record, projection)
+                c.update_data(
+                    identity=self._identity,
+                    record=self._record,
+                    projection=projection,
+                    expand=self._expand,
+                )
             yield projection
