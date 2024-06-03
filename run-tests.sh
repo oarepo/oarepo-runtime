@@ -14,7 +14,7 @@ fi
 $PYTHON -m venv $BUILDER_VENV
 . $BUILDER_VENV/bin/activate
 pip install -U setuptools pip wheel
-pip install -U oarepo-model-builder oarepo-model-builder-files
+pip install -U oarepo-model-builder oarepo-model-builder-files oarepo-model-builder-cf
 
 if test -d records2 ; then
   rm -rf records2

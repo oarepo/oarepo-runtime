@@ -1,0 +1,14 @@
+metadata:
+  title: Další záznam
+custom_fields:
+  test: True
+---
+metadata:
+  title: Český záznam
+custom_fields:
+  test: False
+---
+metadata:
+  title: Cesky zaznam
+custom_fields:
+  test: True
