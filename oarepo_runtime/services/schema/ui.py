@@ -124,6 +124,7 @@ if False:  # NOSONAR
 
 
 class InvenioUISchema(ma.Schema):
+    _schema = ma.fields.Str(attribute="$schema", data_key="$schema")
     id = ma.fields.Str()
     created = LocalizedDateTime(dump_only=True)
     updated = LocalizedDateTime(dump_only=True)
