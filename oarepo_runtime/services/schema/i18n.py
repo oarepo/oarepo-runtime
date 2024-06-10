@@ -1,6 +1,7 @@
 from functools import lru_cache
-
+import importlib
 import langcodes
+from invenio_base.utils import obj_or_import_string
 from marshmallow import Schema, ValidationError, fields, validates
 
 """
@@ -10,39 +11,41 @@ it for each project.
 
 
 @lru_cache
-def get_i18n_schema(lang_field, value_field):
-    @validates(lang_field)
+def get_i18n_schema(lang_name, value_name, value_field="marshmallow_utils.fields.SanitizedHTML"):
+    @validates(lang_name)
     def validate_lang(self, value):
         if value != "_" and not langcodes.Language.get(value).is_valid():
             raise ValidationError("Invalid language code")
 
+    value_field_class = obj_or_import_string(value_field)
+
     return type(
-        f"I18nSchema_{lang_field}_{value_field}",
+        f"I18nSchema_{lang_name}_{value_name}",
         (Schema,),
         {
             "validate_lang": validate_lang,
-            lang_field: fields.String(required=True),
-            value_field: fields.String(required=True),
+            lang_name: fields.String(required=True),
+            value_name: value_field_class(required=True),
         },
     )
 
 
 def MultilingualField(  # noqa NOSONAR
-    *args, lang_field="lang", value_field="value", **kwargs
+    *args, lang_name="lang", value_name="value", value_field="marshmallow_utils.fields.SanitizedHTML", **kwargs
 ):
     # TODO: args are not used but oarepo-model-builder-multilingual generates them
     # should be fixed there and subsequently removed here
     return fields.List(
-        fields.Nested(get_i18n_schema(lang_field, value_field)),
+        fields.Nested(get_i18n_schema(lang_name, value_name, value_field)),
         **kwargs,
     )
 
 
 def I18nStrField(  # noqa NOSONAR
-    *args, lang_field="lang", value_field="value", **kwargs
+    *args, lang_name="lang", value_name="value", value_field="marshmallow_utils.fields.SanitizedHTML", **kwargs
 ):
     return fields.Nested(
-        get_i18n_schema(lang_field, value_field),
+        get_i18n_schema(lang_name, value_name, value_field),
         *args,
         **kwargs,
     )

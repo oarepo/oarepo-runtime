@@ -7,7 +7,6 @@ permissions:
   contents: read
 
 jobs:
-
   build12:
     uses: ./.github/workflows/build.yaml
     with:

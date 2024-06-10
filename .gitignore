@@ -87,6 +87,7 @@ tests/test-sample-app
 tests/test-sample-site
 
 records2
+thesis
 
 dist
 .vscode
