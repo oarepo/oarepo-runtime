@@ -13,18 +13,25 @@ else:
 from sqlalchemy.exc import NoResultFound
 
 
+def set_field(result, resolved_dict, field_name):
+    from_metadata = resolved_dict.get("metadata", {}).get(field_name)
+    from_data = resolved_dict.get(field_name)
+
+    if from_metadata:
+        result.setdefault("metadata", {})[field_name] = from_metadata
+    if from_data:
+        result[field_name] = from_data
+
+
 class RecordProxy(InvenioRecordProxy):
+    picked_fields = ["title", "creators", "contributors"]
+
     def pick_resolved_fields(self, identity, resolved_dict):
         """Select which fields to return when resolving the reference."""
         resolved_fields = super().pick_resolved_fields(identity, resolved_dict)
 
-        metadata_title = resolved_dict.get("metadata", {}).get("title")
-        data_title = resolved_dict.get("title")
-
-        if metadata_title:
-            resolved_fields["title"] = metadata_title
-        elif data_title:
-            resolved_fields["title"] = data_title
+        for fld in self.picked_fields:
+            set_field(resolved_fields, resolved_dict, fld)
 
         return resolved_fields
 
