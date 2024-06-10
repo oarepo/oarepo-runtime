@@ -1,6 +1,6 @@
 from oarepo import __version__ as oarepo_version
 
-from oarepo_runtime.records.entity_resolvers.proxies import DraftProxy
+from oarepo_runtime.records.entity_resolvers.proxies import DraftProxy, RecordProxy
 
 # compatibility setting between invenio rdm 11 and invenio rdm 12
 # can be removed when invenio rdm 11 is no longer supported
@@ -87,4 +87,4 @@ else:
     from invenio_records_resources.references import EntityResolver, RecordResolver
     from invenio_users_resources.entity_resolvers import UserResolver, GroupResolver
 
-__all__ = ["DraftProxy", "UserResolver", "GroupResolver", "RecordResolver", "EntityResolver"]
+__all__ = ["DraftProxy", "UserResolver", "GroupResolver", "RecordResolver", "EntityResolver", "RecordProxy"]
