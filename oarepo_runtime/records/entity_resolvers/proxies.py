@@ -29,6 +29,14 @@ class RecordProxy(InvenioRecordProxy):
 
         return resolved_fields
 
+    def ghost_record(self, value):
+        return {
+            **value,
+            "metadata": {
+                "title": "Deleted record",
+            },
+        }
+
 
 class DraftProxy(RecordProxy):
     def _resolve(self):
