@@ -38,7 +38,10 @@ class RecordList(BaseRecordList):
     def aggregations(self):
         """Get the search result aggregations."""
         try:
-            result = self._results.labelled_facets.to_dict()
+            result = super().aggregations
+            if result is None:
+                return result
+
             for key in result.keys():
                 if 'buckets' in result[key]:
                     for bucket in result[key]['buckets']:
