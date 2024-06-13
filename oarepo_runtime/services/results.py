@@ -35,6 +35,28 @@ class RecordList(BaseRecordList):
     components = []
 
     @property
+    def aggregations(self):
+        """Get the search result aggregations."""
+        try:
+            result = super().aggregations
+            if result is None:
+                return result
+
+            for key in result.keys():
+                if 'buckets' in result[key]:
+                    for bucket in result[key]['buckets']:
+                        val = bucket['key']
+                        label = bucket.get('label', '')
+
+                        if not isinstance(val, str):
+                            bucket['key'] = str(val)
+                        if not isinstance(label, str):
+                            bucket['label'] = str(label)
+            return result
+        except AttributeError:
+            return None
+
+    @property
     def hits(self):
         """Iterator over the hits."""
         for hit in self._results:
