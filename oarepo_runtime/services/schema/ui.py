@@ -130,3 +130,4 @@ class InvenioUISchema(ma.Schema):
     updated = LocalizedDateTime(dump_only=True)
     links = ma.fields.Raw(dump_only=True)
     revision_id = ma.fields.Integer(dump_only=True)
+    expanded = ma.fields.Raw(dump_only=True)
