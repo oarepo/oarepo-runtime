@@ -36,9 +36,12 @@ class FuzzySuggestQueryParser(SuggestQueryParser):
 
     def parse(self, query_str):
         """Parse the query."""
+        # default behavior
         multi_match_with_bool_prefix = dsl.Q(
             "multi_match", query=query_str, **self.extra_params
         )
+        # fuzziness does not seem to work with bool_prefix multimatch query, so we turn this into
+        # should multi match query with two clauses
         multi_match_fuzzy = dsl.Q(
             "multi_match", query=query_str, fields=self.fields, fuzziness="AUTO"
         )
