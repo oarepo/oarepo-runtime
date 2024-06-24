@@ -12,6 +12,8 @@ from invenio_records_resources.services.records.params import (
     SortParam,
 )
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
+from invenio_search.engine import dsl
+
 
 # TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
 from oarepo_runtime.i18n import lazy_gettext as _
@@ -23,6 +25,24 @@ try:
     from invenio_i18n import get_locale
 except ImportError:
     from invenio_i18n.babel import get_locale
+
+
+class FuzzySuggestQueryParser(SuggestQueryParser):
+    def __init__(self, identity=None, extra_params=None, **kwargs):
+        """Constructor."""
+        super().__init__(identity=identity, extra_params=extra_params)
+        self.fields = self.extra_params.get("fields", [])
+        self.extra_params.setdefault("type", "bool_prefix")
+
+    def parse(self, query_str):
+        """Parse the query."""
+        multi_match_with_bool_prefix = dsl.Q(
+            "multi_match", query=query_str, **self.extra_params
+        )
+        multi_match_fuzzy = dsl.Q(
+            "multi_match", query=query_str, fields=self.fields, fuzziness="AUTO"
+        )
+        return dsl.Q("bool", should=[multi_match_with_bool_prefix, multi_match_fuzzy])
 
 
 class SearchOptions(InvenioSearchOptions):
@@ -114,9 +134,7 @@ class ICUSuggestParser:
                     f"{fld.field}._index_prefix^{fld.boost * fld.boost_prefix}"
                 )
 
-        return SuggestQueryParser.factory(
-            fields=fields,
-        )
+        return FuzzySuggestQueryParser.factory(fields=fields)
 
 
 @dataclasses.dataclass
