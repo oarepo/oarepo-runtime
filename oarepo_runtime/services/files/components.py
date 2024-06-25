@@ -1,13 +1,9 @@
 import mimetypes
 import os
 from invenio_records_resources.services.files.components import FileServiceComponent
+from marshmallow.exceptions import ValidationError
 
-class FileTypeException(Exception):
-
-    def __init__(self, message):
-        super().__init__(message)
-
-class FileTypesComponent(FileServiceComponent):
+class AllowedFileTypesComponent(FileServiceComponent):
 
     def guess_content_type(self, filename: str | None) -> str | None:
         if filename:
@@ -15,7 +11,7 @@ class FileTypesComponent(FileServiceComponent):
         return None
 
     @property
-    def mimetypes(self):
+    def allowed_mimetypes(self):
         """Returns files attribute (field) key."""
         return getattr(self.service.config, "allowed_mimetypes", [])
 
@@ -41,7 +37,7 @@ class FileTypesComponent(FileServiceComponent):
             return ext_guessed[1:]
 
     @property
-    def extensions(self):
+    def allowed_extensions(self):
         """Returns files attribute (field) key."""
         return getattr(self.service.config, "allowed_extensions", [])
 
@@ -50,10 +46,10 @@ class FileTypesComponent(FileServiceComponent):
         list_files = list(data.files.entries)
 
         for file in list_files:
-            type = self.guess_content_type(file)
-            ext = self.guess_extension(file, type)
-            if len(self.mimetypes) > 0 and type not in self.mimetypes:
-                raise FileTypeException(f"Mimetype not supported, supported mimetypes: {self.mimetypes}")
-            elif len(self.extensions) > 0 and ext not in self.extensions:
-                raise FileTypeException(f"Extension not supported, supported extensions: {self.extensions}")
+            allowed_type = self.guess_content_type(file)
+            allowed_ext = self.guess_extension(file, allowed_type)
+            if len(self.allowed_mimetypes) > 0 and allowed_type not in self.allowed_mimetypes:
+                raise ValidationError(f"Mimetype not supported, supported mimetypes: {self.allowed_mimetypes}")
+            elif len(self.allowed_extensions) > 0 and allowed_ext not in self.allowed_extensions:
+                raise ValidationError(f"Extension not supported, supported extensions: {self.allowed_extensions}")
 
