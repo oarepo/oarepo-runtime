@@ -1,8 +1,10 @@
 from functools import cached_property
 
 import marshmallow as ma
-#from marshmallow_oneofschema import OneOfSchema
+
+# from marshmallow_oneofschema import OneOfSchema
 from oarepo_runtime.services.schema.oneofschema import OneOfSchema
+
 
 class PolymorphicSchema(OneOfSchema):
     type_field_remove = False

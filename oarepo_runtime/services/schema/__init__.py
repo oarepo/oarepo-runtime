@@ -3,11 +3,11 @@ from .polymorphic import PolymorphicSchema
 
 def consistent_resolution(*classes):
     """
-        A helper function to solve resolution order of classes.
-        If the classes are in a correct mro order, it will return
-        them in the same order. Otherwise it will try to reorder
-        them and remove those that are already contained in mro
-        of others.
+    A helper function to solve resolution order of classes.
+    If the classes are in a correct mro order, it will return
+    them in the same order. Otherwise it will try to reorder
+    them and remove those that are already contained in mro
+    of others.
     """
 
     # remove classes that are already in mro of others
@@ -35,8 +35,10 @@ def consistent_resolution(*classes):
 
     bases = ", ".join(cls.__name__ for cls in filtered_classes)
     orig_bases = ", ".join(cls.__name__ for cls in classes)
-    raise TypeError(f"Cannot create a consistent method resolution order (MRO) "
-                    f"for bases {orig_bases}, tried {bases}")
+    raise TypeError(
+        f"Cannot create a consistent method resolution order (MRO) "
+        f"for bases {orig_bases}, tried {bases}"
+    )
 
 
 __all__ = ("PolymorphicSchema", "consistent_resolution")

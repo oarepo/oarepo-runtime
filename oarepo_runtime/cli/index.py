@@ -112,14 +112,19 @@ def reindex(model, bulk_size, verbose):
             service = current_service_registry.get(service_id)
         except KeyError:
             click.secho(f"Service {service_id} not in known services:", color="red")
-            for known_service_id, known_service in sorted(current_service_registry._services.items()):
-                click.secho(f"    {known_service_id} -> {type(known_service).__module__}.{type(known_service).__name__}", color="red")
+            for known_service_id, known_service in sorted(
+                current_service_registry._services.items()
+            ):
+                click.secho(
+                    f"    {known_service_id} -> {type(known_service).__module__}.{type(known_service).__name__}",
+                    color="red",
+                )
             sys.exit(1)
         record_class = getattr(service.config, "record_cls", None)
 
         id_generators = []
 
-        record_generator = RECORD_GENERATORS.get(service_id,  model_records_generator)
+        record_generator = RECORD_GENERATORS.get(service_id, model_records_generator)
 
         if record_class and hasattr(service, "indexer"):
             try:
@@ -223,9 +228,11 @@ def model_records_generator(model_class):
     except Exception as e:
         click.secho(f"Could not index {model_class}: {e}", fg="red", file=sys.stderr)
 
+
 def users_record_generator(model_class):
     from invenio_accounts.models import User
     from invenio_users_resources.records.api import UserAggregate
+
     try:
         for x in db.session.query(User.id):
             rec_id = x[0]
@@ -233,6 +240,5 @@ def users_record_generator(model_class):
     except Exception as e:
         click.secho(f"Could not index {model_class}: {e}", fg="red", file=sys.stderr)
 
-RECORD_GENERATORS = {
-    'users': users_record_generator
-}
+
+RECORD_GENERATORS = {"users": users_record_generator}

@@ -43,15 +43,15 @@ class RecordList(BaseRecordList):
                 return result
 
             for key in result.keys():
-                if 'buckets' in result[key]:
-                    for bucket in result[key]['buckets']:
-                        val = bucket['key']
-                        label = bucket.get('label', '')
+                if "buckets" in result[key]:
+                    for bucket in result[key]["buckets"]:
+                        val = bucket["key"]
+                        label = bucket.get("label", "")
 
                         if not isinstance(val, str):
-                            bucket['key'] = str(val)
+                            bucket["key"] = str(val)
                         if not isinstance(label, str):
-                            bucket['label'] = str(label)
+                            bucket["label"] = str(label)
             return result
         except AttributeError:
             return None

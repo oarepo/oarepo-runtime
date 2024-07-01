@@ -25,6 +25,6 @@ def has_draft(record, ctx):
     """Shortcut for links to determine if record is either a draft or a published one with a draft associated."""
     if getattr(record, "is_draft", False):
         return True
-    if getattr(record, 'has_draft', False):
+    if getattr(record, "has_draft", False):
         return True
     return False

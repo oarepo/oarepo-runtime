@@ -1,8 +1,8 @@
 from flask import current_app
 from invenio_records_permissions import RecordPermissionPolicy
+from records2.services.records.config import Records2ServiceConfig
 
 from oarepo_runtime.services.config import UserWithRole
-from records2.services.records.config import Records2ServiceConfig
 
 
 def test_permissions_with_config_key(

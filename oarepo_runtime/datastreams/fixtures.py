@@ -35,7 +35,7 @@ def load_fixtures(
     callback: FixturesCallback = None,
     batch_size=100,
     datastreams_impl=SynchronousDataStream,
-    identity=system_identity
+    identity=system_identity,
 ):
     """
     Loads fixtures. If fixture dir is set, fixtures are loaded from that directory first.
@@ -64,7 +64,7 @@ def load_fixtures(
             callback,
             batch_size=batch_size,
             datastreams_impl=datastreams_impl,
-            identity=identity
+            identity=identity,
         )
 
     if system_fixtures:
@@ -94,13 +94,19 @@ def load_fixtures(
                 callback,
                 batch_size=batch_size,
                 datastreams_impl=datastreams_impl,
-                identity=identity
+                identity=identity,
             )
 
 
 def _load_fixtures_from_catalogue(
-    catalogue, fixtures, include, exclude, callback, batch_size, datastreams_impl,
-        identity=system_identity
+    catalogue,
+    fixtures,
+    include,
+    exclude,
+    callback,
+    batch_size,
+    datastreams_impl,
+    identity=system_identity,
 ):
     for catalogue_datastream in catalogue.get_datastreams():
         if catalogue_datastream.stream_name in fixtures:
