@@ -6,21 +6,27 @@ from oarepo_runtime.services.schema import consistent_resolution
 class A:
     pass
 
+
 class B(A):
     pass
+
 
 class C(A):
     pass
 
+
 class D(B, C):
     pass
+
 
 def test_consistent_resolution():
     try:
         type("Test", (A, B), {})
-        raise AssertionError("Should not be able to create a class with inconsistent MRO")
+        raise AssertionError(
+            "Should not be able to create a class with inconsistent MRO"
+        )
     except TypeError:
-        pass # sanity check passed
+        pass  # sanity check passed
     for clz in (A, B, C, D):
         consistent_resolution(clz)
 

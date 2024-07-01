@@ -41,3 +41,13 @@ class OwnersComponent(ServiceComponent):
         if new_term:
             return search.filter(new_term)
         return search
+
+
+from datetime import datetime
+
+
+class DateIssuedComponent(ServiceComponent):
+    def publish(self, identity, data=None, record=None, errors=None, **kwargs):
+        """Create a new record."""
+        if "dateIssued" not in record["metadata"]:
+            record["metadata"]["dateIssued"] = datetime.today().strftime("%Y-%m-%d")

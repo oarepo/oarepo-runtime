@@ -1,8 +1,8 @@
+import logging
+
 from invenio_records.systemfields import SystemField
 
 from .mapping import MappingSystemFieldMixin
-
-import logging
 
 log = logging.getLogger(__name__)
 

@@ -1,10 +1,11 @@
 import mimetypes
 import os
+
 from invenio_records_resources.services.files.components import FileServiceComponent
 from marshmallow.exceptions import ValidationError
 
-class AllowedFileTypesComponent(FileServiceComponent):
 
+class AllowedFileTypesComponent(FileServiceComponent):
     def guess_content_type(self, filename: str | None) -> str | None:
         if filename:
             return mimetypes.guess_type(filename)[0] or "application/octet-stream"
@@ -22,10 +23,7 @@ class AllowedFileTypesComponent(FileServiceComponent):
         ext_guessed = mimetypes.guess_extension(mimetype)
 
         # Check if a valid extension is guessed and it's not the default mimetype
-        if (
-                ext_guessed is not None
-                and mimetype != "application/octet-stream"
-        ):
+        if ext_guessed is not None and mimetype != "application/octet-stream":
             return ext_guessed[1:]
 
         # Support non-standard file extensions that cannot be guessed
@@ -48,8 +46,17 @@ class AllowedFileTypesComponent(FileServiceComponent):
         for file in list_files:
             allowed_type = self.guess_content_type(file)
             allowed_ext = self.guess_extension(file, allowed_type)
-            if len(self.allowed_mimetypes) > 0 and allowed_type not in self.allowed_mimetypes:
-                raise ValidationError(f"Mimetype not supported, supported mimetypes: {self.allowed_mimetypes}")
-            elif len(self.allowed_extensions) > 0 and allowed_ext not in self.allowed_extensions:
-                raise ValidationError(f"Extension not supported, supported extensions: {self.allowed_extensions}")
-
+            if (
+                len(self.allowed_mimetypes) > 0
+                and allowed_type not in self.allowed_mimetypes
+            ):
+                raise ValidationError(
+                    f"Mimetype not supported, supported mimetypes: {self.allowed_mimetypes}"
+                )
+            elif (
+                len(self.allowed_extensions) > 0
+                and allowed_ext not in self.allowed_extensions
+            ):
+                raise ValidationError(
+                    f"Extension not supported, supported extensions: {self.allowed_extensions}"
+                )

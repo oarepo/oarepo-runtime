@@ -17,7 +17,6 @@ from oarepo_runtime.records.systemfields import MappingSystemFieldMixin
 
 
 class OwnerRelationManager:
-
     def __init__(self, record_id, serialized_owners):
         self._serialized_owners = serialized_owners
         self._deserialized_owners = None
@@ -33,9 +32,13 @@ class OwnerRelationManager:
         if self._serialized_owners is None:
             deserialized_owners = []
             for deserialized_owner in self._deserialized_owners or []:
-                serialized_owner = OwnerEntityResolverRegistry.reference_entity(deserialized_owner)
+                serialized_owner = OwnerEntityResolverRegistry.reference_entity(
+                    deserialized_owner
+                )
                 if serialized_owner is None:
-                    raise ValueError(f'failed serialize owner; owner - {deserialized_owner}')
+                    raise ValueError(
+                        f"failed serialize owner; owner - {deserialized_owner}"
+                    )
                 deserialized_owners.append(serialized_owner)
             self._serialized_owners = deserialized_owners
         return self._serialized_owners
@@ -44,7 +47,9 @@ class OwnerRelationManager:
         if self._deserialized_owners is None:
             self._deserialized_owners = set()
             for ref in self._serialized_owners or []:
-                self._deserialized_owners.add(OwnerEntityResolverRegistry.resolve_reference(ref))
+                self._deserialized_owners.add(
+                    OwnerEntityResolverRegistry.resolve_reference(ref)
+                )
             self._serialized_owners = None
 
     def add(self, owner):
@@ -62,6 +67,7 @@ class OwnerRelationManager:
     def __iter__(self):
         self._resolve()
         return iter(self._deserialized_owners)
+
 
 class OwnersField(MappingSystemFieldMixin, SystemField):
     """Communites system field for managing relations to communities."""

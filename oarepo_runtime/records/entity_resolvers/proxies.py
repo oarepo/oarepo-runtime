@@ -1,9 +1,7 @@
 from invenio_pidstore.errors import PIDUnregistered
-
 from invenio_records_resources.references.entity_resolvers.records import (
     RecordProxy as InvenioRecordProxy,
 )
-
 from sqlalchemy.exc import NoResultFound
 
 
