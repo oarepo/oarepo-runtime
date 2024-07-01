@@ -78,6 +78,19 @@ class GroupedFacetsParam(FacetsParam):
 
         return search
 
+    def filter(self, search):
+        """Apply a post filter on the search."""
+        if not self._filters:
+            return search
+
+        filters = list(self._filters.values())
+
+        _filter = filters[0]
+        for f in filters[1:]:
+            _filter &= f
+
+        return search.filter(_filter)
+
     def apply(self, identity, search, params):
         """Evaluate the facets on the search."""
         facets_values = params.pop("facets", {})
