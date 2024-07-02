@@ -36,6 +36,19 @@ class GroupedFacetsParam(FacetsParam):
     def facets(self):
         return self._facets
 
+    def filter(self, search):
+        """Apply a post filter on the search."""
+        if not self._filters:
+            return search
+
+        filters = list(self._filters.values())
+
+        facet_filter = filters[0]
+        for f in filters[1:]:
+            facet_filter &= f
+
+        return search.filter(facet_filter)
+
     def identity_facet_groups(self, identity: Identity) -> List[str]:
         if "OAREPO_FACET_GROUP_NAME" in current_app.config:
             find_facet_groups_func = obj_or_import_string(
