@@ -19,7 +19,7 @@ from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 class Mapping(InvenioMapping):
     @classmethod
     def properties_for_fields(
-        cls, given_fields_names, available_fields, field_name="custom_fields"
+            cls, given_fields_names, available_fields, field_name="custom_fields"
     ):
         """Prepare search mapping properties for each field."""
 
@@ -34,7 +34,7 @@ class Mapping(InvenioMapping):
 
     @classmethod
     def settings_for_fields(
-        cls, given_fields_names, available_fields, field_name="custom_fields"
+            cls, given_fields_names, available_fields, field_name="custom_fields"
     ):
         """Prepare mapping settings for each field."""
 
@@ -72,10 +72,11 @@ def prepare_cf_indices():
         if record_class:
             prepare_cf_index(record_class, config)
             parent_class = getattr(record_class, "parent_record_cls", None)
-            prepare_cf_index(parent_class, config)
+            prepare_parent_mapping(parent_class, config)
+            prepare_cf_index(parent_class, config, path=["parent", "properties"])
 
 
-def prepare_cf_index(record_class, config):
+def prepare_cf_index(record_class, config, path=[]):
     if not record_class:
         return
 
@@ -84,6 +85,11 @@ def prepare_cf_index(record_class, config):
         mapping = fld.mapping
         settings = fld.mapping_settings
         dynamic_templates = fld.dynamic_templates
+
+        for pth in reversed(path):
+            mapping = {
+                pth: mapping
+            }
 
         # upload mapping
         try:
@@ -109,6 +115,79 @@ def prepare_cf_index(record_class, config):
             click.secho(e.info["error"]["reason"], fg="red")
 
 
+def prepare_parent_mapping(parent_class, config):
+    if not parent_class:
+        return
+    parent_mapping = {
+        "parent": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "date",
+                    "format": "strict_date_time||strict_date_time_no_millis||basic_date_time||basic_date_time_no_millis||basic_date||strict_date||strict_date_hour_minute_second||strict_date_hour_minute_second_fraction"
+                },
+                "id": {
+                    "type": "keyword",
+                    "ignore_above": 1024
+                },
+                "pid": {
+                    "properties": {
+                        "obj_type": {
+                            "type": "keyword",
+                            "ignore_above": 1024
+                        },
+                        "pid_type": {
+                            "type": "keyword",
+                            "ignore_above": 1024
+                        },
+                        "pk": {
+                            "type": "long"
+                        },
+                        "status": {
+                            "type": "keyword",
+                            "ignore_above": 1024
+                        }
+                    }
+                },
+                "updated": {
+                    "type": "date",
+                    "format": "strict_date_time||strict_date_time_no_millis||basic_date_time||basic_date_time_no_millis||basic_date||strict_date||strict_date_hour_minute_second||strict_date_hour_minute_second_fraction"
+                },
+                "uuid": {
+                    "type": "keyword",
+                    "ignore_above": 1024
+                },
+                "version_id": {
+                    "type": "long"
+                }
+            }
+        }
+    }
+
+    # upload mapping
+    try:
+        record_index = dsl.Index(
+            build_alias_name(
+                config.record_cls.index._name,
+            ),
+            using=current_search_client,
+        )
+        update_index(record_index, {}, parent_mapping)
+
+        if hasattr(config, "draft_cls"):
+            draft_index = dsl.Index(
+                build_alias_name(
+                    config.draft_cls.index._name,
+                ),
+                using=current_search_client,
+            )
+            update_index(draft_index, {}, parent_mapping)
+
+    except search.RequestError as e:
+        click.secho("An error occurred while creating parent mapping.", fg="red")
+        click.secho(e.info["error"]["reason"], fg="red")
+
+
 def update_index(record_index, settings, mapping, dynamic_templates=None):
     if settings:
         record_index.close()
@@ -125,6 +204,6 @@ def update_index(record_index, settings, mapping, dynamic_templates=None):
 
 def get_mapping_fields(record_class) -> Iterable[MappingSystemFieldMixin]:
     for cfg_name, cfg_value in inspect.getmembers(
-        record_class, lambda x: isinstance(x, MappingSystemFieldMixin)
+            record_class, lambda x: isinstance(x, MappingSystemFieldMixin)
     ):
         yield cfg_value

@@ -82,6 +82,12 @@ class OwnersField(MappingSystemFieldMixin, SystemField):
         return {
             self.attr_name: {
                 "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
             },
         }
 
