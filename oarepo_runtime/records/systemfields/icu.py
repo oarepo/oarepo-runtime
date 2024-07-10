@@ -146,7 +146,7 @@ class ICUSearchField(ICUField):
             "tokenizer": "standard",
             "filter": ["stemming_filter_en"],
         },
-        "ascii_folding": {
+        "ascii_folding_analyzer": {
             "tokenizer": "standard",
             "filter": [
                 "ascii_folding_filter"
@@ -160,7 +160,7 @@ class ICUSearchField(ICUField):
             "tokenizer": "icu_stemming_ngram_tokenizer",
             "filter": ["stemming_filter_en"],
         },
-        "ascii_folding_ngram": {
+        "ascii_folding_analyzer_ngram": {
             "tokenizer": "icu_stemming_ngram_tokenizer",
             "filter": [
                 "ascii_folding_filter"
@@ -221,7 +221,7 @@ class ICUSearchField(ICUField):
                         "search_ascii_folding",
                         {
                             "type": "text",
-                            "analyzer": f"ascii_folding",
+                            "analyzer": f"ascii_folding_analyzer",
                         },
                     )
                     for lang, setting in self.languages.items()
@@ -241,7 +241,7 @@ class ICUSearchField(ICUField):
                         "search_ascii_folding",
                         {
                             "type": "text",
-                            "analyzer": f"ascii_folding_ngram",
+                            "analyzer": f"ascii_folding_analyzer_ngram",
                         },
                     )
                     for lang, setting in self.languages.items()
