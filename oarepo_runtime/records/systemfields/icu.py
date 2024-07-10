@@ -194,7 +194,7 @@ class ICUSearchField(ICUField):
                                 },
                                 "ascii_folded": {
                                     "type": "text",
-                                    "analyzer": f"ascii_folding_analyzer",
+                                    "analyzer": "ascii_folding_analyzer",
                                     "boost": 0.3,
                                 },
                             }
