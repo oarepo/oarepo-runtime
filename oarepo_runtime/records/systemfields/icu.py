@@ -146,6 +146,12 @@ class ICUSearchField(ICUField):
             "tokenizer": "standard",
             "filter": ["stemming_filter_en"],
         },
+        "ascii_folding_analyzer": {
+            "tokenizer": "standard",
+            "filter": [
+                "ascii_folding_filter"
+            ]
+        },
     }
 
     default_stemming_filters = {
@@ -159,6 +165,10 @@ class ICUSearchField(ICUField):
             "name": "english",
             "language": "english",
         },
+        "ascii_folding_filter": {
+            "type": "asciifolding",
+            "preserve_original": True
+        }
     }
 
     def __init__(self, source_field, key=None):
@@ -170,11 +180,24 @@ class ICUSearchField(ICUField):
             self.attr_name: {
                 "type": "object",
                 "properties": {
+                    # normal stemming
                     lang: setting.get(
                         "search",
                         {
                             "type": "text",
-                            "analyzer": f"stemming_analyzer_{lang}",
+                            "boost": 1,
+                            "fields": {
+                                "stemmed": {
+                                    "type": "text",
+                                    "analyzer": f"stemming_analyzer_{lang}",
+                                    "boost": 0.5,
+                                },
+                                "ascii_folded": {
+                                    "type": "text",
+                                    "analyzer": "ascii_folding_analyzer",
+                                    "boost": 0.3,
+                                },
+                            }
                         },
                     )
                     for lang, setting in self.languages.items()
