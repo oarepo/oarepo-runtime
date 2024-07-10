@@ -146,6 +146,26 @@ class ICUSearchField(ICUField):
             "tokenizer": "standard",
             "filter": ["stemming_filter_en"],
         },
+        "ascii_folding": {
+            "tokenizer": "standard",
+            "filter": [
+                "ascii_folding_filter"
+            ]
+        },
+        "stemming_analyzer_ngram_cs": {
+            "tokenizer": "icu_stemming_ngram_tokenizer",
+            "filter": ["stemming_filter_cs"],
+        },
+        "stemming_analyzer_ngram_en": {
+            "tokenizer": "icu_stemming_ngram_tokenizer",
+            "filter": ["stemming_filter_en"],
+        },
+        "ascii_folding_ngram": {
+            "tokenizer": "icu_stemming_ngram_tokenizer",
+            "filter": [
+                "ascii_folding_filter"
+            ]
+        },
     }
 
     default_stemming_filters = {
@@ -159,6 +179,22 @@ class ICUSearchField(ICUField):
             "name": "english",
             "language": "english",
         },
+        "ascii_folding_filter": {
+            "type": "asciifolding",
+            "preserve_original": True
+        }
+    }
+
+    default_stemming_tokenizers = {
+        "icu_stemming_ngram_tokenizer": {
+            "type": "edge_ngram",
+            "min_gram": 3,
+            "max_gram": 10,
+            "token_chars": [
+                "letter",
+                "digit"
+            ]
+        }
     }
 
     def __init__(self, source_field, key=None):
@@ -170,11 +206,42 @@ class ICUSearchField(ICUField):
             self.attr_name: {
                 "type": "object",
                 "properties": {
+                    # normal stemming
                     lang: setting.get(
                         "search",
                         {
                             "type": "text",
                             "analyzer": f"stemming_analyzer_{lang}",
+                        },
+                    )
+                    for lang, setting in self.languages.items()
+                } | {
+                    # ascii folding
+                    f"{lang}_ascii_folded": setting.get(
+                        "search_ascii_folding",
+                        {
+                            "type": "text",
+                            "analyzer": f"ascii_folding",
+                        },
+                    )
+                    for lang, setting in self.languages.items()
+                } | {
+                    # ngram stemming
+                    lang: setting.get(
+                        "search",
+                        {
+                            "type": "text",
+                            "analyzer": f"stemming_analyzer_ngram_{lang}",
+                        },
+                    )
+                    for lang, setting in self.languages.items()
+                } | {
+                    # ngram ascii folding
+                    f"{lang}_ascii_folded": setting.get(
+                        "search_ascii_folding",
+                        {
+                            "type": "text",
+                            "analyzer": f"ascii_folding_ngram",
                         },
                     )
                     for lang, setting in self.languages.items()
@@ -192,5 +259,8 @@ class ICUSearchField(ICUField):
                 "filter": current_app.config.get(
                     "OAREPO_ICU_SEARCH_FILTERS", self.default_stemming_filters
                 ),
+                "tokenizer": current_app.config.get(
+                    "OAREPO_ICU_SEARCH_TOKENIZERS", self.default_stemming_tokenizers
+                )
             }
         }
