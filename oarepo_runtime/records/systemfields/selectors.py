@@ -1,12 +1,12 @@
-from typing import List
+from typing import List, Any
 
 
 class Selector:
-    def select(self, record):
+    def select(self, record) -> List[Any]:
         return []
 
 
-class PathSelector:
+class PathSelector(Selector):
     def __init__(self, *paths):
         self.paths = [x.split(".") for x in paths]
 

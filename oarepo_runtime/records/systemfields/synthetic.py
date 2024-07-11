@@ -2,6 +2,7 @@ import logging
 
 from invenio_records.systemfields import SystemField
 
+from . import Selector
 from .mapping import MappingSystemFieldMixin
 
 log = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
            ```
     """
 
-    def __init__(self, selector=None, filter=None, map=None, key=None, **kwargs):
+    def __init__(self, selector: Selector=None, filter=None, map=None, key=None, **kwargs):
         self.selector = selector
         self.map = map
         self.filter = filter
