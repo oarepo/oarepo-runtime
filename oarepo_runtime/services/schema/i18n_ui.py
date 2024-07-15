@@ -2,7 +2,6 @@ from functools import lru_cache
 
 from invenio_base.utils import obj_or_import_string
 from marshmallow import Schema, fields
-from marshmallow_utils.fields import SanitizedHTML
 
 
 @lru_cache

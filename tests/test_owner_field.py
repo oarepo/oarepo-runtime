@@ -6,10 +6,10 @@ from invenio_access.permissions import system_identity
 from invenio_accounts.testutils import login_user_via_session
 from invenio_records_permissions.generators import AnyUser, AuthenticatedUser
 from invenio_records_resources.services.errors import PermissionDeniedError
-from thesis.records.api import ThesisDraft, ThesisRecord
 
 from oarepo_runtime.services.generators import RecordOwners
 from tests.test_files import add_file_to_record
+from thesis.records.api import ThesisDraft, ThesisRecord
 
 
 @pytest.fixture(scope="module", autouse=True)

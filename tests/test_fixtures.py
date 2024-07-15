@@ -2,15 +2,14 @@ import tempfile
 from pathlib import Path
 
 import yaml
-from records2.proxies import current_service
-from records2.records.api import Records2Record
 
-from oarepo_runtime.datastreams import DataStreamCallback
 from oarepo_runtime.datastreams.fixtures import (
     FixturesCallback,
     dump_fixtures,
     load_fixtures,
 )
+from records2.proxies import current_service
+from records2.records.api import Records2Record
 
 
 def read_yaml(fp):

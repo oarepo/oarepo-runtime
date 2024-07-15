@@ -2,14 +2,7 @@ import click
 import tqdm
 from flask import current_app
 from flask.cli import with_appcontext
-from flask_login import login_user
-from flask_principal import (
-    Identity,
-    RoleNeed,
-    UserNeed,
-    identity_changed,
-    identity_loaded,
-)
+from flask_principal import Identity, RoleNeed, UserNeed
 from invenio_access.permissions import any_user, authenticated_user, system_identity
 from invenio_accounts.models import User
 

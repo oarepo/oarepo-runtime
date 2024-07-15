@@ -29,7 +29,6 @@ from invenio_app.factory import create_api as _create_api
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 from oarepo_runtime.datastreams.fixtures import FixturesCallback
-from oarepo_runtime.datastreams.types import DataStreamCallback
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 pytest_plugins = ("celery.contrib.pytest",)
@@ -77,12 +76,12 @@ class FailingWriter(BaseWriter):
 def app_config(app_config):
     """Mimic an instance's configuration."""
     app_config["JSONSCHEMAS_HOST"] = "localhost"
-    app_config[
-        "RECORDS_REFRESOLVER_CLS"
-    ] = "invenio_records.resolver.InvenioRefResolver"
-    app_config[
-        "RECORDS_REFRESOLVER_STORE"
-    ] = "invenio_jsonschemas.proxies.current_refresolver_store"
+    app_config["RECORDS_REFRESOLVER_CLS"] = (
+        "invenio_records.resolver.InvenioRefResolver"
+    )
+    app_config["RECORDS_REFRESOLVER_STORE"] = (
+        "invenio_jsonschemas.proxies.current_refresolver_store"
+    )
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
 
@@ -268,10 +267,9 @@ def client_with_credentials_curator(db, client, user, curator_role):
 
 @pytest.fixture()
 def sample_data(db, app, identity, search_clear, location):
+    from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
-
-    from oarepo_runtime.datastreams.fixtures import load_fixtures
 
     load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
@@ -283,10 +281,9 @@ def sample_data(db, app, identity, search_clear, location):
 
 @pytest.fixture()
 def sample_data_system_field(db, app, identity, search_clear, location):
+    from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
-
-    from oarepo_runtime.datastreams.fixtures import load_fixtures
 
     load_fixtures(
         Path(__file__).parent / "data_system_field", callback=FixturesCallback()

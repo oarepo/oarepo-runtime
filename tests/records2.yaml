@@ -48,3 +48,8 @@ record:
        type: integer
        facets:
         facet-groups: [ 'default', 'curator' ]
+      date:
+        facets:
+          facet-class: oarepo_runtime.services.facets.year_histogram.YearAutoHistogramFacet
+          facet-groups: [ 'default', 'curator' ]
+        type: edtf
