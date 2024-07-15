@@ -148,9 +148,7 @@ class ICUSearchField(ICUField):
         },
         "ascii_folding_analyzer": {
             "tokenizer": "standard",
-            "filter": [
-                "ascii_folding_filter"
-            ]
+            "filter": ["ascii_folding_filter"],
         },
     }
 
@@ -165,10 +163,7 @@ class ICUSearchField(ICUField):
             "name": "english",
             "language": "english",
         },
-        "ascii_folding_filter": {
-            "type": "asciifolding",
-            "preserve_original": True
-        }
+        "ascii_folding_filter": {"type": "asciifolding", "preserve_original": True},
     }
 
     def __init__(self, source_field, key=None):
@@ -197,7 +192,7 @@ class ICUSearchField(ICUField):
                                     "analyzer": "ascii_folding_analyzer",
                                     "boost": 0.3,
                                 },
-                            }
+                            },
                         },
                     )
                     for lang, setting in self.languages.items()

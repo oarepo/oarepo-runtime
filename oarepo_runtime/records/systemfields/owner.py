@@ -7,8 +7,6 @@
 # details.
 
 """Communities system field."""
-import functools
-import inspect
 
 from invenio_records.systemfields import SystemField
 
@@ -82,12 +80,7 @@ class OwnersField(MappingSystemFieldMixin, SystemField):
         return {
             self.attr_name: {
                 "type": "object",
-                "properties": {
-                    "user": {
-                        "type": "keyword",
-                        "ignore_above": 256
-                    }
-                }
+                "properties": {"user": {"type": "keyword", "ignore_above": 256}},
             },
         }
 

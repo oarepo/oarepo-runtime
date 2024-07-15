@@ -4,7 +4,6 @@ from typing import List, Type
 
 from flask import current_app
 from flask_principal import RoleNeed
-from invenio_accounts.models import User
 from invenio_records_permissions import BasePermissionPolicy
 from invenio_records_permissions.generators import Generator
 from invenio_search.engine import dsl

@@ -1,9 +1,6 @@
 import sys
 from pathlib import Path
 
-from records2.proxies import current_service
-from records2.records.api import Records2Record
-
 from oarepo_runtime.datastreams import JSONObject, StreamBatch
 from oarepo_runtime.datastreams.asynchronous import (
     AsynchronousDataStream,
@@ -11,6 +8,8 @@ from oarepo_runtime.datastreams.asynchronous import (
 )
 from oarepo_runtime.datastreams.datastreams import Signature, SignatureKind
 from oarepo_runtime.datastreams.types import StreamEntryError
+from records2.proxies import current_service
+from records2.records.api import Records2Record
 
 
 def test_async_fixtures_in_process(

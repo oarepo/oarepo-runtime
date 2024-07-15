@@ -14,7 +14,6 @@ from invenio_records_resources.services.records.params import (
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
 from invenio_search.engine import dsl
 
-
 # TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
 from oarepo_runtime.i18n import lazy_gettext as _
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
