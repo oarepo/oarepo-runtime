@@ -7,27 +7,21 @@ from invenio_records_resources.services import FileService, RecordService
 from invenio_records_resources.services.records.results import RecordItem
 from requests import PreparedRequest, Response
 from requests.adapters import BaseAdapter
-
+from oarepo_published_service.services.service import PublishedService
 
 def get_record_service_for_record(record):
     if not record:
         return None
 
-    if getattr(record, "is_draft", False):
-        record_name = "draft_cls"
-        expect_draft_service = True
-    else:
-        record_name = "record_cls"
-        expect_draft_service = False
+    record_name = "draft_cls" if getattr(record, "is_draft", False) else "record_cls"
 
     for svc in current_service_registry._services.values():
         if not isinstance(svc, RecordService):
             continue
         if isinstance(svc, FileService):
             continue
-        is_draft_service = isinstance(svc, DraftRecordService)
-        if is_draft_service != expect_draft_service:
-            continue
+        if isinstance(svc, PublishedService):
+           continue
         service_record = getattr(svc, record_name, None)
         if service_record == type(record):
             return svc
