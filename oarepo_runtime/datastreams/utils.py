@@ -1,6 +1,8 @@
 from base64 import b64decode
 
 import requests
+from deprecated import deprecated
+from flask import current_app
 from invenio_drafts_resources.services import RecordService as DraftRecordService
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services import FileService, RecordService
@@ -12,7 +14,16 @@ from requests.adapters import BaseAdapter
 def get_record_service_for_record(record):
     if not record:
         return None
+    if "OAREPO_PRIMARY_RECORD_SERVICE" in current_app.config:
+        return current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][type(record)]
+    else:
+        return get_record_service_for_record_deprecated(record)
 
+
+@deprecated(
+    version="1.5.43", reason="Please recompile model to remove this deprecation warning"
+)
+def get_record_service_for_record_deprecated(record):
     if getattr(record, "is_draft", False):
         record_name = "draft_cls"
         expect_draft_service = True
