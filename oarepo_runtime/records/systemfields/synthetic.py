@@ -70,7 +70,9 @@ class SyntheticSystemField(MappingSystemFieldMixin, SystemField):
            ```
     """
 
-    def __init__(self, selector: Selector=None, filter=None, map=None, key=None, **kwargs):
+    def __init__(
+        self, selector: Selector = None, filter=None, map=None, key=None, **kwargs
+    ):
         self.selector = selector
         self.map = map
         self.filter = filter
