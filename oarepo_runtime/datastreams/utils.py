@@ -1,27 +1,44 @@
 from base64 import b64decode
 
 import requests
+from deprecated import deprecated
+from flask import current_app
 from invenio_drafts_resources.services import RecordService as DraftRecordService
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services import FileService, RecordService
 from invenio_records_resources.services.records.results import RecordItem
 from requests import PreparedRequest, Response
 from requests.adapters import BaseAdapter
-from oarepo_published_service.services.service import PublishedService
+
 
 def get_record_service_for_record(record):
     if not record:
         return None
+    if "OAREPO_PRIMARY_RECORD_SERVICE" in current_app.config:
+        return current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][type(record)]
+    else:
+        return get_record_service_for_record_deprecated(record)
 
-    record_name = "draft_cls" if getattr(record, "is_draft", False) else "record_cls"
+
+@deprecated(
+    version="1.5.43", reason="Please recompile model to remove this deprecation warning"
+)
+def get_record_service_for_record_deprecated(record):
+    if getattr(record, "is_draft", False):
+        record_name = "draft_cls"
+        expect_draft_service = True
+    else:
+        record_name = "record_cls"
+        expect_draft_service = False
 
     for svc in current_service_registry._services.values():
         if not isinstance(svc, RecordService):
             continue
         if isinstance(svc, FileService):
             continue
-        if isinstance(svc, PublishedService):
-           continue
+        is_draft_service = isinstance(svc, DraftRecordService)
+        if is_draft_service != expect_draft_service:
+            continue
         service_record = getattr(svc, record_name, None)
         if service_record == type(record):
             return svc
