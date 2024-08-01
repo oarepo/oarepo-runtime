@@ -40,9 +40,11 @@ def test_facets_not_existing_role(
             "buckets": [],
             "label": "metadata/num_increased.label",
         },
-        'metadata_date': {'buckets': [],
-                          'interval': '1y',
-                          'label': 'metadata/date.label'},
+        "metadata_date": {
+            "buckets": [],
+            "interval": "1y",
+            "label": "metadata/date.label",
+        },
     }
 
 
@@ -66,7 +68,9 @@ def test_facets_with_system_fields(
             ],
             "label": "metadata/num_increased.label",
         },
-        'metadata_date': {'buckets': [],
-                          'interval': '1y',
-                          'label': 'metadata/date.label'},
+        "metadata_date": {
+            "buckets": [],
+            "interval": "1y",
+            "label": "metadata/date.label",
+        },
     }

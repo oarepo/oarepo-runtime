@@ -4,11 +4,10 @@ from .permissions_presets import (
     OaiHarvesterPermissionPolicy,
     ReadOnlyPermissionPolicy,
 )
-from .service import PermissionsPresetsConfigMixin, UserWithRole
+from .service import PermissionsPresetsConfigMixin
 
 __all__ = (
     "PermissionsPresetsConfigMixin",
-    "UserWithRole",
     "OaiHarvesterPermissionPolicy",
     "ReadOnlyPermissionPolicy",
     "EveryonePermissionPolicy",
