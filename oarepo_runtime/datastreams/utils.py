@@ -15,7 +15,8 @@ def get_record_service_for_record(record):
     if not record:
         return None
     if "OAREPO_PRIMARY_RECORD_SERVICE" in current_app.config:
-        return current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][type(record)]
+        service_id = current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][type(record)]
+        return current_service_registry.get(service_id)
     else:
         return get_record_service_for_record_deprecated(record)
 
