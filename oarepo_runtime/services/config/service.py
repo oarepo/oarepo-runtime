@@ -3,10 +3,7 @@ import re
 from typing import List, Type
 
 from flask import current_app
-from flask_principal import RoleNeed
 from invenio_records_permissions import BasePermissionPolicy
-from invenio_records_permissions.generators import Generator
-from invenio_search.engine import dsl
 
 from oarepo_runtime.utils.functools import class_property
 
@@ -103,19 +100,3 @@ class PermissionsPresetsConfigMixin:
             name = name[:-6]
         name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).upper()
         return f"{name}_PERMISSIONS_PRESETS"
-
-
-class UserWithRole(Generator):
-    def __init__(self, *roles):
-        self.roles = roles
-
-    def needs(self, **kwargs):
-        return [RoleNeed(role) for role in self.roles]
-
-    def query_filter(self, identity=None, **kwargs):
-        if not identity:
-            return dsl.Q("match_none")
-        for provide in identity.provides:
-            if provide.method == "role" and provide.value in self.roles:
-                return dsl.Q("match_all")
-        return dsl.Q("match_none")
