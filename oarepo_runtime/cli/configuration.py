@@ -28,9 +28,9 @@ def configuration_command(output_file):
     if output_file == "-":
         print(
             json.dumps(
-                configuration, indent=4, ensure_ascii=False, default=lambda x: str(x)
+                configuration, skipkeys=True, indent=4, ensure_ascii=False, default=lambda x: str(x)
             )
         )
     else:
         with open(output_file, "w") as f:
-            json.dump(configuration, f, ensure_ascii=False, default=lambda x: str(x))
+            json.dump(configuration, f, skipkeys=True, ensure_ascii=False, default=lambda x: str(x))
