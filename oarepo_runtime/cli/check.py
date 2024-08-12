@@ -86,7 +86,13 @@ def check_opensearch():
             except opensearchpy.exceptions.ConnectionError:
                 return "connection_error"
 
-        index = indexer._prepare_index(indexer.record_to_index(record_class))
+
+        try:
+            index = indexer._prepare_index(indexer.record_to_index(record_class))
+        except AttributeError:
+            print(f"Warning: can not get index name for record class {record_class}")
+            continue
+
         try:
             service.indexer.client.indices.get(index=index)
         except TransportError:
