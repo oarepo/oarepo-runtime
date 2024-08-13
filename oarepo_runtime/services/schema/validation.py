@@ -1,9 +1,20 @@
 import functools
 import re
 from datetime import datetime
+from idutils import normalize_pid
 
 from marshmallow.exceptions import ValidationError
 from marshmallow_utils.fields.edtfdatestring import EDTFValidator
+
+
+def validate_identifier(value):
+    try:
+        value["identifier"] = normalize_pid(
+            value["identifier"], value["scheme"].lower()
+        )
+    except:
+        raise ValidationError(f"Invalid {value['scheme']} value {value['identifier']}")
+    return value
 
 
 def validate_date(date_format):
