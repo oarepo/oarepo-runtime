@@ -197,7 +197,7 @@ class InfoResource(Resource):
         return ret
 
     def call_components(self, method_name, **kwargs):
-        for component in self.config.components:
+        for component in self.components:
             if hasattr(component, method_name):
                 getattr(component, method_name)(**kwargs)
 
