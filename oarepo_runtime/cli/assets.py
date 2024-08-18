@@ -79,7 +79,7 @@ def enumerate_assets():
     return aliases, asset_dirs
 
 
-COMPONENT_RE = re.compile(
+COMPONENT_LIST_RE = re.compile(
     r"""
 ^
 \s*
@@ -87,13 +87,27 @@ COMPONENT_RE = re.compile(
 \s*
 {    
 \s*
-@import\s+["'](.*?)["']
-\s*
-;
+(
+    @import\s+["'](.*?)["']
+    \s*
+    ;
+)+
 \s*
 }""",
     re.MULTILINE | re.DOTALL | re.VERBOSE,
 )
+
+COMPONENT_RE = re.compile(
+    r"""
+\s*
+@import\s+["'](.*?)["']
+\s*
+;
+\s*
+""",
+    re.MULTILINE | re.DOTALL | re.VERBOSE,
+)
+
 
 
 @assets.command(name="less-components")
@@ -110,8 +124,9 @@ def less_components(output_file):
                 less_component_files.append(f)
     components = set()
     for cmp_file in less_component_files:
-        for s in COMPONENT_RE.findall(cmp_file.read_text()):
-            components.add(Path(s).stem)
+        for component_list in COMPONENT_LIST_RE.findall(cmp_file.read_text()):
+            for s in COMPONENT_RE.findall(component_list[0]):
+                components.add(Path(s).stem)
     data = {"components": list(sorted(components))}
     if output_file == "-":
         print(json.dumps(data, indent=4, ensure_ascii=False))
