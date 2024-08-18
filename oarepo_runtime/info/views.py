@@ -130,7 +130,7 @@ class InfoResource(Resource):
                     "schemas": self._get_model_schemas(service),
                 }
             )
-        self.call_components("repository", data=data)
+        self.call_components("model", data=data)
         return data, 200
 
     @schema_view_args
