@@ -54,7 +54,7 @@ wrap_command_for_testmo() {
   cmd="$1"
   shift
 
-  if [ -z "$GITHUB_WORKFLOW" ]; then
+  if [ -z "$TESTMO_TOKEN" ]; then
     "${cmd}" "$@"
   else
     testmo automation:run:submit \

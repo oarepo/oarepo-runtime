@@ -11,6 +11,9 @@ on:
 
 env:
   OAREPO_VERSION: ${{ inputs.oarepo }}
+  TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+  TESTMO_ORG_NAME: ${{ secrets.TESTMO_ORG_NAME }}
+  TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
 
 jobs:
   build:
