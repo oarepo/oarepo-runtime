@@ -1,0 +1,14 @@
+name: Test
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          echo "TESTMO_ORG_NAME: >>>$TESTMO_ORG_NAME<<<"
+        env:
+          TESTMO_ORG_NAME: ${{ secrets.TESTMO_ORG_NAME }}

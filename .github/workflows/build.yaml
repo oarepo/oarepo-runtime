@@ -8,38 +8,30 @@ on:
         required: true
         default: "12"
         type: string
-      testmo:
-        description: Testmo organization name
-        required: false
-        type: string
-        default: "not set up at all"
 
 env:
   OAREPO_VERSION: ${{ inputs.oarepo }}
-  TESTMO: ${{ inputs.testmo }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-#    services:
-#      postgres:
-#        image: postgres
-#        env:
-#          POSTGRES_PASSWORD: postgres
-#        options: >-
-#          --health-cmd pg_isready
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-#        ports:
-#          - 5432:5432
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: Show oarepo version
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
-          echo "TESTMO: >>>$TESTMO<<< >>>${{ inputs.testmo }}<<<"
-          exit 1
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:
