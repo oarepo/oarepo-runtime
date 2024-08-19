@@ -11,6 +11,7 @@ on:
 
 env:
   OAREPO_VERSION: ${{ inputs.oarepo }}
+  BLAH: ${{ vars.BLAH_VAR }}
 
 jobs:
   build:
@@ -32,6 +33,7 @@ jobs:
       - name: Show oarepo version
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
+          echo "blah: >>>$BLAH<<< >>>${{ vars.BLAH_VAR }}<<<"
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:

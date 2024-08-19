@@ -61,8 +61,8 @@ wrap_command_for_testmo() {
 #  else
     echo "Running tests with testmo"
     npx testmo automation:run:submit \
-      --instance https://${TESTMO_ORG_NAME}.testmo.net \
-      --project-id ${TESTMO_PROJECT_ID} \
+      --instance "https://${TESTMO_ORG_NAME}.testmo.net" \
+      --project-id "${TESTMO_PROJECT_ID}" \
       --name "Github action run" \
       --source "unittests" \
       --results .tests/results/*.xml \
