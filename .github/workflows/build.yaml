@@ -36,7 +36,7 @@ jobs:
           TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
-          echo "testmo org name $TESTMO_ORG_NAME"
+          echo "testmo org name $TESTMO_ORG_NAME : ${{ secrets.TESTMO_ORG_NAME }}"
           echo "testmo project id $TESTMO_PROJECT_ID"
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
