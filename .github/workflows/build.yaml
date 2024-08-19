@@ -15,35 +15,23 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-#    services:
-#      postgres:
-#        image: postgres
-#        env:
-#          POSTGRES_PASSWORD: postgres
-#        options: >-
-#          --health-cmd pg_isready
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-#        ports:
-#          - 5432:5432
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: Show oarepo version
-        shell: bash
-        env:
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-          TESTMO_ORG_NAME: ${{ secrets.TESTMO_ORG_NAME }}
-          TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
-          echo "testmo org name $TESTMO_ORG_NAME"
-          echo "testmo project id $TESTMO_PROJECT_ID"
-          if [ -z "$TESTMO_ORG_NAME" ]; then
-            echo "TESTMO_ORG_NAME is empty"
-            exit 1
-          fi
-          exit 1
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:
@@ -93,10 +81,6 @@ jobs:
           TESTMO_ORG_NAME: ${{ secrets.TESTMO_ORG_NAME }}
           TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
         run: |
-          export TESTMO_TOKEN
-          export TESTMO_ORG_NAME
-          export TESTMO_PROJECT_ID
-
           ./run-tests.sh
       
 
