@@ -57,7 +57,7 @@ wrap_command_for_testmo() {
   if [ -z "$TESTMO_TOKEN" ]; then
     "${cmd}" "$@"
   else
-    testmo automation:run:submit \
+    npx testmo automation:run:submit \
       --instance https://${TESTMO_ORG_NAME}.testmo.net \
       --project-id ${TESTMO_PROJECT_ID} \
       --name "Github action run" \
