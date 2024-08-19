@@ -80,6 +80,10 @@ jobs:
 
       - name: Run tests
         run: |
+          export TESTMO_TOKEN
+          export TESTMO_ORG_NAME
+          export TESTMO_PROJECT_ID
+
           ./run-tests.sh
       
 

@@ -54,9 +54,12 @@ wrap_command_for_testmo() {
   cmd="$1"
   shift
 
+  echo "testmo: $TESTMO_ORG_NAME, $TESTMO_PROJECT_ID"
+
   if [ -z "$TESTMO_TOKEN" ]; then
     "${cmd}" "$@"
   else
+    echo "Running tests with testmo"
     npx testmo automation:run:submit \
       --instance https://${TESTMO_ORG_NAME}.testmo.net \
       --project-id ${TESTMO_PROJECT_ID} \
