@@ -6,12 +6,15 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TESTMO: ${{ secrets.TESTMO_ORG_NAME }}
+
 jobs:
   build12:
     uses: ./.github/workflows/build.yaml
     with:
       oarepo: "12"
-      testmo: ${{ secrets.TESTMO_ORG_NAME }}
+      testmo: ${{ env.TESTMO }}
 
   publish:
     runs-on: ubuntu-latest
