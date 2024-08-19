@@ -57,19 +57,22 @@ wrap_command_for_testmo() {
   if [ -z "$TESTMO_TOKEN" ]; then
     "${cmd}" "$@"
   else
+    if [ -d .tests/results ] ; then
+      rm -rf .tests/results
+    fi
     echo "Running tests with testmo"
     npx testmo automation:run:submit \
       --instance "https://${TESTMO_ORG_NAME}.testmo.net" \
       --project-id "${TESTMO_PROJECT_ID}" \
-      --name "${GITHUB_REPOSITORY} : ${GITHUB_REF_NAME}" \
+      --name "${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME}" \
       --source "unittests" \
       --results .tests/results/*.xml \
       -- "${cmd}" "$@"
   fi
 }
 
-wrap_command_for_testmo pytest -m "not oom" --junitxml=.tests/results/non-oom.xml tests
-wrap_command_for_testmo pytest -m "oom" --junitxml=.tests/results/oom.xml tests
+wrap_command_for_testmo pytest -m "not oom" --junitxml=.tests/results/result.xml tests
+wrap_command_for_testmo pytest -m "oom" --junitxml=.tests/results/result.xml tests
 
 
 test -d $VENV/var/instance || mkdir $VENV/var/instance
