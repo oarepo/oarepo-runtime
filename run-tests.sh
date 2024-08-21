@@ -64,8 +64,8 @@ wrap_command_for_testmo() {
     npx testmo automation:run:submit \
       --instance "https://${TESTMO_ORG_NAME}.testmo.net" \
       --project-id "${TESTMO_PROJECT_ID}" \
-      --name "${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME}" \
-      --source "unittests" \
+      --name "Test Run ${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME}" \
+      --source "${GITHUB_REPOSITORY}" \
       --results .tests/results/*.xml \
       -- "${cmd}" "$@"
   fi
