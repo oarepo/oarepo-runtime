@@ -61,11 +61,13 @@ wrap_command_for_testmo() {
       rm -rf .tests/results
     fi
     echo "Running tests with testmo"
+    GITHUB_REPO_SHORT=${GITHUB_REPOSITORY#*/}
+    
     npx testmo automation:run:submit \
       --instance "https://${TESTMO_ORG_NAME}.testmo.net" \
       --project-id "${TESTMO_PROJECT_ID}" \
       --name "Test Run ${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME}" \
-      --source "${GITHUB_REPOSITORY}" \
+      --source "${GITHUB_REPO_SHORT}" \
       --results .tests/results/*.xml \
       -- "${cmd}" "$@"
   fi
