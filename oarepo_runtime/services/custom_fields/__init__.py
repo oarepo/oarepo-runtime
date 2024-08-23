@@ -43,7 +43,16 @@ class CustomFields(CustomFieldsMixin, DictField):
 
 
 class InlinedCustomFields(CustomFieldsMixin, SystemField):
-    pass
+
+    def __get__(self, record, owner=None):
+        """Getting the attribute value."""
+        if record is None:
+            return self
+        return self.get_dictkey(record)
+
+    def __set__(self, record, value):
+        """Setting a new value."""
+        self.set_dictkey(record, value)
 
 
 class InlinedCustomFieldsSchemaMixin:
