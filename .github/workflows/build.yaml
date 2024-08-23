@@ -33,6 +33,16 @@ jobs:
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 19
+      - run: npm install --no-save @testmo/testmo-cli
+      - run: |
+          npx testmo automation:resources:add-field --name git --type string \
+            --value ${GITHUB_SHA:0:7} --resources resources.json
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          npx testmo automation:resources:add-link --name build \
+            --url $RUN_URL --resources resources.json
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
@@ -66,6 +76,10 @@ jobs:
           redis-version: ${{ matrix.redis-version }}
 
       - name: Run tests
+        env:
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          TESTMO_ORG_NAME: ${{ secrets.TESTMO_ORG_NAME }}
+          TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
         run: |
           ./run-tests.sh
       

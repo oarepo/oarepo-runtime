@@ -50,9 +50,31 @@ pip install uritemplate
 
 invenio index destroy --force --yes-i-know || true
 
-## run OOM separately as it needs its own configuration of logging
-pytest -m "not oom" tests
-pytest -m "oom" tests
+wrap_command_for_testmo() {
+  cmd="$1"
+  shift
+
+  if [ -z "$TESTMO_TOKEN" ]; then
+    "${cmd}" "$@"
+  else
+    if [ -d .tests/results ] ; then
+      rm -rf .tests/results
+    fi
+    echo "Running tests with testmo"
+    GITHUB_REPO_SHORT=${GITHUB_REPOSITORY#*/}
+    
+    npx testmo automation:run:submit \
+      --instance "https://${TESTMO_ORG_NAME}.testmo.net" \
+      --project-id "${TESTMO_PROJECT_ID}" \
+      --name "Test Run ${GITHUB_REPOSITORY} @ ${GITHUB_REF_NAME}" \
+      --source "${GITHUB_REPO_SHORT}" \
+      --results .tests/results/*.xml \
+      -- "${cmd}" "$@"
+  fi
+}
+
+wrap_command_for_testmo pytest -m "not oom" --junitxml=.tests/results/result.xml tests
+wrap_command_for_testmo pytest -m "oom" --junitxml=.tests/results/result.xml tests
 
 
 test -d $VENV/var/instance || mkdir $VENV/var/instance
