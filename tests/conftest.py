@@ -26,6 +26,7 @@ from invenio_access.permissions import any_user, authenticated_user, system_proc
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
 from invenio_app.factory import create_api as _create_api
+from invenio_records_resources.services.custom_fields import KeywordCF
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 from oarepo_runtime.datastreams.fixtures import FixturesCallback
@@ -104,6 +105,10 @@ def app_config(app_config):
     app_config["DATASTREAMS_WRITERS"] = {"failing": FailingWriter}
 
     app_config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:?check_same_thread=False"
+
+    app_config["CF2"] = [
+        KeywordCF("blah"),
+    ]
 
     return app_config
 
