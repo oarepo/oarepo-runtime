@@ -2,10 +2,11 @@ import inspect
 from collections import defaultdict
 from typing import Type
 
+from flask import current_app
 from invenio_accounts.models import User
 from invenio_records import Record
 
-from oarepo_runtime.services.custom_fields import CustomFieldsMixin
+from oarepo_runtime.services.custom_fields import CustomFieldsMixin, CustomFields, InlinedCustomFields
 from oarepo_runtime.services.generators import RecordOwners
 
 try:
@@ -73,10 +74,17 @@ cf_registry = CFRegistry()
 class CustomFieldsComponent(ServiceComponent):
     def create(self, identity, data=None, record=None, **kwargs):
         """Create a new record."""
-        for cf in cf_registry.lookup(type(record)):
-            setattr(record, cf.attr_name, data.get(cf.key, {}))
+        self._set_cf_to_record(record, data)
 
     def update(self, identity, data=None, record=None, **kwargs):
         """Update a record."""
+        self._set_cf_to_record(record, data)
+
+    def _set_cf_to_record(self, record, data):
         for cf in cf_registry.lookup(type(record)):
-            setattr(record, cf.attr_name, data.get(cf.key, {}))
+            if isinstance(cf, CustomFields):
+                setattr(record, cf.attr_name, data.get(cf.key, {}))
+            elif isinstance(cf, InlinedCustomFields):
+                config = current_app.config.get(cf.config_key, {})
+                for c in config:
+                    record[c.name] =data.get(c.name)

@@ -13,6 +13,6 @@ def test_cf_registry(app, db):
     assert {x.key for x in fields} == {"cf1", "cf2"}
 
     rec = TestRecord({})
-    CustomFieldsComponent(None).create(None, record=rec, data={"cf1": {"a": 1}, "cf2": "aa"})
-    assert rec.cf1 == {"a": 1}
-    assert rec.cf2 == "aa"
+    CustomFieldsComponent(None).create(None, record=rec, data={"cf1": {"a": 1}, "blah": "aa"})
+    assert rec['cf1'] == {"a": 1}
+    assert rec['blah'] == "aa"
