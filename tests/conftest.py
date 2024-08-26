@@ -30,6 +30,7 @@ from invenio_records_resources.services.custom_fields import KeywordCF
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 from oarepo_runtime.datastreams.fixtures import FixturesCallback
+from oarepo_runtime.info.views import InfoResource, InfoConfig
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
 pytest_plugins = ("celery.contrib.pytest",)
@@ -298,3 +299,7 @@ def sample_data_system_field(db, app, identity, search_clear, location):
     for rec in current_service.scan(identity):
         titles.add(rec["metadata"]["title"])
     assert titles == {"record 1", "record 2"}
+
+@pytest.fixture()
+def info_blueprint(app):
+    app.register_blueprint(InfoResource(InfoConfig(app)).as_blueprint())

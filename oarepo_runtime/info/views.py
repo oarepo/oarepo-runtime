@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 from functools import cached_property
 from urllib.parse import urljoin
@@ -23,6 +24,7 @@ from flask_restful import abort
 from invenio_base.utils import obj_or_import_string
 from invenio_jsonschemas import current_jsonschemas
 from invenio_records_resources.proxies import current_service_registry
+
 
 logger = logging.getLogger("oarepo_runtime.info")
 
@@ -65,10 +67,20 @@ class InfoResource(Resource):
     @response_handler()
     def repository(self):
         """Repository endpoint."""
+        links = {
+            "self": url_for(request.endpoint, _external=True),
+            "models": url_for("oarepo_runtime_info.models", _external=True),
+        }
+        try:
+            import invenio_requests # noqa
+            links["requests"] = url_for("requests.search", _external=True)
+        except ImportError:
+            pass
+
         ret = {
             "name": current_app.config.get("THEME_SITENAME", ""),
             "description": current_app.config.get("REPOSITORY_DESCRIPTION", ""),
-            "version": get_package_version("repo"),
+            "version": os.environ.get("DEPLOYMENT_VERSION", "local development"),
             "invenio_version": get_package_version("oarepo"),
             "transfers": [
                 "local-file",
@@ -76,10 +88,7 @@ class InfoResource(Resource):
                 # TODO: where to get these? (permissions?)
                 # "direct-s3",
             ],
-            "links": {
-                "self": url_for(request.endpoint, _external=True),
-                "models": url_for("oarepo_runtime_info.models", _external=True),
-            },
+            "links": links,
         }
         self.call_components("repository", data=ret)
         return ret, 200
