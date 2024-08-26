@@ -111,6 +111,9 @@ def app_config(app_config):
         KeywordCF("blah"),
     ]
 
+    # only API app is running
+    app_config["SITE_API_URL"] = "http://localhost/"
+
     return app_config
 
 
