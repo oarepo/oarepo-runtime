@@ -73,7 +73,7 @@ class InfoResource(Resource):
         }
         try:
             import invenio_requests # noqa
-            links["requests"] = url_for("requests.search", _external=True)
+            links["requests"] = api_url_for("requests.search", _external=True)
         except ImportError:
             pass
 
