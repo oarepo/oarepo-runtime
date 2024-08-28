@@ -69,6 +69,7 @@ jobs:
         env:
           QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
           QASE_TESTOPS_PROJECT: ${{ secrets.QASE_TESTOPS_PROJECT }}
+          QASE_ENVIRONMENT: gh-ci
         run: |
           ./run-tests.sh
       
