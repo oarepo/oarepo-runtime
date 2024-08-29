@@ -1,4 +1,5 @@
 from qase.pytest import qase
+import requests
 
 
 @qase.step("Step 01")
@@ -101,6 +102,12 @@ def test_with_layer_success():
 @qase.layer("unit")
 def test_with_layer_failed():
     assert 1 == 2
+
+@qase.layer("unit")
+def test_request_with_failed():
+    url = f"http://localhost/api/health"
+    response = requests.get(url)
+    assert response.status_code == 200
 
 
 @qase.fields(
