@@ -25,12 +25,10 @@ def test_with_steps_failed():
         pass
     assert 1 == 2
 
-@qase.id(1)
 def test_with_qase_id_success():
     assert 1 == 1
 
 
-@qase.id(2)
 def test_with_qase_id_failed():
     assert 1 == 2
 
