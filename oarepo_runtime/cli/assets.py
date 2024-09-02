@@ -70,12 +70,13 @@ def collect(output_file, repository_dir, assets_dir):
 def enumerate_assets():
     asset_dirs = []
     aliases = {}
-    theme = (current_app.config["APP_THEME"] or ["semantic-ui"])[0]
+    themes = current_app.config["APP_THEME"] or ["semantic-ui"]
     for ep in entry_points(group="invenio_assets.webpack"):
         webpack = ep.load()
-        if theme in webpack.themes:
-            asset_dirs.append(webpack.themes[theme].path)
-            aliases.update(webpack.themes[theme].aliases)
+        for wp_theme_name, wp_theme in webpack.themes.items():
+            if wp_theme_name in themes:
+                asset_dirs.append(wp_theme.path)
+                aliases.update(wp_theme.aliases)
     return aliases, asset_dirs
 
 
