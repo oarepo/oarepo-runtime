@@ -29,6 +29,12 @@ jobs:
           - 5432:5432
 
     steps:
+         # First Step - Ensure Environment Variables and Initial Setup
+      - name: Set up environment and initial configuration
+        env:
+          OAREPO_VERSION: ${{ inputs.oarepo }}
+        run: |
+          echo "Setting up environment..."
       - name: Show oarepo version
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
