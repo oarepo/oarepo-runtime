@@ -3,79 +3,58 @@ name: Build and test
 on:
   workflow_call:
     inputs:
-       qase_api_base_url:
+      qase_api_base_url:
         description: 'Qase API URL'
         required: true
-       qase_report:
+      qase_report:
         description: 'Enabled/disabled reporting to Qase'
         required: true
-       qase_project_code:
+      qase_project_code:
         description: 'Qase project code'
         required: true
-       qase_run_id:
+      qase_run_id:
         description: 'Qase Run ID'
         required: true
-       qase_run_complete:
+      qase_run_complete:
         description: 'Qase Run autocomplete'
         required: true
-        oarepo:
-         description: OARepo version (11, 12, ...)
-       required: true
-       default: "12"
-    type: string
+      oarepo:
+        description: 'OARepo version (11, 12, ...)'
+        required: true
+        default: "12"
+        type: string
 
 env:
   OAREPO_VERSION: ${{ inputs.oarepo }}
   QASE_API_BASE_URL: ${{ inputs.qase_api_base_url }}
   QASE_TESTOPS_PROJECT: ${{ inputs.qase_project_code }}
   QASE_TESTOPS_RUN_ID: ${{ inputs.qase_run_id }}
-  QASE_TESTOPS_RUN_COMPLETE: true
+  QASE_TESTOPS_RUN_COMPLETE: ${{ inputs.qase_run_complete }}
   QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-    - uses: cskmnrpt/qase-link-run@v2
-      env:
-        QASE_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
-    - run: npm install
-    - run: npm test    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-         # First Step - Ensure Environment Variables and Initial Setup
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      
       - name: Set up environment and initial configuration
-        env:
-          OAREPO_VERSION: ${{ inputs.oarepo }}
         run: |
           echo "Setting up environment..."
-      - name: Show oarepo version
-        run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v3
+
+      - run: npm install
+      - run: npm test
+      
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.10"
+
       - name: Cache pip
         uses: actions/cache@v3
         with:
-          # This path is specific to Ubuntu
           path: ~/.cache/pip
-          # Look to see if there is a cache hit for the corresponding requirements file
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
@@ -88,7 +67,7 @@ jobs:
           sudo sysctl -w fs.file-max=262144
           sudo sysctl -w vm.max_map_count=262144
 
-      - name: Runs Opensearch
+      - name: Run Opensearch
         uses: ankane/setup-opensearch@v1
         with:
           plugins: analysis-icu
@@ -96,16 +75,15 @@ jobs:
       - name: Start Redis
         uses: supercharge/redis-github-action@1.7.0
         with:
-          redis-version: ${{ matrix.redis-version }}
+          redis-version: latest
+
+      - name: Link Qase Run
+        uses: cskmnrpt/qase-link-run@v2
 
       - name: Run tests
         env:
-          QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
-          QASE_TESTOPS_PROJECT: ${{ secrets.QASE_TESTOPS_PROJECT }}
           QASE_ENVIRONMENT: gh-ci
-        run: |
-          ./run-tests.sh
-      
+        run: ./run-tests.sh
 
       - name: Build package to publish
         run: |
@@ -115,14 +93,27 @@ jobs:
         run: |
           .venv/bin/pip freeze > requirements.txt
 
-      - name: Archive production artifacts
+      - name: Archive production artifacts (dist)
         uses: actions/upload-artifact@v3
         with:
           name: dist
           path: dist
 
-      - name: Archive production artifacts
+      - name: Archive production artifacts (requirements)
         uses: actions/upload-artifact@v3
         with:
           name: requirements.txt
           path: requirements.txt
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - "5432:5432"
