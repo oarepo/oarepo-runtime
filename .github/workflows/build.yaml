@@ -35,76 +35,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      
-      - name: Set up environment and initial configuration
-        run: |
-          echo "Setting up environment..."
-          echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
-
-      - run: npm install
-      - run: npm test
-      
-      - uses: actions/setup-python@v3
-        with:
-          python-version: "3.10"
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
-      - name: Configure sysctl limits
-        run: |
-          sudo swapoff -a
-          sudo sysctl -w vm.swappiness=1
-          sudo sysctl -w fs.file-max=262144
-          sudo sysctl -w vm.max_map_count=262144
-
-      - name: Run Opensearch
-        uses: ankane/setup-opensearch@v1
-        with:
-          plugins: analysis-icu
-
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.7.0
-        with:
-          redis-version: latest
-
-      - name: Link Qase Run
-        uses: cskmnrpt/qase-link-run@v2
-
-      - name: Run tests
-        env:
-          QASE_ENVIRONMENT: gh-ci
-        run: ./run-tests.sh
-
-      - name: Build package to publish
-        run: |
-          .venv/bin/python setup.py sdist bdist_wheel
-
-      - name: Freeze packages
-        run: |
-          .venv/bin/pip freeze > requirements.txt
-
-      - name: Archive production artifacts (dist)
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist
-          path: dist
-
-      - name: Archive production artifacts (requirements)
-        uses: actions/upload-artifact@v3
-        with:
-          name: requirements.txt
-          path: requirements.txt
-
     services:
       postgres:
         image: postgres
@@ -117,3 +47,95 @@ jobs:
           --health-retries 5
         ports:
           - "5432:5432"
+
+    steps:
+     # Checkout code
+     - uses: actions/checkout@v4
+     
+     # Set up Node.js
+     - uses: actions/setup-node@v4
+
+     # Link with Qase
+     - uses: cskmnrpt/qase-link-run@v2
+       env:
+        QASE_API_TOKEN: ${{ env.QASE_API_TOKEN }}
+
+     # Install npm dependencies and run tests
+     - run: npm install
+     - run: npm test      
+     
+     # Ensure environment variables and initial setup
+     - name: Set up environment and initial configuration
+       run: |
+          echo "Setting up environment..."
+          echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
+
+      # Set up Python
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      # Cache pip dependencies
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      # Configure sysctl limits
+      - name: Configure sysctl limits
+        run: |
+          sudo swapoff -a
+          sudo sysctl -w vm.swappiness=1
+          sudo sysctl -w fs.file-max=262144
+          sudo sysctl -w vm.max_map_count=262144
+
+      # Run Opensearch
+      - name: Run Opensearch
+        uses: ankane/setup-opensearch@v1
+        with:
+          plugins: analysis-icu
+
+      # Start Redis
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.7.0
+        with:
+          redis-version: latest
+
+      # Link Qase Run
+      - name: Link Qase Run
+        uses: cskmnrpt/qase-link-run@v2
+        env:
+          QASE_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
+
+      # Run tests
+      - name: Run tests
+        env:
+          QASE_ENVIRONMENT: gh-ci
+        run: ./run-tests.sh
+
+      # Build Python package
+      - name: Build package to publish
+        run: |
+          .venv/bin/python setup.py sdist bdist_wheel
+
+      # Freeze Python packages
+      - name: Freeze packages
+        run: |
+          .venv/bin/pip freeze > requirements.txt
+
+      # Archive production artifacts
+      - name: Archive production artifacts (dist)
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - name: Archive production artifacts (requirements)
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements.txt
+          path: requirements.txt
