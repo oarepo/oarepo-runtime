@@ -29,6 +29,10 @@ jobs:
           - 5432:5432
 
     steps:
+      - name: Link workflow run with Qase
+        uses: qase-tms/qase-link-run@main
+        env:
+          QASE_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
       - name: Show oarepo version
         run: |
           echo "OAREPO_VERSION: >>>$OAREPO_VERSION<<< >>>${{ inputs.oarepo }}<<<"
@@ -64,7 +68,6 @@ jobs:
         uses: supercharge/redis-github-action@1.7.0
         with:
           redis-version: ${{ matrix.redis-version }}
-
       - name: Run tests
         run: |
           ./run-tests.sh
