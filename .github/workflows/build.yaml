@@ -11,6 +11,7 @@ on:
 
 env:
   OAREPO_VERSION: ${{ inputs.oarepo }}
+  QASE_API_BASE_URL: 'https://app.qase.io/api/v1'
 
 jobs:
   build:
