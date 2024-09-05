@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Link workflow run with Qase
-        uses: qase-tms/qase-link-run@main
+        uses: cskmnrpt/qase-link-run@v2
         env:
           QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
           QASE_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
