@@ -1,6 +1,5 @@
 name: Build and test from Qase
 on:
-  push:
   workflow_dispatch:
     inputs:
       qase_api_base_url:
