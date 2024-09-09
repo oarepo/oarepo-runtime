@@ -81,7 +81,7 @@ def run_semi_asynchronous_datastream_processor(
                 {
                     "batch": batch.json,
                     "identity": serialize_identity(identity),
-                    "callback": f"{signature.kind}_error",
+                    "callback": f"{signature.kind.value}_error",
                     "exception": err.json,
                 },
             )

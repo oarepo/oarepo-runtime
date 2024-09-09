@@ -12,7 +12,9 @@ def test_info_endpoint(
         'links': {
             'models': 'http://localhost/.well-known/repository/models',
             'requests': 'http://localhost/requests/',
-            'self': 'http://localhost/.well-known/repository/'
+            'self': 'http://localhost/.well-known/repository/',
+            'records': 'http://localhost/search/',
+            'user_records': 'http://localhost/user/search/'
         },
         'name': '',
         'transfers': ['local-file', 'url-fetch'],

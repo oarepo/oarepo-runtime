@@ -178,7 +178,7 @@ def run_datastream_processor(batch: Dict, *, processor: JSONObject, identity, ca
             {
                 "batch": deserialized_batch.json,
                 "identity": serialize_identity(identity),
-                "callback": f"{processor_signature.kind}_error",
+                "callback": f"{processor_signature.kind.value}_error",
                 "exception": err.json,
             },
         )

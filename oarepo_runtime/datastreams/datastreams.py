@@ -25,11 +25,20 @@ class DataStreamChain(abc.ABC):
     def finish(self, callback: Union[DataStreamCallback, Any]):
         pass
 
+try:
+    from enum import StrEnum
 
-class SignatureKind(str, Enum):
-    READER = "reader"
-    TRANSFORMER = "transformer"
-    WRITER = "writer"
+    class SignatureKind(StrEnum):
+        READER = "reader"
+        TRANSFORMER = "transformer"
+        WRITER = "writer"
+
+except ImportError:
+
+    class SignatureKind(str, Enum):
+        READER = "reader"
+        TRANSFORMER = "transformer"
+        WRITER = "writer"
 
 
 @dataclasses.dataclass
