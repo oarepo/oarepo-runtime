@@ -11,5 +11,6 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
+    secrets: inherit
     with:
       oarepo: ${{ github.event.inputs.oarepo }}

@@ -87,6 +87,8 @@ def app_config(app_config):
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("cs", "Czech")]
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
 
+    app_config["APP_THEMES"] = ["my-theme-1", "my-theme-2", "semantic-ui"]
+
     app_config["DATASTREAMS_TRANSFORMERS"] = {
         "status": StatusTransformer,
     }

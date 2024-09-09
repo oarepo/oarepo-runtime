@@ -103,20 +103,15 @@ jobs:
       - name: Start Redis
         uses: supercharge/redis-github-action@1.7.0
         with:
-          redis-version: latest
-
-      # Link Qase Run
-      - name: Link Qase Run
-        uses: cskmnrpt/qase-link-run@v2
-        env:
-          QASE_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
-
-      # Run tests
+          redis-version: ${{ matrix.redis-version }}
       - name: Run tests
         env:
+          QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_TESTOPS_API_TOKEN }}
+          QASE_TESTOPS_PROJECT: ${{ secrets.QASE_TESTOPS_PROJECT }}
           QASE_ENVIRONMENT: gh-ci
-        run: ./run-tests.sh
-
+        run: |
+          ./run-tests.sh
+      
       # Build Python package
       - name: Build package to publish
         run: |
