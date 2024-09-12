@@ -62,7 +62,10 @@ class FilteredSelector(Selector):
             ret = []
             for select_element in selected:
                 if isinstance(self.projection, str):
-                    result = select_element[self.projection]
+                    if isinstance(select_element, dict) and self.projection in select_element:
+                        result = select_element[self.projection]
+                    else:
+                        result = []
                 else:
                     result = self.projection(select_element)
                 if isinstance(result, list):
@@ -99,48 +102,3 @@ def getter(data, path: List):
     elif isinstance(data, list):
         for item in data:
             yield from getter(item, path)
-
-
-"""
-def separate_element_condition(element):
-    if "?" in element:
-        return element.split("?")
-    return element, None
-
-
-def check(data, condition):
-    if condition:
-        key, value = condition.split("=")
-        return key in data and data[key] == value
-    else:
-        return True
-
-
-def getter(data, path: List, condition=None):
-    # allows selection from list of dicts based on one of the dict's values
-    if len(path) == 0:
-        if isinstance(data, list):
-            for item in data:
-                if check(item, condition):
-                    yield item
-        elif isinstance(data, dict):
-            if check(data, condition):
-                yield data
-        else:
-            yield data
-
-    elif isinstance(data, dict):
-        element, condition = separate_element_condition(path[0])
-        if element and element in data:
-            next = data[element]
-            if isinstance(next, list):
-                yield from getter(next, path[1:], condition)
-            elif isinstance(next, dict):
-                if check(data, condition):
-                    yield from getter(next, path[1:], None)
-
-    elif isinstance(data, list):
-        for item in data:
-            if check(item, condition):
-                yield from getter(item, path)
-"""
