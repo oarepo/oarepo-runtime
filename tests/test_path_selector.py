@@ -1,30 +1,40 @@
-from oarepo_runtime.records.systemfields.selectors import getter, PathSelector, FilteredSelector, MultiSelector
+from oarepo_runtime.records.systemfields.selectors import (
+    FilteredSelector,
+    MultiSelector,
+    PathSelector,
+    getter,
+)
 
 
 def test_filtered_selector():
-    data = {"metadata": {
-        "creators": [
-            {"name": "hugo", "affiliations": ["uni1", "uni2"], "nameType": "personal"},
-            {"name": "uni3", "nameType": "organizational"},
-        ]
-    }
+    data = {
+        "metadata": {
+            "creators": [
+                {
+                    "name": "hugo",
+                    "affiliations": ["uni1", "uni2"],
+                    "nameType": "personal",
+                },
+                {"name": "uni3", "nameType": "organizational"},
+            ]
+        }
     }
 
-    selectors = [FilteredSelector(PathSelector("metadata.creators", "metadata.contributors"),
-                                         filter=lambda x: x["nameType"] == "personal", projection="affiliations"),
-                 FilteredSelector(PathSelector("metadata.creators", "metadata.contributors"),
-                                  filter=lambda x: x["nameType"] == "organizational")
+    selectors = [
+        FilteredSelector(
+            PathSelector("metadata.creators", "metadata.contributors"),
+            filter=lambda x: x["nameType"] == "personal",
+            projection="affiliations",
+        ),
+        FilteredSelector(
+            PathSelector("metadata.creators", "metadata.contributors"),
+            filter=lambda x: x["nameType"] == "organizational",
+        ),
     ]
 
     selector = MultiSelector(*selectors)
     result = selector.select(data)
-    assert result == ['uni1', 'uni2', {'name': 'uni3', 'nameType': 'organizational'}]
-
-
-
-
-
-
+    assert result == ["uni1", "uni2", {"name": "uni3", "nameType": "organizational"}]
 
 
 def test_getter():
@@ -53,7 +63,13 @@ def test_getter_more_complex():
     data = {
         "creators": [
             {
-                "name": {"u": {"university": {"org": "cvut", "city": "prag"}, "type": "technical"}, "v": "uni3"},
+                "name": {
+                    "u": {
+                        "university": {"org": "cvut", "city": "prag"},
+                        "type": "technical",
+                    },
+                    "v": "uni3",
+                },
                 "nameType": "organizational",
             },
             {
@@ -70,13 +86,18 @@ def test_getter_more_complex():
     result0 = list(
         getter(
             data,
-            "creators?nameType=personal.affiliations.institution?graduated=yes".split("."),
+            "creators?nameType=personal.affiliations.institution?graduated=yes".split(
+                "."
+            ),
         )
     )
 
     result = list(
         getter(
-            data, "creators?nameType=organizational.name.u?v=uni3.university?type=technical".split(".")
+            data,
+            "creators?nameType=organizational.name.u?v=uni3.university?type=technical".split(
+                "."
+            ),
         )
     )
 
@@ -99,4 +120,3 @@ def test_getter_more_complex():
     assert result1 == [{"institution": {"u": "uni1", "v": "uni2"}, "graduated": "yes"}]
     assert result2 == ["uni1"]
     assert result3 == [{"u": "uni1", "v": "uni2"}, {"u": "uni3", "v": "uni3"}]
-

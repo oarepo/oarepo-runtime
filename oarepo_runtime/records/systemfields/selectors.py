@@ -1,4 +1,4 @@
-from typing import Any, List, Callable
+from typing import Any, Callable, List
 
 
 class Selector:
@@ -24,6 +24,7 @@ class FirstItemSelector(PathSelector):
             return [rec]
         return []
 
+
 class FilteredSelector(Selector):
     """
     Selector which filters output of another selector
@@ -42,7 +43,13 @@ class FilteredSelector(Selector):
         }
     }
     """
-    def __init__(self, selector: Selector, filter: Callable[[Any], bool], projection: Callable[[Any], Any]|str=None):
+
+    def __init__(
+        self,
+        selector: Selector,
+        filter: Callable[[Any], bool],
+        projection: Callable[[Any], Any] | str = None,
+    ):
 
         self.selector = selector
         self.filter = filter
@@ -66,8 +73,10 @@ class FilteredSelector(Selector):
             ret = list(selected)
         return ret
 
+
 class MultiSelector(Selector):
     """Selector concatenating outputs of multiple selectors"""
+
     def __init__(self, *selectors: Selector):
         self.selectors = selectors
 
@@ -90,6 +99,8 @@ def getter(data, path: List):
     elif isinstance(data, list):
         for item in data:
             yield from getter(item, path)
+
+
 """
 def separate_element_condition(element):
     if "?" in element:
