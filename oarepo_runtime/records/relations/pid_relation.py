@@ -35,6 +35,8 @@ class PIDRelationResult(RelationResult):
 
         try:
             obj = pid_field_context.resolve(id_)
+            if hasattr(obj, "relations") and obj.relations and hasattr(obj.relations, "dereference"):
+                obj.relations.dereference()
             # We detach the related record model from the database session when
             # we add it in the cache. Otherwise, accessing the cached record
             # model, will execute a new select query after a db.session.commit.
