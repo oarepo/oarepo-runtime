@@ -25,7 +25,6 @@ from invenio_base.utils import obj_or_import_string
 from invenio_jsonschemas import current_jsonschemas
 from invenio_records_resources.proxies import current_service_registry
 
-
 logger = logging.getLogger("oarepo_runtime.info")
 
 
@@ -72,7 +71,7 @@ class InfoResource(Resource):
             "models": url_for("oarepo_runtime_info.models", _external=True),
         }
         try:
-            import invenio_requests # noqa
+            import invenio_requests  # noqa
             links["requests"] = api_url_for("requests.search", _external=True)
         except ImportError:
             pass
@@ -111,19 +110,27 @@ class InfoResource(Resource):
             if not service or type(service) != service_class:
                 continue
 
+            # check if the service class is inside OAREPO_GLOBAL_SEARCH and if not, skip it
+            global_search_models = current_app.config.get('GLOBAL_SEARCH_MODELS', [])
+            for global_model in global_search_models:
+                if global_model['model_service'] == model_data["service"]["class"]:
+                    break
+            else:
+                continue
+
             model_features = self._get_model_features(model_data)
 
             links = {
                 "api": self._get_model_api_endpoint(model_data),
                 "html": self._get_model_html_endpoint(model_data),
-                "schema": self._get_model_schema_endpoint(model_data),
+                "schemas": self._get_model_schema_endpoints(model_data),
                 "model": self._get_model_model_endpoint(model.name),
                 # "openapi": url_for(self._get_model_openapi_endpoint(model_data), _external=True)
             }
 
             links["published"] = links["api"]
             if "drafts" in model_features:
-                links["drafts"] = self._get_model_draft_endpoint(model_data)
+                links["user_records"] = self._get_model_draft_endpoint(model_data)
 
             data.append(
                 {
@@ -153,7 +160,7 @@ class InfoResource(Resource):
     def model(self):
         model = resource_requestctx.view_args["model"]
         for _model in importlib_metadata.entry_points().select(
-            group="oarepo.models", name=model
+                group="oarepo.models", name=model
         ):
             package_name, file_name = _model.value.split(":")
             model_data = json.loads(
@@ -246,13 +253,15 @@ class InfoResource(Resource):
             logger.exception("Failed to get model html endpoint")
             return None
 
-    def _get_model_schema_endpoint(self, model):
+    def _get_model_schema_endpoints(self, model):
         try:
-            return url_for(
-                "oarepo_runtime_info.schema",
-                schema=model["json-schema-settings"]["name"],
-                _external=True,
-            )
+            return {
+                'application/json': url_for(
+                    "oarepo_runtime_info.schema",
+                    schema=model["json-schema-settings"]["name"],
+                    _external=True,
+                )
+            }
         except:  # NOSONAR noqa
             logger.exception("Failed to get model schema endpoint")
             return None
@@ -269,10 +278,10 @@ class InfoResource(Resource):
             record_cls = service.config.record_cls
             schema = getattr(record_cls, "schema", None)
             if schema is not None:
-                return [schema.value]
+                return {"application/json": schema.value}
         except:  # NOSONAR noqa
             logger.exception("Failed to get model schemas")
-        return []
+        return {}
 
     def _get_service(self, model_data):
         service_id = model_data["service-config"]["service-id"]
