@@ -92,8 +92,6 @@ def app_config(app_config):
     app_config["DATASTREAMS_TRANSFORMERS"] = {
         "status": StatusTransformer,
     }
-    app_config["GLOBAL_SEARCH_MODELS"] = []
-
     app_config["SEARCH_HOSTS"] = [
         {
             "host": os.environ.get("OPENSEARCH_HOST", "localhost"),

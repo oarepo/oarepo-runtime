@@ -56,7 +56,7 @@ class GroupedFacetsParam(FacetsParam):
 
     def identity_facets(self, identity: Identity):
         global_search_model = False
-        for model in current_app.config.get("GLOBAL_SEARCH_MODELS"):
+        for model in current_app.config.get("GLOBAL_SEARCH_MODELS", []):
             service_config = obj_or_import_string(model["service_config"])
             if service_config == self.config:
                 global_search_model = True
