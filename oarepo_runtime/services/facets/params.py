@@ -55,10 +55,17 @@ class GroupedFacetsParam(FacetsParam):
         return None
 
     def identity_facets(self, identity: Identity):
+        global_search_model = False
+        for model in current_app.config.get("GLOBAL_SEARCH_MODELS", []):
+            service_config = obj_or_import_string(model["service_config"])
+            if service_config == self.config:
+                global_search_model = True
+
         if not self.facet_groups:
-            log.warning(
-                "No facet groups defined on the service config %s", type(self.config)
-            )
+            if global_search_model:
+                log.warning(
+                    "No facet groups defined on the service config %s", type(self.config)
+                )
             return self.facets
 
         has_system_user_id = identity.id == system_user_id
