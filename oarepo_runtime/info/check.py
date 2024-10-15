@@ -5,7 +5,8 @@ from invenio_db import db # sql alchemy session
 from invenio_cache import current_cache # redis
 import redis
 from invenio_search import current_search_client # opensearch
-from celery import current_app as celery_current_app
+from celery import current_app as celery_current_app, shared_task
+
 
 def check_db_connection():
     if not has_database_connection():
@@ -49,23 +50,13 @@ def check_cache_connection():
 #  pinging workers didnt work as they didnt respond, although rabbitmq was active
 #  try to test with some task
 #  https://github.com/celery/celery/issues/4283
-@celery_current_app.task(name='oarepo_runtime.info.check.ping')
-def ping():
-    return 'pong'
-
 def check_message_queue():
+    from kombu.exceptions import OperationalError
     try:
-        from kombu.exceptions import OperationalError
-        """
-        celery_current_app.autodiscover_tasks(['oarepo_runtime.info'])
+        #celery_current_app.autodiscover_tasks(['oarepo_runtime.info'])
         ping_task = celery_current_app.send_task('ping')
         if ping_task.get(timeout=2) == 'pong':
             return "ok"
-        else:
-            return 'workers did not respond'
-        """
-        celery_current_app.control.inspect().active()
-        return "ok"
     except OperationalError as e:
         if isinstance(e.__cause__, ConnectionRefusedError):
             return "RabbitMQ connection refused"
