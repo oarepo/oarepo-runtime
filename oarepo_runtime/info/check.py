@@ -44,11 +44,6 @@ def check_cache_connection():
 
 
 
-# rabbitmq (celery)
-# https://stackoverflow.com/questions/8506914/detect-whether-celery-is-available-running
-# TODO
-#  pinging workers didnt work as they didnt respond, although rabbitmq was active
-#  try to test with some task
 #  https://github.com/celery/celery/issues/4283
 def check_message_queue():
     from kombu.exceptions import OperationalError
