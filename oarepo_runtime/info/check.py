@@ -3,6 +3,7 @@ from flask import Response, Blueprint
 from flask import current_app as flask_current_app
 from invenio_db import db # sql alchemy session
 from invenio_cache import current_cache # redis
+import redis
 from invenio_search import current_search_client # opensearch
 from celery import current_app as celery_current_app
 
@@ -33,8 +34,12 @@ def check_cache_connection():
                 return "Cache returned unexpected value."
         else:
             return "Failed to set cache key."
-    except Exception as e:
-        return str(e)
+    except redis.exceptions.ConnectionError as e:
+        if isinstance(e.__cause__, ConnectionRefusedError):
+            return "Cache connection error"
+        return "Cache exception"
+    except Exception as other:
+        return str(other)
 
 
 
