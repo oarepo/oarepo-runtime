@@ -5,17 +5,8 @@ class SimpleSchema(Schema):
     a = fields.Integer()
     b = fields.String()
 
-# ma.fields str, integer, float, bool
-
-# ma field.list( ma field str)
-# ma field.( ma field str)
-
-# test for objects, arrays etc
-
 def test_simple_schema():
     schema = SimpleSchema()
-    # fields dict
-
     converted = marshmallow_to_json_schema(schema)
 
     assert converted == {
