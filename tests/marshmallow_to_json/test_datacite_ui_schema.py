@@ -6,6 +6,7 @@ from oarepo_runtime.services.schema.ui import LocalizedEDTFTime
 
 from oarepo_runtime.services.schema.marshmallow_to_json_schema import marshmallow_to_json_schema
 
+#TODO more testing on other schemas
 
 class NRDataCiteMetadataUISchema(Schema):
 
