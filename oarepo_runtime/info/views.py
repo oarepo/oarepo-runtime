@@ -105,6 +105,7 @@ class InfoResource(Resource):
             if model_data.get("type") != "model":
                 continue
 
+            resource_config_class = self._get_resource_config_class(model_data)
             service = self._get_service(model_data)
             service_class = self._get_service_class(model_data)
             if not service or type(service) != service_class:
@@ -143,7 +144,7 @@ class InfoResource(Resource):
                     "links": links,
                     # TODO: we also need to get previous schema versions here if we support
                     # multiple version of the same schema at the same time
-                    "schemas": self._get_model_schemas(service),
+                    "accept": self._get_model_accept_types(service, resource_config_class),
                 }
             )
         self.call_components("model", data=data)
@@ -273,15 +274,26 @@ class InfoResource(Resource):
             logger.exception("Failed to get model model endpoint")
             return None
 
-    def _get_model_schemas(self, service):
+    def _get_model_accept_types(self, service, resource_config):
         try:
             record_cls = service.config.record_cls
             schema = getattr(record_cls, "schema", None)
-            if schema is not None:
-                return {"application/json": schema.value}
+            accept_types = []
+            for accept_type, handler in resource_config.response_handlers.items():
+                curr_item = {'accept': accept_type}
+                if handler.serializer is not None and hasattr(handler.serializer, "info"):
+                    curr_item.update(handler.serializer.info(service))
+                accept_types.append(curr_item)
+
+            return accept_types
         except:  # NOSONAR noqa
             logger.exception("Failed to get model schemas")
         return {}
+
+
+    def _get_resource_config_class(self, model_data):
+        model_class = model_data['resource-config']['class']
+        return obj_or_import_string(model_class)()
 
     def _get_service(self, model_data):
         service_id = model_data["service-config"]["service-id"]
