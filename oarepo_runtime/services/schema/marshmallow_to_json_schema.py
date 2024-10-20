@@ -1,5 +1,12 @@
 from marshmallow import Schema, fields
-from oarepo_runtime.services.schema.ui import LocalizedEDTFTime
+from oarepo_runtime.services.schema.ui import (
+    LocalizedEDTFTime,
+    LocalizedDateTime,
+    LocalizedEDTF,
+    LocalizedEDTFInterval,
+    LocalizedEDTFTimeInterval,
+    LocalizedTime
+)
 
 field_type_converters = {
     fields.String : lambda field: {"type" : "string"},
@@ -14,14 +21,35 @@ field_type_converters = {
         "type": "object",
         "properties": marshmallow_to_json_schema(field.schema)["properties"]
     },
+    fields.Raw: lambda field: {
+        "type": "object",
+        'additionalProperties' : True
+    },
     LocalizedEDTFTime: lambda field: {
         "type": "string",
         "format": "date-time",
+    },
+    LocalizedDateTime: lambda field: {
+        "type": "string",
+        "format": "date-time",
+    },
+    LocalizedTime: lambda field: {
+        "type": "string",
+        "format": "time",
+    },
+    LocalizedEDTF: lambda field: {
+        "type": "string",
+        "format": "date",
+    },
+    LocalizedEDTFInterval: lambda field: {
+        "type": "string",
+        "format": "date-time",
+    },
+    LocalizedEDTFTimeInterval: lambda field: {
+        "type": "string",
+        "format": "date-time",
     }
-    # TODO raw fields?
-    # TODO other date fields
 }
-
 
 def marshmallow_to_json_schema(schema:Schema) -> dict:
     json_schema = {
