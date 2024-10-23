@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTHON="${PYTHON:-python3.10}"
+PYTHON="${PYTHON:-python3.12}"
 
 set -e
 
