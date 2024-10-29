@@ -1,7 +1,10 @@
-from typing import Any, Callable, List
+import dataclasses
+from typing import Any, Callable, List, Protocol, Tuple
+
+from oarepo_runtime.records.relations.lookup import lookup_key
 
 
-class Selector:
+class Selector(Protocol):
     def select(self, record) -> List[Any]:
         return []
 
@@ -25,6 +28,7 @@ class FirstItemSelector(PathSelector):
         return []
 
 
+@dataclasses.dataclass
 class FilteredSelector(Selector):
     """
     Selector which filters output of another selector
@@ -43,17 +47,9 @@ class FilteredSelector(Selector):
         }
     }
     """
-
-    def __init__(
-        self,
-        selector: Selector,
-        filter: Callable[[Any], bool],
-        projection: Callable[[Any], Any] | str = None,
-    ):
-
-        self.selector = selector
-        self.filter = filter
-        self.projection = projection
+    selector: Selector
+    filter: Callable[[Any], bool]
+    projection: Callable[[Any], Any] | str = None
 
     def select(self, record):
         selected = self.selector.select(record)
@@ -62,10 +58,7 @@ class FilteredSelector(Selector):
             ret = []
             for select_element in selected:
                 if isinstance(self.projection, str):
-                    if isinstance(select_element, dict) and self.projection in select_element:
-                        result = select_element[self.projection]
-                    else:
-                        result = []
+                    result = [x.value for x in lookup_key(select_element, self.projection)]
                 else:
                     result = self.projection(select_element)
                 if isinstance(result, list):
@@ -77,6 +70,7 @@ class FilteredSelector(Selector):
         return ret
 
 
+@dataclasses.dataclass
 class MultiSelector(Selector):
     """Selector concatenating outputs of multiple selectors"""
 
