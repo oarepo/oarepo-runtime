@@ -33,6 +33,62 @@ def test_filtered_selector():
     assert result == ["uni1", "uni2"]
 
 
+def test_filtered_selector_long_path():
+    data = {
+        "metadata": {
+            "creators": [
+                {
+                    "name": "hugo",
+                    "affiliations": [{"full_name": "uni1"}, {"full_name": "uni2"}],
+                    "nameType": "personal",
+                },
+                {"name": "uni3", "nameType": "organizational"},
+                {
+                    "name": "andrej",
+                    "nameType": "personal",
+                },
+            ]
+        }
+    }
+
+    selector = FilteredSelector(
+        PathSelector("metadata.creators", "metadata.contributors"),
+        filter=lambda x: x["nameType"] == "personal",
+        projection="affiliations.full_name",
+    )
+
+    result = selector.select(data)
+    assert result == ["uni1", "uni2"]
+
+
+def test_filtered_selector_long_path_array():
+    data = {
+        "metadata": {
+            "creators": [
+                {
+                    "name": "hugo",
+                    "affiliations": [{"full_name": ["uni1", "uni11"]}, {"full_name": "uni2"}],
+                    "nameType": "personal",
+                },
+                {"name": "uni3", "nameType": "organizational"},
+                {
+                    "name": "andrej",
+                    "nameType": "personal",
+                },
+            ]
+        }
+    }
+
+    selector = FilteredSelector(
+        PathSelector("metadata.creators", "metadata.contributors"),
+        filter=lambda x: x["nameType"] == "personal",
+        projection="affiliations.full_name",
+    )
+
+    result = selector.select(data)
+    assert result == ["uni1", "uni11", "uni2"]
+
+
 def test_filtered_selector_function_projection():
     data = {
         "metadata": {
