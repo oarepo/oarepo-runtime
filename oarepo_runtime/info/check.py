@@ -16,7 +16,6 @@ def check_db_connection():
 
 def has_database_connection():
     try:
-        db.session.begin()
         db.session.execute("select * from alembic_version").scalar()
         return True
     except:
