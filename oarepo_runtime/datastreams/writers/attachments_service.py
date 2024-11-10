@@ -51,7 +51,7 @@ class AttachmentsServiceWriter(BaseWriter):
 
         with BulkUnitOfWork() as uow:
             for entry in batch.entries:
-                if not entry.ok or entry.deleted:
+                if not entry.ok or entry.deleted or not entry.entry["files"]["enabled"]:
                     continue
                 with record_invenio_exceptions(entry):
                     self._write_attachments(entry, uow)
