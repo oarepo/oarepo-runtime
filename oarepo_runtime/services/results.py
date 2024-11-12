@@ -88,3 +88,54 @@ class RecordList(BaseRecordList):
                     expand=self._expand,
                 )
             yield projection
+
+class ArrayRecordItem(RecordItem):
+    """Single record result."""
+
+    @property
+    def id(self):
+        """Get the record id."""
+        return self._record["id"]
+
+
+class ArrayRecordList(RecordList):
+    # move to runtime
+
+    @property
+    def total(self):
+        """Get total number of hits."""
+        return len(self._results)
+
+    @property
+    def aggregations(self):
+        """Get the search result aggregations."""
+        return None
+
+    @property
+    def hits(self):
+        """Iterator over the hits."""
+        for hit in self._results:
+            # Project the record
+            projection = self._schema.dump(
+                hit,
+                context=dict(
+                    identity=self._identity,
+                    record=hit,
+                ),
+            )
+            if self._links_item_tpl:
+                projection["links"] = self._links_item_tpl.expand(
+                    self._identity, hit
+                )
+            if self._nested_links_item:
+                for link in self._nested_links_item:
+                    link.expand(self._identity, hit, projection)
+
+            for c in self.components:
+                c.update_data(
+                    identity=self._identity,
+                    record=hit,
+                    projection=projection,
+                    expand=self._expand,
+                )
+            yield projection
