@@ -2,6 +2,8 @@ from typing import Type
 
 from invenio_records_resources.records import Record
 
+from ..datastreams.utils import get_record_service_for_record
+
 
 def select_record_for_update(record_cls: Type[Record], persistent_identifier):
     """Select a record for update."""
@@ -28,3 +30,17 @@ def has_draft(record, ctx):
     if getattr(record, "has_draft", False):
         return True
     return False
+
+class Condition:
+    def __init__(self, *conditions):
+        self.conditions = conditions
+
+    def __call__(self, obj, ctx):
+        results = [cond(obj, ctx) for cond in self.conditions]
+        return all(results)
+
+def has_permission(action_name):
+    def _has_permission(record, ctx):
+        service = get_record_service_for_record(record)
+        return service.check_permission(action_name=action_name, record=record, **ctx) #will this always work without other arguments; ie will the requiered arguments always be in ctx?
+    return _has_permission
