@@ -89,6 +89,7 @@ class RecordList(BaseRecordList):
                 )
             yield projection
 
+
 class ArrayRecordItem(RecordItem):
     """Single record result."""
 
@@ -124,9 +125,7 @@ class ArrayRecordList(RecordList):
                 ),
             )
             if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(
-                    self._identity, hit
-                )
+                projection["links"] = self._links_item_tpl.expand(self._identity, hit)
             if self._nested_links_item:
                 for link in self._nested_links_item:
                     link.expand(self._identity, hit, projection)
