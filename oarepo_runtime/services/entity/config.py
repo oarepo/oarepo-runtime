@@ -4,9 +4,11 @@ from ..results import ArrayRecordItem, ArrayRecordList
 from .schema import KeywordEntitySchema
 
 
-class KeywordEntityServiceConfig(ServiceConfig):
+class EntityServiceConfig(ServiceConfig):
     links_item = {}
-
     result_item_cls = ArrayRecordItem
     result_list_cls = ArrayRecordList
+
+
+class KeywordEntityServiceConfig(EntityServiceConfig):
     schema = KeywordEntitySchema
