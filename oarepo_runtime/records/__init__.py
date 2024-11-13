@@ -44,3 +44,8 @@ def has_permission(action_name):
         service = get_record_service_for_record(record)
         return service.check_permission(action_name=action_name, record=record, **ctx) #will this always work without other arguments; ie will the requiered arguments always be in ctx?
     return _has_permission
+
+def has_published_record(record, ctx):
+    """
+    Is there a published record with the same parent?
+    """
