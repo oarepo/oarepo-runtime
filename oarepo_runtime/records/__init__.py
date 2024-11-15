@@ -1,7 +1,7 @@
 from typing import Type
 
 from invenio_records_resources.records import Record
-
+from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
 from ..datastreams.utils import get_record_service_for_record
 
 
@@ -46,6 +46,9 @@ def has_permission(action_name):
     return _has_permission
 
 def has_published_record(record, ctx):
-    """
-    Is there a published record with the same parent?
-    """
+    service = get_record_service_for_record(record)
+    try:
+        service.record_cls.pid.resolve(record["id"])
+    except (PIDUnregistered, PIDDoesNotExistError):
+        return False
+    return True
