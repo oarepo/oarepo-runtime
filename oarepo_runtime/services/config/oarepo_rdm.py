@@ -6,5 +6,5 @@ OarepoRDMComponents = [
 ]
 
 class OarepoRDMServiceConfig(RDMRecordServiceConfig):
-    
+
     components = OarepoRDMComponents
