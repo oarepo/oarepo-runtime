@@ -6,5 +6,6 @@ OarepoRDMComponents = [
 ]
 
 class OarepoRDMServiceConfig(RDMRecordServiceConfig):
+    """If service config is inherited directly from the RDM service config, model builder will generate components incorrectly"""
 
     components = OarepoRDMComponents
