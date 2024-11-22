@@ -9,6 +9,7 @@ from invenio_records import Record
 from oarepo_runtime.services.custom_fields import CustomFieldsMixin, CustomFields, InlinedCustomFields
 from oarepo_runtime.services.generators import RecordOwners
 
+
 try:
     from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
 except ImportError:
@@ -88,3 +89,29 @@ class CustomFieldsComponent(ServiceComponent):
                 config = current_app.config.get(cf.config_key, {})
                 for c in config:
                     record[c.name] =data.get(c.name)
+
+def process_service_configs(service_configs):
+    """
+    Processes a list of service_config classes. If a class has a `components` attribute,
+    it extends the result with the values in it.
+
+    :param service_config: List of service_config classes to process.
+    :return: A flattened list of processed components.
+    """
+    processed_components = []
+
+    for config in service_configs:
+
+        if hasattr(config, "build"):
+            config = config.build(current_app)
+
+        if hasattr(config, 'components'):
+            component_property = config.components
+            if isinstance(component_property, list):
+                processed_components.extend(component_property)
+            elif isinstance(component_property, tuple):
+                processed_components.extend(list (component_property))
+            else:
+                raise ValueError(f"{config} component's definition is not supported")
+
+    return processed_components
