@@ -9,6 +9,7 @@ from invenio_records import Record
 from oarepo_runtime.services.custom_fields import CustomFieldsMixin, CustomFields, InlinedCustomFields
 from oarepo_runtime.services.generators import RecordOwners
 
+
 try:
     from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
 except ImportError:
@@ -16,6 +17,7 @@ except ImportError:
         RecordCommitOp as ParentRecordCommitOp,
     )
 
+from invenio_records_resources.services.base.components import BaseServiceComponent
 from invenio_records_resources.services.records.components import ServiceComponent
 
 
@@ -88,3 +90,31 @@ class CustomFieldsComponent(ServiceComponent):
                 config = current_app.config.get(cf.config_key, {})
                 for c in config:
                     record[c.name] =data.get(c.name)
+
+def process_components(components):
+    """
+    Processes a list of component classes. If a class has a `components` attribute,
+    it extends the result with the values in it. Otherwise, the class is included as-is.
+
+    :param components: List of component classes to process.
+    :return: A flattened list of processed components.
+    """
+    processed_components = []
+
+    for component in components:
+        mro_full_paths = [f"{cls.__module__}.{cls.__qualname__}" for cls in component.mro()]
+        service_component_path = f"{BaseServiceComponent.__module__}.{BaseServiceComponent.__qualname__}"
+
+        if hasattr(component, "build"):
+            component = component.build(current_app)
+
+        if not hasattr(component, 'components') and service_component_path in mro_full_paths:
+            processed_components.append(component)
+        elif hasattr(component, 'components'):
+            component_property = component.components
+            if isinstance(component_property, list):
+                processed_components.extend(component_property)
+            else:
+                raise ValueError(f"{component} component's definition is not supported")
+
+    return processed_components
