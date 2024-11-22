@@ -17,7 +17,6 @@ except ImportError:
         RecordCommitOp as ParentRecordCommitOp,
     )
 
-from invenio_records_resources.services.base.components import BaseServiceComponent
 from invenio_records_resources.services.records.components import ServiceComponent
 
 
@@ -91,30 +90,28 @@ class CustomFieldsComponent(ServiceComponent):
                 for c in config:
                     record[c.name] =data.get(c.name)
 
-def process_components(components):
+def process_service_configs(service_configs):
     """
-    Processes a list of component classes. If a class has a `components` attribute,
-    it extends the result with the values in it. Otherwise, the class is included as-is.
+    Processes a list of service_config classes. If a class has a `components` attribute,
+    it extends the result with the values in it.
 
-    :param components: List of component classes to process.
+    :param service_config: List of service_config classes to process.
     :return: A flattened list of processed components.
     """
     processed_components = []
 
-    for component in components:
-        mro_full_paths = [f"{cls.__module__}.{cls.__qualname__}" for cls in component.mro()]
-        service_component_path = f"{BaseServiceComponent.__module__}.{BaseServiceComponent.__qualname__}"
+    for config in service_configs:
 
-        if hasattr(component, "build"):
-            component = component.build(current_app)
+        if hasattr(config, "build"):
+            config = config.build(current_app)
 
-        if not hasattr(component, 'components') and service_component_path in mro_full_paths:
-            processed_components.append(component)
-        elif hasattr(component, 'components'):
-            component_property = component.components
+        if hasattr(config, 'components'):
+            component_property = config.components
             if isinstance(component_property, list):
                 processed_components.extend(component_property)
+            elif isinstance(component_property, tuple):
+                processed_components.extend(list (component_property))
             else:
-                raise ValueError(f"{component} component's definition is not supported")
+                raise ValueError(f"{config} component's definition is not supported")
 
     return processed_components
