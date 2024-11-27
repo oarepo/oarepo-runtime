@@ -1,8 +1,13 @@
+import json
+import os
 import inspect
+
 from typing import Iterable
 
 import click
 import deepmerge
+
+from deepmerge import always_merger
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.custom_fields.mappings import (
     Mapping as InvenioMapping,
@@ -14,7 +19,7 @@ from invenio_search.engine import dsl, search
 from invenio_search.utils import build_alias_name
 
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
-
+from pathlib import Path
 
 class Mapping(InvenioMapping):
     @classmethod
@@ -116,6 +121,16 @@ def prepare_cf_index(record_class, config, path=[]):
 def prepare_parent_mapping(parent_class, config):
     if not parent_class:
         return
+
+    script_dir = str(Path(__file__).resolve().parent)
+    path_parts = script_dir.split('/')
+    path_parts = path_parts[:-2]
+    base_path = '/'.join(path_parts)
+    mapping_path = f"{base_path}/records/mappings/rdm_parent_mapping.json"
+
+    with open(mapping_path, 'r') as f:
+        rdm_parent = json.load(f)
+
     parent_mapping = {
         "parent": {
             "type": "object",
@@ -143,6 +158,11 @@ def prepare_parent_mapping(parent_class, config):
         }
     }
 
+    parent_mapping_merged = always_merger.merge(parent_mapping, {
+        "parent": {
+            "properties": rdm_parent
+        }
+    })
     # upload mapping
     try:
         record_index = dsl.Index(
@@ -151,7 +171,7 @@ def prepare_parent_mapping(parent_class, config):
             ),
             using=current_search_client,
         )
-        update_index(record_index, {}, parent_mapping)
+        update_index(record_index, {}, parent_mapping_merged)
 
         if hasattr(config, "draft_cls"):
             draft_index = dsl.Index(
@@ -160,7 +180,7 @@ def prepare_parent_mapping(parent_class, config):
                 ),
                 using=current_search_client,
             )
-            update_index(draft_index, {}, parent_mapping)
+            update_index(draft_index, {}, parent_mapping_merged)
 
     except search.RequestError as e:
         click.secho("An error occurred while creating parent mapping.", fg="red")
