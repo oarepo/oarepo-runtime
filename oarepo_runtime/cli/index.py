@@ -7,6 +7,7 @@ from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 from invenio_search.proxies import current_search
+import traceback
 from werkzeug.utils import ImportStringError, import_string
 
 try:
@@ -102,9 +103,10 @@ def record_or_service(model):
 @click.option("--verbose/--no-verbose", default=False)
 def reindex(model, bulk_size, verbose):
     if not model:
-        services = current_service_registry._services.keys()
+        services = list(current_service_registry._services.keys())
     else:
         services = [model]
+    services = sort_services(services)
     for service_id in services:
         click.secho(f"Preparing to index {service_id}", file=sys.stderr)
 
@@ -200,14 +202,17 @@ def generate_bulk_data(record_generator, record_indexer, bulk_size):
     data = []
     n = 0
     for record in tqdm(record_generator):
-        index = record_indexer.record_to_index(record)
-        body = record_indexer._prepare_record(record, index)
-        index = record_indexer._prepare_index(index)
-        data.append({"index": {"_index": index, "_id": body["uuid"]}})
-        data.append(body)
-        if len(data) >= bulk_size:
-            yield data
-            data = []
+        try:
+            index = record_indexer.record_to_index(record)
+            body = record_indexer._prepare_record(record, index)
+            index = record_indexer._prepare_index(index)
+            data.append({"index": {"_index": index, "_id": body["uuid"]}})
+            data.append(body)
+            if len(data) >= bulk_size:
+                yield data
+                data = []
+        except:
+            traceback.print_exc()
     if data:
         yield data
 
@@ -240,5 +245,19 @@ def users_record_generator(model_class):
     except Exception as e:
         click.secho(f"Could not index {model_class}: {e}", fg="red", file=sys.stderr)
 
+priorities = [
+    'vocabular',
+    'users',
+    'groups'
+]
+
+def sort_services(services):
+    def idx(x):
+        for idx, p in enumerate(priorities):
+            if p in x:
+                return idx, x
+        return len(priorities), x
+    services.sort(key=idx)
+    return services
 
 RECORD_GENERATORS = {"users": users_record_generator}
