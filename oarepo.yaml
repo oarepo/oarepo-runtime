@@ -1,0 +1,9 @@
+i18n:
+  babel_output_translations: oarepo_runtime/translations
+  babel_source_paths:
+    - oarepo_runtime/
+  # hack - make-translations can not handle non-javascript case
+  i18next_output_translations: /tmp/oarepo-runtime-tmp
+  languages:
+    - cs
+    - en

@@ -6,6 +6,8 @@ from idutils import normalize_pid
 from marshmallow.exceptions import ValidationError
 from marshmallow_utils.fields.edtfdatestring import EDTFValidator
 
+from invenio_i18n import gettext as _
+
 
 def validate_identifier(value):
     try:
@@ -13,7 +15,9 @@ def validate_identifier(value):
             value["identifier"], value["scheme"].lower()
         )
     except:
-        raise ValidationError(f"Invalid {value['scheme']} value {value['identifier']}")
+        raise ValidationError({
+            "identifier": _("Invalid value %(identifier)s of identifier type %(type)s") % {"identifier": value['identifier'], "type": value['scheme']}
+        })
     return value
 
 

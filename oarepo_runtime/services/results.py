@@ -1,3 +1,4 @@
+from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
 )
@@ -30,6 +31,44 @@ class RecordItem(BaseRecordItem):
             )
         return _data
 
+    @property
+    def errors(self):
+        return postprocess_errors(self._errors)
+
+    def to_dict(self):
+        """Get a dictionary for the record."""
+        res = self.data
+        if self._errors:
+            res["errors"] = self.errors
+        return res
+
+
+def postprocess_error_messages(field_path: str, messages: any):
+    """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio.
+
+    """
+    if not isinstance(messages, list):
+        yield {"field": field_path, "messages": messages}
+    else:
+        str_messages = [ msg for msg in messages if isinstance(msg, str) ]
+        non_str_messages = [ msg for msg in messages if not isinstance(msg, str) ]
+
+        if str_messages:
+            yield {"field": field_path, "messages": str_messages}
+        else:
+            for non_str_msg in non_str_messages:
+                yield from _iter_errors_dict(non_str_msg, field_path)
+
+
+def postprocess_errors(errors: list[dict]):
+    """Postprocess errors."""
+    converted_errors = []
+    for error in errors:
+        if error.get("messages"):
+            converted_errors.extend(postprocess_error_messages(error["field"], error["messages"]))
+        else:
+            converted_errors.append(error)
+    return converted_errors
 
 class RecordList(BaseRecordList):
     components = []

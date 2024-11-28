@@ -45,3 +45,8 @@ msgstr ""
 #: oarepo_runtime/services/schema/ui.py:114
 msgid "False"
 msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/validation.py:19
+#, python-format
+msgid "Invalid value %(identifier)s of identifier type %(type)s"
+msgstr ""
