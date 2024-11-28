@@ -1,10 +1,8 @@
 from typing import Type
-from deprecated import deprecated
 
+from deprecated import deprecated
 from invenio_records_resources.records import Record
-from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
-from ..datastreams.utils import get_record_service_for_record, get_file_service_for_record_class
-from invenio_records_resources.records.api import FileRecord
+
 
 def select_record_for_update(record_cls: Type[Record], persistent_identifier):
     """Select a record for update."""
@@ -21,7 +19,9 @@ def is_published_record_function():
     This function is deprecated. Use oarepo_runtime.services.config.is_published_record instead.
     """
     from oarepo_runtime.services.config.link_conditions import is_published_record
+
     return is_published_record()
+
 
 @deprecated("Moved to oarepo_runtime.services.config.link_conditions")
 def is_draft_record_function():
@@ -30,7 +30,9 @@ def is_draft_record_function():
     This function is deprecated. Use oarepo_runtime.services.config.is_draft_record instead.
     """
     from oarepo_runtime.services.config.link_conditions import is_draft_record
+
     return is_draft_record()
+
 
 @deprecated("Moved to oarepo_runtime.services.config.link_conditions")
 def has_draft_function():
@@ -39,9 +41,10 @@ def has_draft_function():
     This function is deprecated. Use oarepo_runtime.services.config.has_draft instead.
     """
     from oarepo_runtime.services.config.link_conditions import has_draft
+
     return has_draft()
+
 
 is_published_record = is_published_record_function()
 is_draft = is_draft_record_function()
 has_draft = has_draft_function()
-

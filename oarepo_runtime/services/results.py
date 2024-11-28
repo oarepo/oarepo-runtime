@@ -76,7 +76,9 @@ class RecordList(BaseRecordList):
                 ),
             )
             if hasattr(self._service.config, "links_search_item"):
-                links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
+                links_tpl = self._service.config.search_item_links_template(
+                    self._service.config.links_search_item
+                )
                 projection["links"] = links_tpl.expand(self._identity, record)
             elif self._links_item_tpl:
                 projection["links"] = self._links_item_tpl.expand(

@@ -1,3 +1,11 @@
+from .link_conditions import (
+    has_draft,
+    has_permission,
+    has_permission_file_service,
+    has_published_record,
+    is_draft_record,
+    is_published_record,
+)
 from .permissions_presets import (
     AuthenticatedPermissionPolicy,
     EveryonePermissionPolicy,
@@ -5,8 +13,6 @@ from .permissions_presets import (
     ReadOnlyPermissionPolicy,
 )
 from .service import PermissionsPresetsConfigMixin
-from .link_conditions import (is_published_record, is_draft_record, has_draft, has_permission,
-                              has_permission_file_service, has_published_record)
 
 __all__ = (
     "PermissionsPresetsConfigMixin",
@@ -19,7 +25,5 @@ __all__ = (
     "has_draft",
     "has_permission",
     "has_permission_file_service",
-    "has_published_record"
+    "has_published_record",
 )
-
-
