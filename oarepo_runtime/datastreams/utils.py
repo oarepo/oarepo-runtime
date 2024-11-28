@@ -44,7 +44,6 @@ def get_record_service_for_record_deprecated(record):
         if service_record == type(record):
             return svc
 
-
 def get_file_service_for_record_class(record_class):
     if not record_class:
         return None
@@ -56,6 +55,9 @@ def get_file_service_for_record_class(record_class):
             continue
         return svc
 
+def get_file_service_for_file_record_class(file_record_class):
+    record_class = file_record_class.record_cls
+    return get_file_service_for_record_class(record_class)
 
 def get_file_service_for_record_service(
     record_service, check_draft_files=True, record=None
