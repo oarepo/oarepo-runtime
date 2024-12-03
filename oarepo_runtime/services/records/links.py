@@ -1,6 +1,6 @@
-from invenio_records_resources.services.base.links import Link, LinksTemplate
+from invenio_records_resources.services.base.links import Link
 
-def pagination_links_html(tpl: LinksTemplate)->dict[str, Link]:
+def pagination_links_html(tpl: str)->dict[str, Link]:
     """Create pagination links (prev/selv/next) from the same template."""
     return {
         "prev_html": Link(
