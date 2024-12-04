@@ -31,12 +31,14 @@ class OaiHarvesterPermissionPolicy(RecordPermissionPolicy):
     can_update_draft = [SystemProcess()]
     can_delete_draft = [SystemProcess()]
     can_publish = [SystemProcess()]
+    can_search_versions = [SystemProcess()]
     can_draft_create_files = [SystemProcess()]
     can_draft_set_content_files = [SystemProcess()]
     can_draft_get_content_files = [SystemProcess()]
     can_draft_commit_files = [SystemProcess()]
     can_draft_read_files = [SystemProcess()]
     can_draft_update_files = [SystemProcess()]
+
 
 
 class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
@@ -65,6 +67,7 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_update_draft = [SystemProcess()]
     can_delete_draft = [SystemProcess()]
     can_publish = [SystemProcess()]
+    can_search_versions = [SystemProcess()]
     can_draft_create_files = [SystemProcess()]
     can_draft_set_content_files = [SystemProcess()]
     can_draft_get_content_files = [SystemProcess()]
@@ -99,6 +102,7 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_new_version = [SystemProcess(), AnyUser()]
     can_search_drafts = [SystemProcess(), AnyUser()]
     can_read_draft = [SystemProcess(), AnyUser()]
+    can_search_versions = [SystemProcess(), AnyUser()]
     can_update_draft = [SystemProcess(), AnyUser()]
     can_delete_draft = [SystemProcess(), AnyUser()]
     can_publish = [SystemProcess(), AnyUser()]
@@ -139,6 +143,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_update_draft = [SystemProcess(), AuthenticatedUser()]
     can_delete_draft = [SystemProcess(), AuthenticatedUser()]
     can_publish = [SystemProcess(), AuthenticatedUser()]
+    can_search_versions = [SystemProcess(), AuthenticatedUser()]
     can_draft_create_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_set_content_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_get_content_files = [SystemProcess(), AuthenticatedUser()]
