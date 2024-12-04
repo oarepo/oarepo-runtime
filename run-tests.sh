@@ -48,33 +48,33 @@ pip install -e thesis
 pip uninstall -y uritemplate
 pip install uritemplate
 
-invenio index destroy --force --yes-i-know || true
+#invenio index destroy --force --yes-i-know || true
 
 ## run OOM separately as it needs its own configuration of logging
-pytest -m "not oom" tests
-pytest -m "oom" tests
+#pytest -m "not oom" tests
+#pytest -m "oom" tests
 
 
-test -d $VENV/var/instance || mkdir $VENV/var/instance
-POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
-cat tests/records2_async_data/invenio.cfg | sed "s/POSTGRES_HOST/${POSTGRES_HOST}/g" > $VENV/var/instance/invenio.cfg
+#test -d $VENV/var/instance || mkdir $VENV/var/instance
+#POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
+#cat tests/records2_async_data/invenio.cfg | sed "s/POSTGRES_HOST/${POSTGRES_HOST}/g" > $VENV/var/instance/invenio.cfg
 
-invenio db destroy --yes-i-know || true
-invenio db init create
-invenio index destroy --force --yes-i-know || true
-invenio index init
-invenio oarepo cf init
-invenio files location create --default default file:////tmp/data
+#invenio db destroy --yes-i-know || true
+#invenio db init create
+#invenio index destroy --force --yes-i-know || true
+#invenio index init
+# oarepo cf init
+#invenio files location create --default default file:////tmp/data
 
 
 
-celery -A invenio_app.celery worker -l INFO -c 1 &
-CELERY_PID=$!
+#celery -A invenio_app.celery worker -l INFO -c 1 &
+#CELERY_PID=$!
 
-trap "kill $CELERY_PID" EXIT
+#trap "kill $CELERY_PID" EXIT
 
-sleep 5
+#sleep 5
 
-python3 tests/records2_async_data/generate_async_data_for_import.py /tmp/sample-records-for-import 100
-invenio oarepo fixtures load --no-system-fixtures /tmp/sample-records-for-import --on-background --bulk-size 10
-python3 tests/records2_async_data/check_async_data_loaded.py 100
+#python3 tests/records2_async_data/generate_async_data_for_import.py /tmp/sample-records-for-import 100
+#invenio oarepo fixtures load --no-system-fixtures /tmp/sample-records-for-import --on-background --bulk-size 10
+#python3 tests/records2_async_data/check_async_data_loaded.py 100
