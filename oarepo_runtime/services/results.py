@@ -114,7 +114,12 @@ class RecordList(BaseRecordList):
                     record=record,
                 ),
             )
-            if self._links_item_tpl:
+            if hasattr(self._service.config, "links_search_item"):
+                links_tpl = self._service.config.search_item_links_template(
+                    self._service.config.links_search_item
+                )
+                projection["links"] = links_tpl.expand(self._identity, record)
+            elif self._links_item_tpl:
                 projection["links"] = self._links_item_tpl.expand(
                     self._identity, record
                 )
@@ -122,7 +127,7 @@ class RecordList(BaseRecordList):
             for c in self.components:
                 c.update_data(
                     identity=self._identity,
-                    record=self._record,
+                    record=record,
                     projection=projection,
                     expand=self._expand,
                 )
