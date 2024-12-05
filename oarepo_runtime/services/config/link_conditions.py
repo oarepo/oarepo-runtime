@@ -1,19 +1,21 @@
+import warnings
 from abc import abstractmethod
+from logging import getLogger
 
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
-from invenio_records_resources.records.api import FileRecord
 from invenio_records.api import RecordBase
-from invenio_records_resources.records.api import Record
-from logging import getLogger
+from invenio_records_resources.records.api import FileRecord, Record
+
 from ...datastreams.utils import (
     get_file_service_for_file_record_class,
     get_file_service_for_record_class,
     get_record_service_for_record,
 )
+
 log = getLogger(__name__)
 
-class Condition:
 
+class Condition:
     @abstractmethod
     def __call__(self, obj, ctx: dict):
         raise NotImplementedError
@@ -74,9 +76,7 @@ class has_permission(Condition):
             log.exception(f"Unexpected exception {e}.")
 
 
-
-class has_permission_file_service(has_permission):
-
+class has_file_permission(has_permission):
     def __call__(self, obj: RecordBase, ctx: dict):
         if isinstance(obj, FileRecord):
             service = get_file_service_for_file_record_class(type(obj))
@@ -90,8 +90,16 @@ class has_permission_file_service(has_permission):
             log.exception(f"Unexpected exception {e}.")
 
 
-class has_published_record(Condition):
+class has_permission_file_service(has_file_permission):
+    def __init__(self, action_name):
+        warnings.warn(
+            "has_permission_file_service is deprecated, use has_file_permission instead",
+            DeprecationWarning,
+        )
+        super().__init__(action_name)
 
+
+class has_published_record(Condition):
     def __call__(self, obj: Record, ctx: dict):
         service = get_record_service_for_record(obj)
         try:

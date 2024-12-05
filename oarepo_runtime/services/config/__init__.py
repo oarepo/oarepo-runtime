@@ -1,5 +1,6 @@
 from .link_conditions import (
     has_draft,
+    has_file_permission,
     has_permission,
     has_permission_file_service,
     has_published_record,
@@ -25,5 +26,6 @@ __all__ = (
     "has_draft",
     "has_permission",
     "has_permission_file_service",
+    "has_file_permission",
     "has_published_record",
 )
