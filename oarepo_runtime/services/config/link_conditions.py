@@ -79,9 +79,8 @@ class has_permission(Condition):
 class has_file_permission(has_permission):
     def __call__(self, obj: RecordBase, ctx: dict):
         if isinstance(obj, FileRecord):
-            service = get_file_service_for_file_record_class(type(obj))
-        else:
-            service = get_file_service_for_record_class(type(obj))
+            obj = obj.record
+        service = get_file_service_for_record_class(type(obj))
         try:
             return service.check_permission(
                 action_name=self.action_name, record=obj, **ctx
