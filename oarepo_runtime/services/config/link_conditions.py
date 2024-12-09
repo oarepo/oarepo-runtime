@@ -1,6 +1,7 @@
 import warnings
 from abc import abstractmethod
 from logging import getLogger
+from typing import Callable
 
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
 from invenio_records.api import RecordBase
@@ -59,35 +60,47 @@ class has_draft(Condition):
             return True
         return False
 
-
 class has_permission(Condition):
-    def __init__(self, action_name):
+    def __init__(self, action_name: str | Callable):
         self.action_name = action_name
+
+    def _get_record(self, obj, ctx, **kwargs):
+        return obj
+
+    def _get_service(self, record, ctx, **kwargs):
+        return get_record_service_for_record(record)
 
     def __call__(self, obj: RecordBase, ctx: dict):
         if isinstance(obj, FileRecord):
             obj = obj.record
-        service = get_record_service_for_record(obj)
+        record = self._get_record(obj, ctx)
+        action_name = self.action_name(record) if isinstance(self.action_name, Callable) else self.action_name
+        service = get_record_service_for_record(record)
         try:
             return service.check_permission(
-                action_name=self.action_name, record=obj, **ctx
+                action_name=action_name, record=record, **ctx
             )
         except Exception as e:
             log.exception(f"Unexpected exception {e}.")
 
 
 class has_file_permission(has_permission):
-    def __call__(self, obj: RecordBase, ctx: dict):
-        if isinstance(obj, FileRecord):
-            service = get_file_service_for_file_record_class(type(obj))
-        else:
-            service = get_file_service_for_record_class(type(obj))
-        try:
-            return service.check_permission(
-                action_name=self.action_name, record=obj, **ctx
-            )
-        except Exception as e:
-            log.exception(f"Unexpected exception {e}.")
+
+    def _get_service(self, record, ctx, **kwargs):
+        return get_file_service_for_record_class(type(record))
+
+class has_permission_entity(has_permission):
+
+    def __init__(self, action_name: str | Callable, entity: str):
+        self.action_name = action_name
+        self.entity = entity
+
+    def _get_record(self, obj, ctx, **kwargs):
+        return getattr(obj, self.entity).resolve()
+
+    def _get_service(self, record, ctx, **kwargs):
+        # todo - get service for non records - user etc. viz ui resolvers?; outsource this somewhere outside?
+        return super()._get_service(record, ctx, **kwargs)
 
 
 class has_permission_file_service(has_file_permission):
