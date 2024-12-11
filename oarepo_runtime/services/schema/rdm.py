@@ -11,4 +11,3 @@ class RDMRecordMixin(ma.Schema):
 
     versions = NestedAttribute(VersionsSchema, dump_only=True)
     deletion_status = ma_fields.Nested(DeletionStatusSchema, dump_only=True)
-    access = NestedAttribute(AccessSchema)
