@@ -1,0 +1,39 @@
+{
+  "is_verified": {
+    "type": "boolean"
+  },
+  "access": {
+    "properties": {
+      "owned_by": {
+        "properties": {
+          "user": {
+            "type": "keyword"
+          }
+        }
+      },
+      "grants": {
+        "properties": {
+          "subject": {
+            "type": "keyword"
+          },
+          "id": {
+            "type": "keyword"
+          },
+          "level": {
+            "type": "keyword"
+          }
+        }
+      },
+      "grant_tokens": {
+        "type": "keyword"
+      },
+      "links": {
+        "properties": {
+          "id": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}
