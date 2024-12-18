@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from logging import getLogger
 from typing import Callable
-
+from invenio_pidstore.errors import PersistentIdentifierError
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
 from invenio_records.api import RecordBase
 from invenio_records_resources.records.api import FileRecord, Record
@@ -96,7 +96,10 @@ class has_permission_entity(has_permission):
         self.entity = entity
 
     def _get_record(self, obj, ctx, **kwargs):
-        return getattr(obj, self.entity).resolve()
+        try:
+            return getattr(obj, self.entity).resolve()
+        except PersistentIdentifierError:
+            return None
 
     def _get_service(self, record, ctx, **kwargs):
         # todo - get service for non records - user etc. viz ui resolvers?; outsource this somewhere outside?
