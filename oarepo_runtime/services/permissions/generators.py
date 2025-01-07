@@ -12,7 +12,7 @@ class RecordOwners(Generator):
             # 'record' is required, so if not passed we default to empty array,
             # i.e. superuser-access.
             return []
-        if current_app.config['INVENIO_RDM_ENABLED']:
+        if current_app.config.get('INVENIO_RDM_ENABLED', False):
             owners = getattr(record.parent.access, "owned_by", None)
         else:
             owners = getattr(record.parent, "owners", None)
@@ -24,7 +24,7 @@ class RecordOwners(Generator):
         """Filters for current identity as owner."""
         users = [n.value for n in identity.provides if n.method == "id"]
         if users:
-            if current_app.config['INVENIO_RDM_ENABLED']:
+            if current_app.config.get('INVENIO_RDM_ENABLED', False):
                 return dsl.Q("terms", **{"parent.access.owned_by.user": users})
             else:
                 return dsl.Q("terms", **{"parent.owners.user": users})
