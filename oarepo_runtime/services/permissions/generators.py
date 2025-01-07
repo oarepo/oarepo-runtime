@@ -1,7 +1,7 @@
 from flask_principal import RoleNeed, UserNeed
 from invenio_records_permissions.generators import Generator
 from invenio_search.engine import dsl
-
+from flask import current_app
 
 class RecordOwners(Generator):
     """Allows record owners."""
