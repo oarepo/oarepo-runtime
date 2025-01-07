@@ -1,7 +1,7 @@
 from flask_principal import RoleNeed, UserNeed
 from invenio_records_permissions.generators import Generator
 from invenio_search.engine import dsl
-
+from flask import current_app
 
 class RecordOwners(Generator):
     """Allows record owners."""
@@ -12,7 +12,10 @@ class RecordOwners(Generator):
             # 'record' is required, so if not passed we default to empty array,
             # i.e. superuser-access.
             return []
-        owners = getattr(record.parent, "owners", None)
+        if current_app.config.get('INVENIO_RDM_ENABLED', False):
+            owners = getattr(record.parent.access, "owned_by", None)
+        else:
+            owners = getattr(record.parent, "owners", None)
         if owners is not None:
             return [UserNeed(owner.id) for owner in owners]
         return []
@@ -21,8 +24,10 @@ class RecordOwners(Generator):
         """Filters for current identity as owner."""
         users = [n.value for n in identity.provides if n.method == "id"]
         if users:
-            return dsl.Q("terms", **{"parent.owners.user": users})
-
+            if current_app.config.get('INVENIO_RDM_ENABLED', False):
+                return dsl.Q("terms", **{"parent.access.owned_by.user": users})
+            else:
+                return dsl.Q("terms", **{"parent.owners.user": users})
 
 class UserWithRole(Generator):
     def __init__(self, *roles):
