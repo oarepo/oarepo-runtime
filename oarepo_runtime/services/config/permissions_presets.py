@@ -23,6 +23,7 @@ class OaiHarvesterPermissionPolicy(RecordPermissionPolicy):
     can_read_files = [AnyUser(), SystemProcess()]
     can_update_files = [SystemProcess()]
     can_delete_files = [SystemProcess()]
+    can_manage_files = [SystemProcess()]
 
     can_edit = [SystemProcess()]
     can_new_version = [SystemProcess()]
@@ -59,6 +60,7 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_update_files = [SystemProcess()]
     can_delete_files = [SystemProcess()]
     can_list_files = [SystemProcess()]
+    can_manage_files = [SystemProcess()]
 
     can_edit = [SystemProcess()]
     can_new_version = [SystemProcess()]
@@ -97,6 +99,7 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_update_files = [SystemProcess(), AnyUser()]
     can_delete_files = [SystemProcess(), AnyUser()]
     can_list_files = [SystemProcess(), AnyUser()]
+    can_manage_files = [SystemProcess(), AnyUser()]
 
     can_edit = [SystemProcess(), AnyUser()]
     can_new_version = [SystemProcess(), AnyUser()]
@@ -135,6 +138,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_update_files = [SystemProcess(), AuthenticatedUser()]
     can_delete_files = [SystemProcess(), AuthenticatedUser()]
     can_list_files = [SystemProcess(), AuthenticatedUser()]
+    can_manage_files = [SystemProcess(), AuthenticatedUser()]
 
     can_edit = [SystemProcess(), AuthenticatedUser()]
     can_new_version = [SystemProcess(), AuthenticatedUser()]
