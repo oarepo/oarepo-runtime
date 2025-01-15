@@ -104,7 +104,8 @@ def process_service_configs(service_config):
     for index, cls in enumerate(type(service_config).mro()):
         if cls in target_classes:
             break
-
+            
+    # We need to start from index 2 because the first two indices in the MRO list contain the class itself, due to the presence of the 'build()' method.
     service_configs = type(service_config).mro()[2:index + 1]
     for config in service_configs:
 
