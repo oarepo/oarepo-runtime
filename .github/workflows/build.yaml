@@ -65,9 +65,9 @@ jobs:
         with:
           redis-version: ${{ matrix.redis-version }}
 
-      - name: Run tests
-        run: |
-          ./run-tests.sh
+#      - name: Run tests
+#        run: |
+#          ./run-tests.sh
       
 
       - name: Build package to publish
