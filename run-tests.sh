@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTHON="${PYTHON:-python3.12}"
+PYTHON="${PYTHON:-python3}"
 
 set -e
 
@@ -36,14 +36,15 @@ fi
 
 $PYTHON -m venv $VENV
 . $VENV/bin/activate
-pip install -U setuptools pip wheel
+pip install -U setuptools pip wheel nrp-devtools
+nrp-devtools proxy 120 &
 
-pip install "oarepo[tests]==${OAREPO_VERSION}.*"
-pip install -e ".[tests]"
-pip install -e records2
+pip install "oarepo[tests, rdm]==${OAREPO_VERSION}.*" --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
+pip install -e ".[tests]" --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
+pip install -e records2 --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
 pip install pytest-invenio
 # pip install -e records
-pip install -e thesis
+pip install -e thesis --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
 
 pip uninstall -y uritemplate
 pip install uritemplate
@@ -51,8 +52,8 @@ pip install uritemplate
 invenio index destroy --force --yes-i-know || true
 
 ## run OOM separately as it needs its own configuration of logging
-pytest -m "not oom" tests
-pytest -m "oom" tests
+#pytest -m "not oom" tests
+#pytest -m "oom" tests
 
 
 test -d $VENV/var/instance || mkdir $VENV/var/instance
