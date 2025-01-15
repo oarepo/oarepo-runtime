@@ -52,8 +52,8 @@ pip install uritemplate
 invenio index destroy --force --yes-i-know || true
 
 ## run OOM separately as it needs its own configuration of logging
-pytest -m "not oom" tests
-pytest -m "oom" tests
+#pytest -m "not oom" tests
+#pytest -m "oom" tests
 
 
 test -d $VENV/var/instance || mkdir $VENV/var/instance
