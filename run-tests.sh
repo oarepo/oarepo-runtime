@@ -5,6 +5,8 @@ PYTHON="${PYTHON:-python3}"
 set -e
 
 OAREPO_VERSION="${OAREPO_VERSION:-12}"
+export PIP_EXTRA_INDEX_URL=https://gitlab.cesnet.cz/api/v4/projects/1408/packages/pypi/simple
+export UV_EXTRA_INDEX_URL=https://gitlab.cesnet.cz/api/v4/projects/1408/packages/pypi/simple
 
 BUILDER_VENV=.venv-builder
 if test -d $BUILDER_VENV ; then
@@ -39,12 +41,11 @@ $PYTHON -m venv $VENV
 pip install -U setuptools pip wheel nrp-devtools
 nrp-devtools proxy 120 &
 
-pip install "oarepo[tests, rdm]==${OAREPO_VERSION}.*" --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
-pip install -e ".[tests]" --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
-pip install -e records2 --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
+pip install "oarepo[tests, rdm]==${OAREPO_VERSION}.*"
+pip install -e ".[tests]"
+pip install -e records2
 pip install pytest-invenio
-# pip install -e records
-pip install -e thesis --index-url "http://127.0.0.1:4549/simple" --extra-index-url https://pypi.org/simple
+pip install -e thesis
 
 pip uninstall -y uritemplate
 pip install uritemplate
