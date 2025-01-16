@@ -8,7 +8,9 @@ from invenio_records import Record
 
 from oarepo_runtime.services.custom_fields import CustomFieldsMixin, CustomFields, InlinedCustomFields
 from oarepo_runtime.services.generators import RecordOwners
-
+from invenio_rdm_records.services.config import RDMRecordServiceConfig
+from invenio_drafts_resources.services.records.config import RecordServiceConfig as DraftsRecordServiceConfig
+from invenio_records_resources.services.records.config import RecordServiceConfig as RecordsRecordServiceConfig
 
 try:
     from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
@@ -90,16 +92,24 @@ class CustomFieldsComponent(ServiceComponent):
                 for c in config:
                     record[c.name] =data.get(c.name)
 
-def process_service_configs(service_configs):
-    """
-    Processes a list of service_config classes. If a class has a `components` attribute,
-    it extends the result with the values in it.
+def process_service_configs(service_config):
 
-    :param service_config: List of service_config classes to process.
-    :return: A flattened list of processed components.
-    """
     processed_components = []
+    target_classes = {
+        RDMRecordServiceConfig,
+        DraftsRecordServiceConfig,
+        RecordsRecordServiceConfig,
+    }
 
+    for end_index, cls in enumerate(type(service_config).mro()):
+        if cls in target_classes:
+            break
+
+    # We need this because if the "build" function is present in service_config,
+    # there are two service_config instances in the MRO (Method Resolution Order) output.
+    start_index = 2 if hasattr(service_config, "build") else 1
+
+    service_configs = type(service_config).mro()[start_index:end_index + 1]
     for config in service_configs:
 
         if hasattr(config, "build"):
