@@ -101,12 +101,15 @@ def process_service_configs(service_config):
         RecordsRecordServiceConfig,
     }
 
-    for index, cls in enumerate(type(service_config).mro()):
+    for end_index, cls in enumerate(type(service_config).mro()):
         if cls in target_classes:
             break
-            
-    # We need to start from index 2 because the first two indices in the MRO list contain the class itself, due to the presence of the 'build()' method.
-    service_configs = type(service_config).mro()[2:index + 1]
+
+    # We need this because if the "build" function is present in service_config,
+    # there are two service_config instances in the MRO (Method Resolution Order) output.
+    start_index = 2 if hasattr(service_config, "build") else 1
+
+    service_configs = type(service_config).mro()[start_index:end_index + 1]
     for config in service_configs:
 
         if hasattr(config, "build"):
