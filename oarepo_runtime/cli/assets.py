@@ -119,7 +119,7 @@ COMPONENT_RE = re.compile(
 @click.argument("output_file", default="-")
 @with_appcontext
 def less_components(output_file):
-    aliases, asset_dirs = enumerate_assets()
+    aliases, asset_dirs, _ = enumerate_assets()
     asset_dirs = [Path(x) for x in asset_dirs]
     less_component_files = []
     for asset_dir in asset_dirs:
