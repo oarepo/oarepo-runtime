@@ -22,7 +22,7 @@ def assets():
 @click.option("--assets-dir", default=".assets")
 @with_appcontext
 def collect(output_file, repository_dir, assets_dir):
-    aliases, asset_dirs = enumerate_assets()
+    aliases, asset_dirs, generated_paths = enumerate_assets()
 
     app_and_blueprints = [current_app] + list(current_app.blueprints.values())
 
@@ -60,6 +60,7 @@ def collect(output_file, repository_dir, assets_dir):
                 "static": static_deps,
                 "@aliases": aliases,
                 "@root_aliases": root_aliases,
+                "generated_paths": generated_paths,
             },
             f,
             indent=4,
@@ -69,6 +70,7 @@ def collect(output_file, repository_dir, assets_dir):
 
 def enumerate_assets():
     asset_dirs = []
+    generated_paths = []
     aliases = {}
     themes = current_app.config["APP_THEME"] or ["semantic-ui"]
     for ep in entry_points(group="invenio_assets.webpack"):
@@ -76,8 +78,10 @@ def enumerate_assets():
         for wp_theme_name, wp_theme in webpack.themes.items():
             if wp_theme_name in themes:
                 asset_dirs.append(wp_theme.path)
+                if hasattr(wp_theme, "generated_paths"):
+                    generated_paths += list(set(wp_theme.generated_paths) - set(generated_paths))
                 aliases.update(wp_theme.aliases)
-    return aliases, asset_dirs
+    return aliases, asset_dirs, generated_paths
 
 
 COMPONENT_LIST_RE = re.compile(
