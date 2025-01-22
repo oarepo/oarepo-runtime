@@ -60,7 +60,7 @@ def collect(output_file, repository_dir, assets_dir):
                 "static": static_deps,
                 "@aliases": aliases,
                 "@root_aliases": root_aliases,
-                "generated_paths": generated_paths,
+                "generated": generated_paths,
             },
             f,
             indent=4,
