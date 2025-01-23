@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 from flask import current_app
 from flask.cli import with_appcontext
+from flask_webpackext import current_webpack
 from importlib_metadata import entry_points
 
 from .base import oarepo
@@ -73,6 +74,10 @@ def enumerate_assets():
     generated_paths = []
     aliases = {}
     themes = current_app.config["APP_THEME"] or ["semantic-ui"]
+    project = current_webpack.project
+    if hasattr(project, 'generated_paths'):
+        generated_paths += project.generated_paths
+
     for ep in entry_points(group="invenio_assets.webpack"):
         webpack = ep.load()
         for wp_theme_name, wp_theme in webpack.themes.items():
