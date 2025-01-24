@@ -11,6 +11,9 @@ from invenio_i18n import gettext as _
 
 def validate_identifier(value):
     try:
+        if value["scheme"].lower() == "isbn":
+            return value
+
         original_identifier = (value["identifier"] or '').strip()
         normalized_identifier = normalize_pid(
             value["identifier"], value["scheme"].lower()
