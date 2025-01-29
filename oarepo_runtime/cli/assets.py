@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 from flask import current_app
 from flask.cli import with_appcontext
+from flask_webpackext import current_webpack
 from importlib_metadata import entry_points
 
 from .base import oarepo
@@ -22,7 +23,7 @@ def assets():
 @click.option("--assets-dir", default=".assets")
 @with_appcontext
 def collect(output_file, repository_dir, assets_dir):
-    aliases, asset_dirs = enumerate_assets()
+    aliases, asset_dirs, generated_paths = enumerate_assets()
 
     app_and_blueprints = [current_app] + list(current_app.blueprints.values())
 
@@ -60,6 +61,7 @@ def collect(output_file, repository_dir, assets_dir):
                 "static": static_deps,
                 "@aliases": aliases,
                 "@root_aliases": root_aliases,
+                "generated": generated_paths,
             },
             f,
             indent=4,
@@ -69,15 +71,22 @@ def collect(output_file, repository_dir, assets_dir):
 
 def enumerate_assets():
     asset_dirs = []
+    generated_paths = []
     aliases = {}
     themes = current_app.config["APP_THEME"] or ["semantic-ui"]
+    project = current_webpack.project
+    if hasattr(project, 'generated_paths'):
+        generated_paths += project.generated_paths
+
     for ep in entry_points(group="invenio_assets.webpack"):
         webpack = ep.load()
         for wp_theme_name, wp_theme in webpack.themes.items():
             if wp_theme_name in themes:
                 asset_dirs.append(wp_theme.path)
+                if hasattr(wp_theme, "generated_paths"):
+                    generated_paths += list(set(wp_theme.generated_paths) - set(generated_paths))
                 aliases.update(wp_theme.aliases)
-    return aliases, asset_dirs
+    return aliases, asset_dirs, generated_paths
 
 
 COMPONENT_LIST_RE = re.compile(
@@ -115,7 +124,7 @@ COMPONENT_RE = re.compile(
 @click.argument("output_file", default="-")
 @with_appcontext
 def less_components(output_file):
-    aliases, asset_dirs = enumerate_assets()
+    aliases, asset_dirs, _ = enumerate_assets()
     asset_dirs = [Path(x) for x in asset_dirs]
     less_component_files = []
     for asset_dir in asset_dirs:
