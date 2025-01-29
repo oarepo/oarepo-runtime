@@ -21,11 +21,12 @@ import pytest
 from flask_principal import Identity, Need, RoleNeed, UserNeed
 from flask_security import login_user
 from flask_security.utils import hash_password
+from flask_webpackext.ext import FlaskWebpackExt
 from invenio_access import ActionUsers, current_access
 from invenio_access.permissions import any_user, authenticated_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
-from invenio_app.factory import create_api as _create_api
+from invenio_app.factory import create_app as _create_app
 from invenio_records_resources.services.custom_fields import KeywordCF
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
@@ -116,13 +117,18 @@ def app_config(app_config):
     # only API app is running
     app_config["SITE_API_URL"] = "http://localhost/"
 
+    # for ui tests
+    app_config["APP_THEME"] = ["semantic-ui"]
+    app_config["THEME_SEARCHBAR"] = False
+
     return app_config
 
 
 @pytest.fixture(scope="module")
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
-    return _create_api
+    return _create_app
+
 
 
 @pytest.fixture(scope="module")
