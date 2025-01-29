@@ -11,6 +11,7 @@ from oarepo_runtime.services.generators import RecordOwners
 from invenio_rdm_records.services.config import RDMRecordServiceConfig
 from invenio_drafts_resources.services.records.config import RecordServiceConfig as DraftsRecordServiceConfig
 from invenio_records_resources.services.records.config import RecordServiceConfig as RecordsRecordServiceConfig
+from invenio_records_resources.services import  FileServiceConfig
 
 try:
     from invenio_drafts_resources.services.records.uow import ParentRecordCommitOp
@@ -99,6 +100,7 @@ def process_service_configs(service_config):
         RDMRecordServiceConfig,
         DraftsRecordServiceConfig,
         RecordsRecordServiceConfig,
+        FileServiceConfig
     }
 
     for end_index, cls in enumerate(type(service_config).mro()):
