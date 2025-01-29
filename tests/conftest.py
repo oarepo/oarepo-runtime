@@ -26,7 +26,7 @@ from invenio_access import ActionUsers, current_access
 from invenio_access.permissions import any_user, authenticated_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
-from invenio_app.factory import create_app as _create_app
+from invenio_app.factory import create_api as _create_api, create_ui as _create_ui
 from invenio_records_resources.services.custom_fields import KeywordCF
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
@@ -127,8 +127,15 @@ def app_config(app_config):
 @pytest.fixture(scope="module")
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
-    return _create_app
+    return _create_api
 
+
+@pytest.fixture(scope="module")
+def ui_app(request, app_config):
+    """UI Application fixture."""
+    app = _create_ui()
+    app.config.update(app_config)
+    return app
 
 
 @pytest.fixture(scope="module")
