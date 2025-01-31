@@ -14,10 +14,13 @@ class RecordOwners(Generator):
             return []
         if current_app.config.get('INVENIO_RDM_ENABLED', False):
             owners = getattr(record.parent.access, "owned_by", None)
+            if owners is not None:
+                owners_list = owners if isinstance(owners, list) else [owners]
+                return [UserNeed(owner.owner_id) for owner in owners_list]
         else:
             owners = getattr(record.parent, "owners", None)
-        if owners is not None:
-            return [UserNeed(owner.id) for owner in owners]
+            if owners is not None:
+                return [UserNeed(owner.id) for owner in owners]
         return []
 
     def query_filter(self, identity=None, **kwargs):
