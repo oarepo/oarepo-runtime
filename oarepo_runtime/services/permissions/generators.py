@@ -17,7 +17,14 @@ class RecordOwners(Generator):
         else:
             owners = getattr(record.parent, "owners", None)
         if owners is not None:
-            return [UserNeed(owner.id) for owner in owners]
+            owners = owners if isinstance(owners, list) else [owners]
+            needs = []
+            for owner in owners:
+                if hasattr(owner, "id"):
+                    needs.append(UserNeed(owner.id))
+                else:
+                    needs.append(UserNeed(owner.owner_id))
+            return needs
         return []
 
     def query_filter(self, identity=None, **kwargs):
