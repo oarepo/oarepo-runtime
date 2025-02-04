@@ -148,24 +148,53 @@ def process_service_configs(service_config, *additional_components):
 
 @dataclass
 class ComponentPlacement:
-    component_id: int = field(init=False)
-    component: Type[ServiceComponent]
-    depends_on: list[ComponentPlacement] = field(default_factory=list)
-    affects: list[ComponentPlacement] = field(default_factory=list)
-    tension_up: int = 0
-    tension_down: int = 0
+    """Component placement in the list of components.
 
-    def __post_init__(self):
-        self.component_id = id(self.component)
+    This is a helper class used in the component ordering algorithm.
+    """
+
+    component: Type[ServiceComponent]
+    """Component to be ordered."""
+
+    depends_on: list[ComponentPlacement] = field(default_factory=list)
+    """List of components this one depends on.
+    
+    The components must be classes of ServiceComponent or '*' to denote
+    that this component depends on all other components and should be placed last.
+    """
+
+    affects: list[ComponentPlacement] = field(default_factory=list)
+    """List of components that depend on this one.
+    
+    The components must be classes of ServiceComponent or '*' to denote
+    that this component affects all other components and should be placed first.
+    """
+
+    tension_up: int = 0
+    """Tension up is the number of components this component depends on that are placed after it.
+    
+    The higher the number, the more the components wants 
+    to be placed at the end of the list of components.
+    """
+
+    tension_down: int = 0
+    """Tension down is the number of components that depend on this component and are placed before it.
+    
+    The higher the number, the more the components wants
+    to be placed at the beginning of the list of components.
+    """
 
     def __hash__(self) -> int:
-        return self.component_id
+        return id(self.component)
 
     def __eq__(self, other: ComponentPlacement) -> bool:
-        return self.component_id == other.component_id
+        return self.component is other.component
 
 
 def _sort_components(components):
+    """Sort components based on their dependencies while trying to
+    keep the initial order as far as possible."""
+
     placements: list[ComponentPlacement] = _prepare_component_placement(components)
     by_position = {p: idx for idx, p in enumerate(placements)}
 
@@ -181,13 +210,12 @@ def _sort_components(components):
     return [p.component for p in placements]
 
 
-def _prepare_component_placement(components):
+def _prepare_component_placement(components) -> list[ComponentPlacement]:
+    """Convert components to ComponentPlacement instances and resolve dependencies."""
     placements = []
-    by_id = {}
     for idx, c in enumerate(components):
         placement = ComponentPlacement(component=c)
         placements.append(placement)
-        by_id[id(c)] = placement
 
     for placement in placements:
         for dep in getattr(placement.component, "depends_on", []):
@@ -226,6 +254,12 @@ def _prepare_component_placement(components):
 def _compute_tensions(
     placements: list[ComponentPlacement], by_position: dict[ComponentPlacement, int]
 ):
+    """Compute tensions between components.
+
+    For each component, count how many components it depends on are placed after it
+    and how many components that depend on it are placed before it. Returns the total
+    number of tensions.
+    """
     tensions = 0
     for placement_position, placement in enumerate(placements):
         placement.tension_down = 0
@@ -248,6 +282,14 @@ def _compute_tensions(
 def _apply_tensions(
     placements: list[ComponentPlacement], by_position: dict[ComponentPlacement, int]
 ) -> bool:
+    """One round of trying to reduce tensions between components.
+
+    For each component beginning from the first one, check if it has a higher tension
+    up than the component that follows it. If so, swap the components.
+
+    Then do the same from the last component to the first one if the component has a higher
+    tension down than the component that precedes it.
+    """
     swap_happened = False
     # one round of bubble sort up and down
     for idx in range(len(placements) - 1):
