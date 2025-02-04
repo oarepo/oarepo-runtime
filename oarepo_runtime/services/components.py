@@ -149,7 +149,7 @@ def process_service_configs(service_config, *additional_components):
 @dataclass
 class ComponentPlacement:
     component_id: int = field(init=False)
-    component: ServiceComponent
+    component: Type[ServiceComponent]
     depends_on: list[ComponentPlacement] = field(default_factory=list)
     affects: list[ComponentPlacement] = field(default_factory=list)
     tension_up: int = 0
@@ -198,7 +198,10 @@ def _prepare_component_placement(components):
                         pl.affects.append(placement)
             else:
                 for pl in placements:
-                    if pl != placement and isinstance(pl.component, dep):
+                    pl_component = pl.component
+                    if not inspect.isclass(pl_component):
+                        pl_component = type(pl_component(service=object()))
+                    if pl != placement and issubclass(pl_component, dep):
                         placement.depends_on.append(pl)
                         pl.affects.append(placement)
 
@@ -210,7 +213,10 @@ def _prepare_component_placement(components):
                         pl.depends_on.append(placement)
             else:
                 for pl in placements:
-                    if pl != placement and isinstance(pl.component, dep):
+                    pl_component = pl.component
+                    if not inspect.isclass(pl_component):
+                        pl_component = type(pl_component(service=object()))
+                    if pl != placement and issubclass(pl_component, dep):
                         placement.affects.append(pl)
                         pl.depends_on.append(placement)
 
@@ -229,12 +235,12 @@ def _compute_tensions(
             dep_position = by_position[dep]
 
             if placement_position < dep_position:
-                placement.tension_up += dep_position - placement_position
+                placement.tension_up += 1
                 tensions += 1
         for dep in placement.affects:
             dep_position = by_position[dep]
             if placement_position > dep_position:
-                placement.tension_down += placement_position - dep_position
+                placement.tension_down += 1
                 tensions += 1
     return tensions
 
