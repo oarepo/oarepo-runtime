@@ -2,6 +2,7 @@ import functools
 import re
 from datetime import datetime
 from idutils import normalize_pid
+from isbnlib import canonical, mask
 
 from marshmallow.exceptions import ValidationError
 from marshmallow_utils.fields.edtfdatestring import EDTFValidator
@@ -12,6 +13,8 @@ from invenio_i18n import gettext as _
 def validate_identifier(value):
     try:
         if value["scheme"].lower() == "isbn":
+            canonical_isbn = canonical(value["identifier"])
+            mask(canonical_isbn)
             return value
 
         original_identifier = (value["identifier"] or '').strip()
