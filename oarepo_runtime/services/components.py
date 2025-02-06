@@ -166,23 +166,8 @@ class ComponentPlacement:
     affects: list[ComponentPlacement] = field(default_factory=list)
     """List of components that depend on this one.
     
-    The components must be classes of ServiceComponent or '*' to denote
-    that this component affects all other components and should be placed first.
-    """
-
-    tension_up: int = 0
-    """Tension up is the number of components this component depends on that are placed after it.
-    
-    The higher the number, the more the components wants 
-    to be placed at the end of the list of components.
-    """
-
-    tension_down: int = 0
-    """Tension down is the number of components that depend on this component and are placed before it.
-    
-    The higher the number, the more the components wants
-    to be placed at the beginning of the list of components.
-    """
+    This is a temporary list used for evaluation of '*' dependencies
+    but does not take part in the sorting algorithm."""
 
     def __hash__(self) -> int:
         return id(self.component)
@@ -196,18 +181,29 @@ def _sort_components(components):
     keep the initial order as far as possible."""
 
     placements: list[ComponentPlacement] = _prepare_component_placement(components)
-    by_position = {p: idx for idx, p in enumerate(placements)}
+    placements = _propagate_dependencies(placements)
 
-    for i in range(100):
-        tension = _compute_tensions(placements, by_position)
-        if not tension:
-            break
-        swap_happened = _apply_tensions(placements, by_position)
-        # todo: break on swap happened or on tension ?
-    else:
-        raise Exception("Failed to resolve component dependencies")
+    ret = []
+    while placements:
+        without_dependencies = [p for p in placements if not p.depends_on]
+        if not without_dependencies:
+            raise ValueError("Circular dependency detected in components.")
+        for p in without_dependencies:
+            ret.append(p.component)
+            placements.remove(p)
+            for p2 in placements:
+                if p in p2.depends_on:
+                    p2.depends_on.remove(p)
+    return ret
 
-    return [p.component for p in placements]
+
+def _matching_placements(placements, dep_class_or_factory):
+    for pl in placements:
+        pl_component = pl.component
+        if not inspect.isclass(pl_component):
+            pl_component = type(pl_component(service=object()))
+        if issubclass(pl_component, dep_class_or_factory):
+            yield pl
 
 
 def _prepare_component_placement(components) -> list[ComponentPlacement]:
@@ -217,106 +213,64 @@ def _prepare_component_placement(components) -> list[ComponentPlacement]:
         placement = ComponentPlacement(component=c)
         placements.append(placement)
 
-    for placement in placements:
+    # direct dependencies
+    for idx, placement in enumerate(placements):
+        placements_without_this = placements[:idx] + placements[idx + 1 :]
         for dep in getattr(placement.component, "depends_on", []):
             if dep == "*":
-                for pl in placements:
-                    if pl != placement:
-                        placement.depends_on.append(pl)
-                        pl.affects.append(placement)
-            else:
-                for pl in placements:
-                    pl_component = pl.component
-                    if not inspect.isclass(pl_component):
-                        pl_component = type(pl_component(service=object()))
-                    if pl != placement and issubclass(pl_component, dep):
-                        placement.depends_on.append(pl)
-                        pl.affects.append(placement)
+                continue
+            for pl in _matching_placements(placements_without_this, dep):
+                placement.depends_on.append(pl)
+                pl.affects.append(placement)
 
         for dep in getattr(placement.component, "affects", []):
             if dep == "*":
-                for pl in placements:
-                    if pl != placement:
-                        placement.affects.append(pl)
-                        pl.depends_on.append(placement)
-            else:
-                for pl in placements:
-                    pl_component = pl.component
-                    if not inspect.isclass(pl_component):
-                        pl_component = type(pl_component(service=object()))
-                    if pl != placement and issubclass(pl_component, dep):
-                        placement.affects.append(pl)
-                        pl.depends_on.append(placement)
+                continue
+            for pl in _matching_placements(placements_without_this, dep):
+                placement.affects.append(pl)
+                pl.depends_on.append(placement)
 
+    # star dependencies
+    for idx, placement in enumerate(placements):
+        placements_without_this = placements[:idx] + placements[idx + 1 :]
+        if "*" in getattr(placement.component, "depends_on", []):
+            for pl in placements_without_this:
+                # if this placement is not in placements that pl depends on
+                # (added via direct dependencies above), add it
+                if placement not in pl.depends_on:
+                    placement.depends_on.append(pl)
+                    pl.affects.append(placement)
+
+        if "*" in getattr(placement.component, "affects", []):
+            for pl in placements_without_this:
+                # if this placement is not in placements that pl affects
+                # (added via direct dependencies above), add it
+                if placement not in pl.affects:
+                    placement.affects.append(pl)
+                    pl.depends_on.append(placement)
     return placements
 
 
-def _compute_tensions(
-    placements: list[ComponentPlacement], by_position: dict[ComponentPlacement, int]
-):
-    """Compute tensions between components.
+def _propagate_dependencies(
+    placements: list[ComponentPlacement],
+) -> list[ComponentPlacement]:
+    # now propagate dependencies
+    dependency_propagated = True
+    while dependency_propagated:
+        dependency_propagated = False
+        for placement in placements:
+            for dep in placement.depends_on:
+                for dep_of_dep in dep.depends_on:
+                    if dep_of_dep not in placement.depends_on:
+                        placement.depends_on.append(dep_of_dep)
+                        dep_of_dep.affects.append(placement)
+                        dependency_propagated = True
 
-    For each component, count how many components it depends on are placed after it
-    and how many components that depend on it are placed before it. Returns the total
-    number of tensions.
-    """
-    tensions = 0
-    for placement_position, placement in enumerate(placements):
-        placement.tension_down = 0
-        placement.tension_up = 0
+            for dep in placement.affects:
+                for dep_of_dep in dep.affects:
+                    if dep_of_dep not in placement.affects:
+                        placement.affects.append(dep_of_dep)
+                        dep_of_dep.depends_on.append(placement)
+                        dependency_propagated = True
 
-        for dep in placement.depends_on:
-            dep_position = by_position[dep]
-
-            if placement_position < dep_position:
-                placement.tension_up += 1
-                tensions += 1
-        for dep in placement.affects:
-            dep_position = by_position[dep]
-            if placement_position > dep_position:
-                placement.tension_down += 1
-                tensions += 1
-    return tensions
-
-
-def _apply_tensions(
-    placements: list[ComponentPlacement], by_position: dict[ComponentPlacement, int]
-) -> bool:
-    """One round of trying to reduce tensions between components.
-
-    For each component beginning from the first one, check if it has a higher tension
-    up than the component that follows it. If so, swap the components.
-
-    Then do the same from the last component to the first one if the component has a higher
-    tension down than the component that precedes it.
-    """
-    swap_happened = False
-    # one round of bubble sort up and down
-    for idx in range(len(placements) - 1):
-        placement = placements[idx]
-
-        if placement.tension_up <= 0:
-            continue
-
-        next_placement = placements[idx + 1]
-        if next_placement.tension_up < placement.tension_up:
-            placements[idx], placements[idx + 1] = next_placement, placement
-            by_position[placement] = idx + 1
-            by_position[next_placement] = idx
-            placement.tension_up -= 1
-            swap_happened = True
-
-    for idx in range(len(placements) - 1, 0, -1):
-        placement = placements[idx]
-        if placement.tension_down <= 0:
-            continue
-
-        prev_placement = placements[idx - 1]
-        if prev_placement.tension_down < placement.tension_down:
-            placements[idx - 1], placements[idx] = placement, prev_placement
-            by_position[placement] = idx - 1
-            by_position[prev_placement] = idx
-            placement.tension_down -= 1
-            swap_happened = True
-
-    return swap_happened
+    return placements
