@@ -14,8 +14,8 @@ def validate_identifier(value):
     try:
         if value["scheme"].lower() == "isbn":
             canonical_isbn = canonical(value["identifier"])
-            mask(canonical_isbn)
-            return value
+            value["identifier"] = mask(canonical_isbn)
+            return value["identifier"]
 
         original_identifier = (value["identifier"] or '').strip()
         normalized_identifier = normalize_pid(
