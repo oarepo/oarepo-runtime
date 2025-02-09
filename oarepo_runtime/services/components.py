@@ -7,6 +7,7 @@ from typing import Type
 
 from flask import current_app
 from invenio_accounts.models import User
+from invenio_base.utils import obj_or_import_string
 from invenio_drafts_resources.services.records.config import (
     RecordServiceConfig as DraftsRecordServiceConfig,
 )
@@ -219,16 +220,22 @@ def _prepare_component_placement(components) -> list[ComponentPlacement]:
         for dep in getattr(placement.component, "depends_on", []):
             if dep == "*":
                 continue
+            dep = obj_or_import_string(dep)
             for pl in _matching_placements(placements_without_this, dep):
-                placement.depends_on.append(pl)
-                pl.affects.append(placement)
+                if pl not in placement.depends_on:
+                    placement.depends_on.append(pl)
+                if placement not in pl.affects:
+                    pl.affects.append(placement)
 
         for dep in getattr(placement.component, "affects", []):
             if dep == "*":
                 continue
+            dep = obj_or_import_string(dep)
             for pl in _matching_placements(placements_without_this, dep):
-                placement.affects.append(pl)
-                pl.depends_on.append(placement)
+                if pl not in placement.affects:
+                    placement.affects.append(pl)
+                if placement not in pl.depends_on:
+                    pl.depends_on.append(placement)
 
     # star dependencies
     for idx, placement in enumerate(placements):
@@ -238,16 +245,20 @@ def _prepare_component_placement(components) -> list[ComponentPlacement]:
                 # if this placement is not in placements that pl depends on
                 # (added via direct dependencies above), add it
                 if placement not in pl.depends_on:
-                    placement.depends_on.append(pl)
-                    pl.affects.append(placement)
+                    if pl not in placement.depends_on:
+                        placement.depends_on.append(pl)
+                    if placement not in pl.affects:
+                        pl.affects.append(placement)
 
         if "*" in getattr(placement.component, "affects", []):
             for pl in placements_without_this:
                 # if this placement is not in placements that pl affects
                 # (added via direct dependencies above), add it
                 if placement not in pl.affects:
-                    placement.affects.append(pl)
-                    pl.depends_on.append(placement)
+                    if pl not in placement.affects:
+                        placement.affects.append(pl)
+                    if placement not in pl.depends_on:
+                        pl.depends_on.append(placement)
     return placements
 
 
