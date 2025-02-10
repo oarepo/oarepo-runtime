@@ -1,9 +1,10 @@
+import importlib
 import json
 import logging
 import os
 import re
 from functools import cached_property
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import importlib_metadata
 import importlib_resources
@@ -23,7 +24,11 @@ from flask_resources import (
 from flask_restful import abort
 from invenio_base.utils import obj_or_import_string
 from invenio_jsonschemas import current_jsonschemas
-from invenio_records_resources.proxies import current_service_registry
+from invenio_records_resources.proxies import (
+    current_service_registry,
+    current_transfer_registry,
+)
+from invenio_records_resources.records.api import Record
 
 logger = logging.getLogger("oarepo_runtime.info")
 
@@ -68,32 +73,42 @@ class InfoResource(Resource):
         """Repository endpoint."""
         links = {
             "self": url_for(request.endpoint, _external=True),
+            "api": replace_path_in_url(
+                url_for(request.endpoint, _external=True), "/api"
+            ),
             "models": url_for("oarepo_runtime_info.models", _external=True),
         }
         try:
             import invenio_requests  # noqa
+
             links["requests"] = api_url_for("requests.search", _external=True)
         except ImportError:
             pass
 
         ret = {
+            "schema": "local://introspection-v1.0.0",
             "name": current_app.config.get("THEME_SITENAME", ""),
             "description": current_app.config.get("REPOSITORY_DESCRIPTION", ""),
             "version": os.environ.get("DEPLOYMENT_VERSION", "local development"),
             "invenio_version": get_package_version("oarepo"),
-            "transfers": [
-                "local-file",
-                "url-fetch",
-                # TODO: where to get these? (permissions?)
-                # "direct-s3",
-            ],
+            "transfers": list(current_transfer_registry.get_transfer_types()),
             "links": links,
+            "features": [
+                *_add_feature_if_can_import("drafts", "invenio_drafts_resources"),
+                *_add_feature_if_can_import("workflows", "oarepo_workflows"),
+                *_add_feature_if_can_import("requests", "invenio_requests"),
+                *_add_feature_if_can_import("communities", "invenio_communities"),
+                *_add_feature_if_can_import("request_types", "oarepo_requests"),
+            ],
         }
+        if len(self.model_data) == 1:
+            ret["default_model"] = self.model_data[0]["name"]
+
         self.call_components("repository", data=ret)
         return ret, 200
 
-    @response_handler(many=True)
-    def models(self):
+    @cached_property
+    def model_data(self):
         data = []
         # iterate entrypoint oarepo.models
         for model in importlib_metadata.entry_points().select(group="oarepo.models"):
@@ -112,9 +127,9 @@ class InfoResource(Resource):
                 continue
 
             # check if the service class is inside OAREPO_GLOBAL_SEARCH and if not, skip it
-            global_search_models = current_app.config.get('GLOBAL_SEARCH_MODELS', [])
+            global_search_models = current_app.config.get("GLOBAL_SEARCH_MODELS", [])
             for global_model in global_search_models:
-                if global_model['model_service'] == model_data["service"]["class"]:
+                if global_model["model_service"] == model_data["service"]["class"]:
                     break
             else:
                 continue
@@ -122,19 +137,22 @@ class InfoResource(Resource):
             model_features = self._get_model_features(model_data)
 
             links = {
-                "api": self._get_model_api_endpoint(model_data),
                 "html": self._get_model_html_endpoint(model_data),
-                "schemas": self._get_model_schema_endpoints(model_data),
                 "model": self._get_model_model_endpoint(model.name),
                 # "openapi": url_for(self._get_model_openapi_endpoint(model_data), _external=True)
             }
 
-            links["published"] = links["api"]
+            links["records"] = self._get_model_api_endpoint(model_data)
             if "drafts" in model_features:
-                links["user_records"] = self._get_model_draft_endpoint(model_data)
+                links["drafts"] = self._get_model_draft_endpoint(model_data)
+            links["deposit"] = links["records"]
 
             data.append(
                 {
+                    "schema": "local://" + model_data["json-schema-settings"]["name"],
+                    "type": model_data.get(
+                        "model-name", model_data.get("module", {}).get("base", "")
+                    ).lower(),
                     "name": model_data.get(
                         "model-name", model_data.get("module", {}).get("base", "")
                     ).lower(),
@@ -144,11 +162,163 @@ class InfoResource(Resource):
                     "links": links,
                     # TODO: we also need to get previous schema versions here if we support
                     # multiple version of the same schema at the same time
-                    "accept": self._get_model_accept_types(service, resource_config_class),
+                    "content_types": self._get_model_content_types(
+                        service, resource_config_class, model_data
+                    ),
+                    "metadata": model_data.get("properties", {}).get("metadata", None)
+                    is not None,
                 }
             )
         self.call_components("model", data=data)
-        return data, 200
+        data.sort(key=lambda x: x["type"])
+        return data
+
+    @cached_property
+    def vocabulary_data(self):
+        ret = []
+        try:
+            from invenio_vocabularies.contrib.affiliations.api import Affiliation
+            from invenio_vocabularies.contrib.awards.api import Award
+            from invenio_vocabularies.contrib.funders.api import Funder
+            from invenio_vocabularies.contrib.names.api import Name
+            from invenio_vocabularies.contrib.subjects.api import Subject
+            from invenio_vocabularies.records.api import Vocabulary
+            from invenio_vocabularies.records.models import VocabularyType
+        except ImportError:
+            return ret
+
+        def _generate_rdm_vocabulary(
+            base_url: str,
+            record: type[Record],
+            vocabulary_type: str,
+            vocabulary_name: str,
+            vocabulary_description: str,
+            special: bool,
+            can_export: bool = True,
+            can_deposit: bool = False,
+        ) -> dict:
+            if not base_url.endswith("/"):
+                base_url += "/"
+            url_prefix = base_url + "api" if special else base_url + "api/vocabularies"
+            schema_path = base_url + record.schema.value.replace("local://", "schemas/")
+            links = dict(
+                records=f"{url_prefix}/{vocabulary_type}",
+            )
+            if can_deposit:
+                links["deposit"] = f"{url_prefix}/{vocabulary_type}"
+
+            return dict(
+                schema=record.schema.value,
+                type=vocabulary_type,
+                name=vocabulary_name,
+                description="Vocabulary for " + vocabulary_name,
+                version="unknown",
+                features=["rdm", "vocabulary"],
+                links=links,
+                content_types=[
+                    dict(
+                        content_type="application/json",
+                        name="Invenio RDM JSON",
+                        description="Vocabulary JSON",
+                        schema=schema_path,
+                        can_export=can_export,
+                        can_deposit=can_deposit,
+                    )
+                ],
+                metadata=False,
+            )
+
+        base_url = api_url_for("vocabularies.search", type="languages", _external=True)
+        base_url = replace_path_in_url(base_url, "/")
+        ret = [
+            _generate_rdm_vocabulary(
+                base_url, Affiliation, "affiliations", "Affiliations", "", special=True
+            ),
+            _generate_rdm_vocabulary(
+                base_url, Award, "awards", "Awards", "", special=True
+            ),
+            _generate_rdm_vocabulary(
+                base_url, Funder, "funders", "Funders", "", special=True
+            ),
+            _generate_rdm_vocabulary(
+                base_url, Subject, "subjects", "Subjects", "", special=True
+            ),
+            _generate_rdm_vocabulary(
+                base_url, Name, "names", "Names", "", special=True
+            ),
+            _generate_rdm_vocabulary(
+                base_url,
+                Affiliation,
+                "affiliations-vocab",
+                "Writable Affiliations",
+                "Write endpoint for affiliations",
+                special=False,
+                can_deposit=True,
+            ),
+            _generate_rdm_vocabulary(
+                base_url,
+                Award,
+                "awards-vocab",
+                "Writable Awards",
+                "Write endpoint for awards",
+                special=False,
+                can_deposit=True,
+            ),
+            _generate_rdm_vocabulary(
+                base_url,
+                Funder,
+                "funders-vocab",
+                "Writable Funders",
+                "Write endpoint for funders",
+                special=False,
+                can_deposit=True,
+            ),
+            _generate_rdm_vocabulary(
+                base_url,
+                Subject,
+                "subjects-vocab",
+                "Writable Subjects",
+                "Write endpoint for subjects",
+                special=False,
+                can_deposit=True,
+            ),
+            _generate_rdm_vocabulary(
+                base_url,
+                Name,
+                "names-vocab",
+                "Writable Names",
+                "Write endpoint for names",
+                special=False,
+                can_deposit=True,
+            ),
+        ]
+
+        vc_types = {vc.id for vc in VocabularyType.query.all()}
+        vocab_type_metadata = current_app.config.get(
+            "INVENIO_VOCABULARY_TYPE_METADATA", {}
+        )
+        vc_types.update(vocab_type_metadata.keys())
+
+        for vc in sorted(vc_types):
+            vc_metadata = vocab_type_metadata.get(vc, {})
+            ret.append(
+                _generate_rdm_vocabulary(
+                    base_url,
+                    Vocabulary,
+                    vc,
+                    to_current_language(vc_metadata.get("name")) or vc,
+                    to_current_language(vc_metadata.get("description")) or "",
+                    special=False,
+                    can_export=True,
+                    can_deposit=True,
+                )
+            )
+
+        return ret
+
+    @response_handler(many=True)
+    def models(self):
+        return self.model_data + self.vocabulary_data, 200
 
     @schema_view_args
     @response_handler()
@@ -161,7 +331,7 @@ class InfoResource(Resource):
     def model(self):
         model = resource_requestctx.view_args["model"]
         for _model in importlib_metadata.entry_points().select(
-                group="oarepo.models", name=model
+            group="oarepo.models", name=model
         ):
             package_name, file_name = _model.value.split(":")
             model_data = json.loads(
@@ -254,10 +424,17 @@ class InfoResource(Resource):
             logger.exception("Failed to get model html endpoint")
             return None
 
+    def _get_model_model_endpoint(self, model):
+        try:
+            return url_for("oarepo_runtime_info.model", model=model, _external=True)
+        except:  # NOSONAR noqa
+            logger.exception("Failed to get model model endpoint")
+            return None
+
     def _get_model_schema_endpoints(self, model):
         try:
             return {
-                'application/json': url_for(
+                "application/json": url_for(
                     "oarepo_runtime_info.schema",
                     schema=model["json-schema-settings"]["name"],
                     _external=True,
@@ -267,32 +444,60 @@ class InfoResource(Resource):
             logger.exception("Failed to get model schema endpoint")
             return None
 
-    def _get_model_model_endpoint(self, model):
-        try:
-            return url_for("oarepo_runtime_info.model", model=model, _external=True)
-        except:  # NOSONAR noqa
-            logger.exception("Failed to get model model endpoint")
-            return None
+    def _get_model_content_types(self, service, resource_config, model):
+        """Get the content types supported by the model. Returns a list of:
 
-    def _get_model_accept_types(self, service, resource_config):
+        content_type="application/json",
+        name="Invenio RDM JSON",
+        description="Invenio RDM JSON as described in",
+        schema=url / "schemas" / "records" / "record-v6.0.0.json",
+        can_export=True,
+        can_deposit=True,
+        """
+
+        content_types = []
+        # implicit content type
+        content_types.append(
+            {
+                "content_type": "application/json",
+                "name": f"Internal json serialization of {model['model-name']}",
+                "description": "This content type is serving this model's native format as described on model link.",
+                "schema": url_for(
+                    "oarepo_runtime_info.schema",
+                    schema=model["json-schema-settings"]["name"],
+                    _external=True,
+                ),
+                "can_export": True,
+                "can_deposit": True,
+            }
+        )
+
+        # export content types
         try:
-            record_cls = service.config.record_cls
-            schema = getattr(record_cls, "schema", None)
-            accept_types = []
             for accept_type, handler in resource_config.response_handlers.items():
-                curr_item = {'accept': accept_type}
-                if handler.serializer is not None and hasattr(handler.serializer, "info"):
-                    curr_item.update(handler.serializer.info(service))
-                accept_types.append(curr_item)
-
-            return accept_types
+                if accept_type == "application/json":
+                    continue
+                curr_item = {
+                    "content_type": accept_type,
+                    "name": getattr(handler, "name", accept_type),
+                    "description": getattr(handler, "description", ""),
+                    "can_export": True,
+                    "can_deposit": False,
+                }
+                if handler.serializer is not None:
+                    if hasattr(handler.serializer, "name"):
+                        curr_item["name"] = handler.serializer.name
+                    if hasattr(handler.serializer, "description"):
+                        curr_item["description"] = handler.serializer.description
+                    if hasattr(handler.serializer, "info"):
+                        curr_item.update(handler.serializer.info(service))
+                content_types.append(curr_item)
         except:  # NOSONAR noqa
             logger.exception("Failed to get model schemas")
-        return {}
-
+        return content_types
 
     def _get_resource_config_class(self, model_data):
-        model_class = model_data['resource-config']['class']
+        model_class = model_data["resource-config"]["class"]
         return obj_or_import_string(model_class)()
 
     def _get_service(self, model_data):
@@ -350,3 +555,32 @@ def api_url_for(endpoint, _external=True, **values):
         )
     finally:
         _cv_request.set(current_request_context)
+
+
+def replace_path_in_url(url, path):
+    # Parse the URL into its components
+    parsed_url = urlparse(url)
+
+    # Replace the path with '/api'
+    new_parsed_url = parsed_url._replace(path=path)
+
+    # Reconstruct the URL with the new path
+    new_url = urlunparse(new_parsed_url)
+
+    return new_url
+
+
+def _add_feature_if_can_import(feature, module):
+    try:
+        importlib.import_module(module)
+        return [feature]
+    except ImportError:
+        return []
+
+
+def to_current_language(data):
+    if isinstance(data, dict):
+        from flask_babel import get_locale
+
+        return data.get(get_locale().language)
+    return data
