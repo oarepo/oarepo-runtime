@@ -188,8 +188,11 @@ class ICUSortOptions:
             }
         return ret
 
+class I18nSearchOptions(SearchOptions):
+    extra_sort_options = {}
+    record_cls = None
 
-class I18nSearchOptions(RDMSearchOptions):
+class I18nRDMSearchOptions(RDMSearchOptions):
     extra_sort_options = {}
     record_cls = None
 
