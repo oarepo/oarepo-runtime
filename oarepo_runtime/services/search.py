@@ -19,7 +19,7 @@ from oarepo_runtime.i18n import lazy_gettext as _
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 
 from .facets.params import GroupedFacetsParam
-
+from invenio_rdm_records.services.config import RDMSearchOptions, RDMSearchDraftsOptions
 try:
     from invenio_i18n import get_locale
 except ImportError:
@@ -189,6 +189,10 @@ class ICUSortOptions:
         return ret
 
 
-class I18nSearchOptions(SearchOptions):
+class I18nSearchOptions(RDMSearchOptions):
+    extra_sort_options = {}
+    record_cls = None
+
+class I18nRDMDraftsSearchOptions(RDMSearchDraftsOptions):
     extra_sort_options = {}
     record_cls = None
