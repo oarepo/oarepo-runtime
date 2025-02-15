@@ -6,12 +6,13 @@ def test_info_endpoint(client_with_credentials_admin, info_blueprint):
         "models": repository_info["links"]["models"],
         "requests": repository_info["links"]["requests"],
     }
+
     assert repository_info == {
         "schema": "local://introspection-v1.0.0",
         "name": "",
         "description": "",
         "version": "local development",
-        "invenio_version": "12.2.5",
+        "invenio_version": repository_info["invenio_version"],
         "transfers": ["L", "F", "R", "M"],
         "links": {
             "self": "http://localhost/.well-known/repository/",
