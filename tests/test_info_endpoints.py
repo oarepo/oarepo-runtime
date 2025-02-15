@@ -1,5 +1,6 @@
 def test_info_endpoint(client_with_credentials_admin, info_blueprint):
     repository_info = client_with_credentials_admin.get("/.well-known/repository/").json
+    # remove rest of links
     repository_info["links"] = {
         "self": repository_info["links"]["self"],
         "api": repository_info["links"]["api"],
