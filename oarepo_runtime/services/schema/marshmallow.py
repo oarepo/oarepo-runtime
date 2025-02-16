@@ -1,12 +1,20 @@
 import typing
 
-import marshmallow as ma
+from invenio_rdm_records.services.schemas.record import RDMRecordSchema
 from invenio_records_resources.services.records.schema import (
     BaseRecordSchema as InvenioBaseRecordSchema,
 )
 
+import marshmallow as ma
+
 
 class BaseRecordSchema(InvenioBaseRecordSchema):
+    """Base record schema - in addition to invenio exposes $schema as well."""
+
+    _schema = ma.fields.Str(attribute="$schema", data_key="$schema")
+
+
+class RDMBaseRecordSchema(RDMRecordSchema):
     """Base record schema - in addition to invenio exposes $schema as well."""
 
     _schema = ma.fields.Str(attribute="$schema", data_key="$schema")

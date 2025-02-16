@@ -2,11 +2,18 @@ import dataclasses
 import inspect
 from typing import List
 
+from invenio_rdm_records.services.config import (
+    RDMSearchDraftsOptions as BaseRDMSearchDraftsOptions,
+)
+from invenio_rdm_records.services.config import (
+    RDMSearchOptions as BaseRDMSearchOptions,
+)
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
 )
 from invenio_records_resources.services.records.params import (
+    FacetsParam,
     PaginationParam,
     QueryStrParam,
     SortParam,
@@ -17,9 +24,10 @@ from invenio_search.engine import dsl
 # TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
 from oarepo_runtime.i18n import lazy_gettext as _
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
+from oarepo_runtime.utils.functools import class_property
 
 from .facets.params import GroupedFacetsParam
-from invenio_rdm_records.services.config import RDMSearchOptions, RDMSearchDraftsOptions
+
 try:
     from invenio_i18n import get_locale
 except ImportError:
@@ -47,13 +55,16 @@ class FuzzySuggestQueryParser(SuggestQueryParser):
         return dsl.Q("bool", should=[multi_match_with_bool_prefix, multi_match_fuzzy])
 
 
-class SearchOptions(InvenioSearchOptions):
-    params_interpreters_cls = [
-        QueryStrParam,
-        PaginationParam,
-        SortParam,
-        GroupedFacetsParam,
-    ]
+class SearchOptionsMixin:
+    @class_property
+    def params_interpreters_cls(cls):
+        """Replaces FacetsParam with GroupedFacetsParam."""
+        param_interpreters = [*super(SearchOptionsMixin, cls).params_interpreters_cls]
+        # replace FacetsParam with GroupedFacetsParam
+        for idx, interpreter in enumerate(param_interpreters):
+            if interpreter == FacetsParam:
+                param_interpreters[idx] = GroupedFacetsParam
+        return param_interpreters
 
     sort_options = {
         "title": dict(
@@ -73,6 +84,24 @@ class SearchOptions(InvenioSearchOptions):
             fields=["created"],
         ),
     }
+
+
+class SearchOptions(SearchOptionsMixin, InvenioSearchOptions):
+    # TODO: should be changed
+    params_interpreters_cls = [
+        QueryStrParam,
+        PaginationParam,
+        SortParam,
+        GroupedFacetsParam,
+    ]
+
+
+class RDMSearchOptions(SearchOptionsMixin, BaseRDMSearchOptions):
+    pass
+
+
+class RDMSearchDraftsOptions(SearchOptionsMixin, BaseRDMSearchDraftsOptions):
+    pass
 
 
 @dataclasses.dataclass
@@ -188,13 +217,16 @@ class ICUSortOptions:
             }
         return ret
 
+
 class I18nSearchOptions(SearchOptions):
     extra_sort_options = {}
     record_cls = None
 
+
 class I18nRDMSearchOptions(RDMSearchOptions):
     extra_sort_options = {}
     record_cls = None
+
 
 class I18nRDMDraftsSearchOptions(RDMSearchDraftsOptions):
     extra_sort_options = {}
