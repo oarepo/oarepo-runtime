@@ -181,3 +181,11 @@ class AccessStatusField(ma.fields.Field):
 class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
     is_draft = ma.fields.Boolean(dump_only=True)
     access_status = AccessStatusField(attribute="access", dump_only=True)
+
+    def hide_tombstone(self, data):
+        """Hide tombstone info if the record isn't deleted and metadata if it is."""
+        return data
+
+    def default_nested(self, data):
+        """Serialize fields as empty dict for partial drafts."""
+        return data
