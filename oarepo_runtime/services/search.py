@@ -5,9 +5,7 @@ from typing import List
 from invenio_rdm_records.services.config import (
     RDMSearchDraftsOptions as BaseRDMSearchDraftsOptions,
 )
-from invenio_rdm_records.services.config import (
-    RDMSearchOptions as BaseRDMSearchOptions,
-)
+from invenio_rdm_records.services.config import RDMSearchOptions as BaseRDMSearchOptions
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
@@ -86,6 +84,35 @@ class SearchOptionsMixin:
     }
 
 
+class SearchOptionsDraftMixin(SearchOptionsMixin):
+    sort_options = {
+        "bestmatch": dict(
+            title=_("Best match"),
+            fields=["_score"],  # search defaults to desc on `_score` field
+        ),
+        "updated-desc": dict(
+            title=_("Recently updated"),
+            fields=["-updated"],
+        ),
+        "updated-asc": dict(
+            title=_("Least recently updated"),
+            fields=["updated"],
+        ),
+        "newest": dict(
+            title=_("Newest"),
+            fields=["-created"],
+        ),
+        "oldest": dict(
+            title=_("Oldest"),
+            fields=["created"],
+        ),
+        "version": dict(
+            title=_("Version"),
+            fields=["-versions.index"],
+        ),
+    }
+
+
 class SearchOptions(SearchOptionsMixin, InvenioSearchOptions):
     # TODO: should be changed
     params_interpreters_cls = [
@@ -100,7 +127,7 @@ class RDMSearchOptions(SearchOptionsMixin, BaseRDMSearchOptions):
     pass
 
 
-class RDMSearchDraftsOptions(SearchOptionsMixin, BaseRDMSearchDraftsOptions):
+class RDMSearchDraftsOptions(SearchOptionsDraftMixin, BaseRDMSearchDraftsOptions):
     pass
 
 
