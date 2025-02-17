@@ -5,6 +5,12 @@ import marshmallow as ma
 from babel.dates import format_date
 from babel_edtf import format_edtf
 from flask import current_app
+from invenio_rdm_records.records.systemfields.access.field.record import (
+    AccessStatusEnum,
+)
+from invenio_rdm_records.resources.serializers.ui.fields import (
+    UIObjectAccessStatus as InvenioUIObjectAccessStatus,
+)
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
@@ -15,6 +21,9 @@ from marshmallow_utils.fields import (
 from marshmallow_utils.fields.babel import BabelFormatField
 
 from oarepo_runtime.i18n import gettext
+from oarepo_runtime.i18n import lazy_gettext as _
+
+from .marshmallow import RDMBaseRecordSchema
 
 
 def current_default_locale():
@@ -131,3 +140,43 @@ class InvenioUISchema(ma.Schema):
     links = ma.fields.Raw(dump_only=True)
     revision_id = ma.fields.Integer(dump_only=True)
     expanded = ma.fields.Raw(dump_only=True)
+
+
+# seems not possible to avoid, as they have this hardcoded in their object,
+# and translation keys are i.e. open, which gets translated to otevret
+class UIObjectAccessStatus(InvenioUIObjectAccessStatus):
+    @property
+    def title(self):
+        """Access status title."""
+        return {
+            AccessStatusEnum.OPEN: _("access.status.open"),
+            AccessStatusEnum.EMBARGOED: _("access.status.embargoed"),
+            AccessStatusEnum.RESTRICTED: _("access.status.restricted"),
+            AccessStatusEnum.METADATA_ONLY: _("access.status.metadata-only"),
+        }.get(self.access_status)
+
+
+class AccessStatusField(ma.fields.Field):
+    """Record access status."""
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        """Serialise access status."""
+        record_access_dict = obj.get("access")
+        _files = obj.get("files", {})
+        has_files = _files is not None and _files.get("enabled", False)
+        if record_access_dict:
+            record_access_status_ui = UIObjectAccessStatus(
+                record_access_dict, has_files
+            )
+            return {
+                "id": record_access_status_ui.id,
+                "title_l10n": record_access_status_ui.title,
+                "description_l10n": record_access_status_ui.description,
+                "icon": record_access_status_ui.icon,
+                "embargo_date_l10n": record_access_status_ui.embargo_date,
+                "message_class": record_access_status_ui.message_class,
+            }
+
+
+class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
+    is_draft = ma.fields.Boolean(dump_only=True)
