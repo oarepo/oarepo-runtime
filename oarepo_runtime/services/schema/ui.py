@@ -180,3 +180,4 @@ class AccessStatusField(ma.fields.Field):
 
 class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
     is_draft = ma.fields.Boolean(dump_only=True)
+    access_status = AccessStatusField(dump_only=True)
