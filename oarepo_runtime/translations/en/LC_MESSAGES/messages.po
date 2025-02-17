@@ -50,3 +50,19 @@ msgstr ""
 #, python-format
 msgid "Invalid value %(identifier)s of identifier type %(type)s"
 msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:152
+msgid "access.status.open"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:153
+msgid "access.status.embargoed"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:154
+msgid "access.status.restricted"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
+msgid "access.status.metadata-only"
+msgstr ""
