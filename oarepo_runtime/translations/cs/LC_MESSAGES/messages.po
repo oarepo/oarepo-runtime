@@ -54,16 +54,16 @@ msgstr "%(type)s: Neplatná hodnota '%(identifier)s'"
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:152
 msgid "access.status.open"
-msgstr ""
+msgstr "otevřený přístup"
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:153
 msgid "access.status.embargoed"
-msgstr ""
+msgstr "odložené zpřístupnění"
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:154
 msgid "access.status.restricted"
-msgstr ""
+msgstr "omezený přístup"
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
 msgid "access.status.metadata-only"
-msgstr ""
+msgstr "pouze metadata"
