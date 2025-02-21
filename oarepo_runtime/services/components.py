@@ -143,6 +143,13 @@ def process_service_configs(service_config, *additional_components):
                 raise ValueError(f"{config} component's definition is not supported")
 
     processed_components.extend(additional_components)
+
+    excluded_components = current_app.config.get("RDM_EXCLUDED_COMPONENTS", [])
+    for excluded_component in excluded_components:
+        cmp = obj_or_import_string(excluded_component)
+        if cmp in processed_components:
+            processed_components.remove(cmp)
+            
     processed_components = _sort_components(processed_components)
     return processed_components
 
