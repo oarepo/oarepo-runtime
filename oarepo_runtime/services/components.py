@@ -17,7 +17,7 @@ from invenio_records_resources.services import FileServiceConfig
 from invenio_records_resources.services.records.config import (
     RecordServiceConfig as RecordsRecordServiceConfig,
 )
-
+from oarepo_runtime.proxies import current_oarepo
 from oarepo_runtime.services.custom_fields import (
     CustomFields,
     CustomFieldsMixin,
@@ -143,6 +143,11 @@ def process_service_configs(service_config, *additional_components):
                 raise ValueError(f"{config} component's definition is not supported")
 
     processed_components.extend(additional_components)
+
+    for excluded_component in current_oarepo.rdm_excluded_components:
+        if excluded_component in processed_components:
+            processed_components.remove(excluded_component)
+            
     processed_components = _sort_components(processed_components)
     return processed_components
 
