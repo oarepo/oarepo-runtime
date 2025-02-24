@@ -81,6 +81,10 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_remove_community = [SystemProcess()]
 
 
+    can_read_deleted = [SystemProcess(), AnyUser()]
+    can_manage_record_access = [SystemProcess(), AnyUser()]
+
+
 class EveryonePermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
 
@@ -119,12 +123,17 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_add_community = [SystemProcess(), AnyUser()]
     can_remove_community = [SystemProcess(), AnyUser()]
 
+    can_read_deleted = [SystemProcess(), AnyUser()]
+    can_manage_record_access = [SystemProcess(), AnyUser()]
+    can_lift_embargo = [SystemProcess(), AnyUser()]
+
 
 class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
 
     can_search = [SystemProcess(), AuthenticatedUser()]
     can_read = [SystemProcess(), AnyUser()]
+    can_read_deleted = [SystemProcess(), AnyUser()]
     can_create = [SystemProcess(), AuthenticatedUser()]
     can_update = [SystemProcess(), AuthenticatedUser()]
     can_delete = [SystemProcess(), AuthenticatedUser()]
