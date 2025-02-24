@@ -1,5 +1,7 @@
 import copy
 import logging
+import operator
+from functools import partial, reduce
 from typing import List
 
 from flask import current_app
@@ -8,6 +10,12 @@ from invenio_access.permissions import system_user_id
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
 from invenio_records_resources.services.records.params import FacetsParam
+from invenio_access.permissions import authenticated_user
+from invenio_records_resources.services.records.params.base import ParamInterpreter
+from invenio_search.engine import dsl
+from invenio_rdm_records.records.systemfields.deletion_status import (
+    RecordDeletionStatusEnum,
+)
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +104,7 @@ class GroupedFacetsParam(FacetsParam):
         for f in filters[1:]:
             _filter &= f
 
-        return search.filter(_filter)
+        return search.filter(_filter).post_filter(_filter)
 
     def apply(self, identity, search, params):
         """Evaluate the facets on the search."""
@@ -129,3 +137,56 @@ class GroupedFacetsParam(FacetsParam):
         for group in groups:
             user_facets.update(self.facet_groups.get(group, {}))
         return user_facets
+
+
+class OARepoAllVersionsParam(ParamInterpreter):
+    """Evaluates the 'allversions' parameter."""
+    def __init__(self, field_names, config):
+        """Construct."""
+        self.field_names = field_names
+        super().__init__(config)
+
+    @classmethod
+    def factory(cls, field_names: list[str]):
+        """Create a new filter parameter."""
+        return partial(cls, field_names)
+
+    def apply(self, identity, search, params):
+        """Evaluate the allversions parameter on the search."""
+        if not params.get("allversions"):
+            queries = [dsl.query.Q("term", **{field_name: True}) for field_name in self.field_names]
+            query = reduce(operator.or_, queries)
+            search = search.filter(query)
+        return search
+
+class OARepoPublishedRecordsParam(ParamInterpreter):
+    """Evaluates the include_deleted parameter."""
+
+    def apply(self, identity, search, params):
+        """Evaluate the include_deleted parameter on the search."""
+
+        value = params.pop("include_deleted", None)
+        # Filter prevents from displaying deleted records on mainsite search
+        # deleted records should appear only in admins panel
+        if value is None:
+            query = dsl.query.Q(
+                "bool",
+                should=[
+                    dsl.query.Q(
+                        "bool",
+                        must=[
+                            dsl.query.Q(
+                                "term",
+                                deletion_status=RecordDeletionStatusEnum.PUBLISHED.value,
+                            )
+                        ],
+                    ),
+                    # Drafts does not have deletion_status so this clause is needed to
+                    # prevent the above clause from filtering out the drafts
+                    dsl.query.Q(
+                        "bool", must_not=[dsl.query.Q("exists", field="deletion_status")]
+                    ),
+                ],
+            )
+            search = search.filter(query)
+        return search
