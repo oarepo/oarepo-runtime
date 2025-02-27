@@ -121,6 +121,9 @@ def prepare_parent_mapping(parent_class, config):
     if not parent_class:
         return
 
+    if not config.record_cls.index._name:
+        return
+
     script_dir = str(Path(__file__).resolve().parent)
     path_parts = script_dir.split('/')
     path_parts = path_parts[:-2]
