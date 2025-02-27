@@ -80,9 +80,10 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_add_community = [SystemProcess()]
     can_remove_community = [SystemProcess()]
 
+    can_read_deleted = [SystemProcess()]
+    can_manage_record_access = [SystemProcess()]
+    can_lift_embargo = [SystemProcess()]
 
-    can_read_deleted = [SystemProcess(), AnyUser()]
-    can_manage_record_access = [SystemProcess(), AnyUser()]
 
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):
@@ -145,7 +146,6 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_commit_files = [SystemProcess(), AuthenticatedUser()]
     can_read_files = [SystemProcess(), AnyUser()]
     can_update_files = [SystemProcess(), AuthenticatedUser()]
-    can_delete_files = [SystemProcess(), AuthenticatedUser()]
     can_list_files = [SystemProcess(), AuthenticatedUser()]
     can_manage_files = [SystemProcess(), AuthenticatedUser()]
 
@@ -166,3 +166,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
 
     can_add_community = [SystemProcess(), AuthenticatedUser()]
     can_remove_community = [SystemProcess(), AuthenticatedUser()]
+
+    can_delete_files = [SystemProcess(), AuthenticatedUser()]
+    can_manage_record_access = [SystemProcess(), AuthenticatedUser()]
+    can_lift_embargo = [SystemProcess(), AuthenticatedUser()]
