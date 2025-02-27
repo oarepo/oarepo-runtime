@@ -80,6 +80,11 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_add_community = [SystemProcess()]
     can_remove_community = [SystemProcess()]
 
+    can_read_deleted = [SystemProcess()]
+    can_manage_record_access = [SystemProcess()]
+    can_lift_embargo = [SystemProcess()]
+
+
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
@@ -119,12 +124,17 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_add_community = [SystemProcess(), AnyUser()]
     can_remove_community = [SystemProcess(), AnyUser()]
 
+    can_read_deleted = [SystemProcess(), AnyUser()]
+    can_manage_record_access = [SystemProcess(), AnyUser()]
+    can_lift_embargo = [SystemProcess(), AnyUser()]
+
 
 class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     """record policy for read only repository"""
 
     can_search = [SystemProcess(), AuthenticatedUser()]
     can_read = [SystemProcess(), AnyUser()]
+    can_read_deleted = [SystemProcess(), AnyUser()]
     can_create = [SystemProcess(), AuthenticatedUser()]
     can_update = [SystemProcess(), AuthenticatedUser()]
     can_delete = [SystemProcess(), AuthenticatedUser()]
@@ -136,7 +146,6 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_commit_files = [SystemProcess(), AuthenticatedUser()]
     can_read_files = [SystemProcess(), AnyUser()]
     can_update_files = [SystemProcess(), AuthenticatedUser()]
-    can_delete_files = [SystemProcess(), AuthenticatedUser()]
     can_list_files = [SystemProcess(), AuthenticatedUser()]
     can_manage_files = [SystemProcess(), AuthenticatedUser()]
 
@@ -157,3 +166,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
 
     can_add_community = [SystemProcess(), AuthenticatedUser()]
     can_remove_community = [SystemProcess(), AuthenticatedUser()]
+
+    can_delete_files = [SystemProcess(), AuthenticatedUser()]
+    can_manage_record_access = [SystemProcess(), AuthenticatedUser()]
+    can_lift_embargo = [SystemProcess(), AuthenticatedUser()]
