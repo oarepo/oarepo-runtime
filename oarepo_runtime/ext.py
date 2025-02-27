@@ -33,7 +33,7 @@ class OARepoRuntime(object):
     @cached_property
     def rdm_excluded_components(self):
         return [
-            obj_or_import_string(x) for x in self.app.config.get("RDM_EXLUDED_COMPONENTS", [])
+            obj_or_import_string(x) for x in self.app.config.get("RDM_EXCLUDED_COMPONENTS", [])
         ]
         
     def init_config(self, app):
