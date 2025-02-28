@@ -11,7 +11,7 @@ from invenio_rdm_records.records.systemfields.access.field.record import (
 from invenio_rdm_records.resources.serializers.ui.fields import (
     UIObjectAccessStatus as InvenioUIObjectAccessStatus,
 )
-from invenio_drafts_resources.services.records.schema import VersionsSchema
+from invenio_rdm_records.services.schemas.versions import VersionsSchema
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
