@@ -7,14 +7,21 @@ from werkzeug.local import LocalProxy
 
 from .base import oarepo
 
+def create_config_dict(config):
+    """Recursively create configuration dict without LocalProxies inside."""
+    result = {}
+    for k, v in config.items():
+        if isinstance(v, dict):
+            result[k] = create_config_dict(v)
+        elif not isinstance(v, LocalProxy):
+            result[k] = v
+    return result
 
 @oarepo.command(name="configuration")
 @click.argument("output_file", default="-")
 @with_appcontext
 def configuration_command(output_file):
-    configuration = {
-        k: v for k, v in current_app.config.items() if not isinstance(v, LocalProxy)
-    }
+    configuration = create_config_dict(current_app.config)
 
     try:
         invenio_db = current_app.extensions["invenio-db"]
