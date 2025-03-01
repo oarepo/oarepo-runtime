@@ -2,19 +2,16 @@ from typing import get_type_hints
 
 import click
 
-from oarepo_runtime.cli import oarepo
+from oarepo_runtime.info.permissions.debug import add_debugging
 
-
-@oarepo.group()
-def permissions():
-    """Commands for checking and explaining permissions."""
+from .base import permissions
 
 
 @permissions.command(name="list")
 @click.option("--workflow", "-w", help="Workflow name")
 @click.option("--community", "-c", help="Community name")
 @click.option("--service", "-s", help="Service name")
-def _permissions(workflow, community, service):
+def list_permissions(workflow, community, service):
     """List all permissions for a given workflow, community or service."""
     # intentionally import here to enable oarepo-runtime to be used
     # without oarepo-workflows and oarepo-communities
@@ -41,11 +38,9 @@ def _permissions(workflow, community, service):
             "You must specify either --workflow, --community or --service."
         )
 
-    from oarepo_runtime.info.permissions.debug import add_debugging
+    add_debugging()
 
     p = permission_policy("read")
-
-    p = add_debugging(p)
 
     for action_name in dir(permission_policy):
         if not action_name.startswith("can_"):
