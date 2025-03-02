@@ -135,6 +135,8 @@ def get_opensearch_caller():
             ) and not module_name.startswith("oarepo_runtime.info"):
                 state = "outside_opensearch"
         if state == "outside_opensearch":
+            if frame.function == "<lambda>":
+                continue
             if "self" in frame.frame.f_locals:
                 self_instance = frame.frame.f_locals["self"]
                 class_name = self_instance.__class__.__name__

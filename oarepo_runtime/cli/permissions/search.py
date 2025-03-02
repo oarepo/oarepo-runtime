@@ -1,6 +1,8 @@
 import json
+import sys
 
 import click
+import yaml
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.info.permissions.debug import add_debugging, merge_communities
@@ -15,8 +17,15 @@ from .base import get_user_and_identity, permissions
 @click.option("--user/--published", "user_call", default=False)
 @click.option("--full-query/--query-filters", default=False)
 @click.option("--merge-communities", "do_merge_communities", is_flag=True)
+@click.option("--json/--yaml", "as_json", default=False)
 def search_permissions(
-    user_id_or_email, service_name, explain, user_call, full_query, do_merge_communities
+    user_id_or_email,
+    service_name,
+    explain,
+    user_call,
+    full_query,
+    do_merge_communities,
+    as_json,
 ):
     """Get search parameters for a given service."""
     service = current_service_registry.get(service_name)
@@ -56,7 +65,7 @@ def search_permissions(
         ret = {
             "query": ret["query"],
         }
-        print(json.dumps(ret, indent=2))
+        dump_dict(ret, as_json)
     else:
 
         over = {}
@@ -76,4 +85,32 @@ def search_permissions(
             dict_qf = qf.to_dict()
             if explain:
                 dict_qf = merge_communities(dict_qf)
+            dump_dict(dict_qf, as_json)
             print(json.dumps(dict_qf, indent=2))
+
+
+def merge_name(d):
+    if isinstance(d, list):
+        return [merge_name(x) for x in d]
+    if isinstance(d, dict):
+        ret = {}
+        for k, v in d.items():
+            v = merge_name(v)
+            if isinstance(v, dict) and "_name" in v:
+                _name = v.pop("_name")
+                _name = _name.split("@")[0].strip()
+                k = f"{k}[{_name}]"
+            ret[k] = v
+        return ret
+    return d
+
+
+def dump_dict(d, as_json=False):
+    if as_json:
+        print(json.dumps(d, indent=2))
+    else:
+        yaml.safe_dump(
+            merge_name(json.loads(json.dumps(d))),
+            sys.stdout,
+            default_flow_style=False,
+        )
