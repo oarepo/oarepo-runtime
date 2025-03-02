@@ -1,15 +1,12 @@
 import json
 
 import click
-from flask import current_app
-from flask_principal import Identity, identity_loaded
-from invenio_access.models import User
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime.info.permissions.debug import add_debugging
 
-from .base import permissions
+from .base import get_user_and_identity, permissions
 
 
 @permissions.command(name="evaluate")
@@ -18,33 +15,24 @@ from .base import permissions
 @click.argument("record_id", required=False)
 @click.option("--data", "-d", help="Data to pass to the policy check")
 @click.option("--explain/--no-explain", default=False)
+@click.option("--draft/--published", default=False)
 def evaluate_permissions(
     user_id_or_email: str,
     service_name: str,
     record_id: str | None = None,
     data: str | None = None,
     explain: bool = False,
+    draft: bool = False,
 ):
     """Evaluate permissions for a given workflow, community or service."""
     service = current_service_registry.get(service_name)
-
-    try:
-        user_id = int(user_id_or_email)
-        user = User.query.filter_by(id=user_id).one()
-    except ValueError:
-        user = User.query.filter_by(email=user_id_or_email).one()
-
-    identity = Identity(user.id)
-    api_app = current_app.wsgi_app.mounts["/api"]
-    with api_app.app_context():
-        with current_app.test_request_context("/api"):
-            identity_loaded.send(api_app, identity=identity)
+    user, identity = get_user_and_identity(user_id_or_email)
 
     over = {}
     if record_id:
-        try:
+        if draft:
             over["record"] = service.config.draft_cls.pid.resolve(record_id)
-        except:
+        else:
             over["record"] = service.config.record_cls.pid.resolve(record_id)
     if data:
         over["data"] = json.loads(data)
