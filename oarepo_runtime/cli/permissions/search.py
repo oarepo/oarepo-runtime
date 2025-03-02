@@ -28,7 +28,12 @@ def search_permissions(
     as_json,
 ):
     """Get search parameters for a given service."""
-    service = current_service_registry.get(service_name)
+    try:
+        service = current_service_registry.get(service_name)
+    except KeyError:
+        raise click.UsageError(
+            f"Service {service_name} not found in {current_service_registry._services.keys()}"
+        )
     user, identity = get_user_and_identity(user_id_or_email)
 
     permission_policy = service.config.permission_policy_cls

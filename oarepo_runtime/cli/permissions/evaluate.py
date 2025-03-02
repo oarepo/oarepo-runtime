@@ -31,7 +31,9 @@ def evaluate_permissions(
     over = {}
     if record_id:
         if draft:
-            over["record"] = service.config.draft_cls.pid.resolve(record_id)
+            over["record"] = service.config.draft_cls.pid.resolve(
+                record_id, registered_only=False
+            )
         else:
             over["record"] = service.config.record_cls.pid.resolve(record_id)
     if data:
