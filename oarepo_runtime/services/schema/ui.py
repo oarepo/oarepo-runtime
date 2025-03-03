@@ -18,7 +18,6 @@ from marshmallow_utils.fields import (
     FormatDatetime,
     FormatEDTF,
     FormatTime,
-    NestedAttribute
 )
 from marshmallow_utils.fields.babel import BabelFormatField
 
