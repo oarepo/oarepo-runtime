@@ -4,6 +4,7 @@ from .check import check
 from .configuration import configuration_command
 from .fixtures import fixtures
 from .index import index
+from .permissions import permissions
 from .validate import validate
 
 __all__ = (
@@ -15,4 +16,5 @@ __all__ = (
     "validate",
     "fixtures",
     "configuration_command",
+    "permissions",
 )
