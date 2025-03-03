@@ -21,7 +21,7 @@ class EDTFIntervalDumperExt(SearchDumperExt):
             search_range = {}
             if rec[0]:
                 search_range["gte"] = rec[0]
-            if rec[1]:
+            if len(rec) > 1 and rec[1]:
                 search_range["lte"] = rec[1]
             path[-1].parent_data[path[-1].key] = search_range
         return data
