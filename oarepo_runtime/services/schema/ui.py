@@ -11,6 +11,7 @@ from invenio_rdm_records.records.systemfields.access.field.record import (
 from invenio_rdm_records.resources.serializers.ui.fields import (
     UIObjectAccessStatus as InvenioUIObjectAccessStatus,
 )
+from invenio_rdm_records.services.schemas.versions import VersionsSchema
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
@@ -181,6 +182,7 @@ class AccessStatusField(ma.fields.Field):
 class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
     is_draft = ma.fields.Boolean(dump_only=True)
     access_status = AccessStatusField(attribute="access", dump_only=True)
+    versions = ma.fields.Nested(VersionsSchema, dump_only=True)
 
     def hide_tombstone(self, data):
         """Hide tombstone info if the record isn't deleted and metadata if it is."""
