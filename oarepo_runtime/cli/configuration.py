@@ -1,4 +1,5 @@
 import json
+from collections.abc import Mapping, Sequence, Set
 
 import click
 from flask import current_app
@@ -7,21 +8,28 @@ from werkzeug.local import LocalProxy
 
 from .base import oarepo
 
-def create_config_dict(config):
-    """Recursively create configuration dict without LocalProxies inside."""
-    result = {}
-    for k, v in config.items():
-        if isinstance(v, dict):
-            result[k] = create_config_dict(v)
-        elif not isinstance(v, LocalProxy):
-            result[k] = v
-    return result
+def remove_lazy_objects(obj):
+    if isinstance(obj, Sequence):
+        if isinstance(obj, list):
+            return [remove_lazy_objects(item) for item in obj if not isinstance(item, LocalProxy)]
+        elif isinstance(obj, tuple):
+            return tuple(remove_lazy_objects(item) for item in obj if not isinstance(item, LocalProxy))
+        elif not isinstance(obj, LocalProxy):
+            return obj # strings, bytes, bytesarray etc.
+    elif isinstance(obj, Set):
+        if isinstance(obj, frozenset):
+            return frozenset(remove_lazy_objects(item) for item in obj if not isinstance(item, LocalProxy))
+        return {remove_lazy_objects(item) for item in obj if not isinstance(item, LocalProxy)}
+    elif isinstance(obj, Mapping):
+        return {k: remove_lazy_objects(v) for k, v in obj.items() if not isinstance(v, LocalProxy)}
+    elif not isinstance(obj, LocalProxy):
+        return obj # everything else that is not localproxy
 
 @oarepo.command(name="configuration")
 @click.argument("output_file", default="-")
 @with_appcontext
 def configuration_command(output_file):
-    configuration = create_config_dict(current_app.config)
+    configuration = remove_lazy_objects(current_app.config)
 
     try:
         invenio_db = current_app.extensions["invenio-db"]
@@ -40,4 +48,4 @@ def configuration_command(output_file):
         )
     else:
         with open(output_file, "w") as f:
-            json.dump(configuration, f, skipkeys=True, ensure_ascii=False, default=lambda x: str(x))
+            json.dump(configuration, f,skipkeys=True, ensure_ascii=False, default=lambda x: str(x))
