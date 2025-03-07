@@ -83,7 +83,12 @@ def test_component_before_all_direct():
 
 def test_component_in_between():
     a = make_component("A")
+    d = make_component("D")
     c = make_component("C")
-    b = make_component("B", affects=[a], depends_on=[c])
-    components = [a, b, c]
-    assert [x.__name__ for x in _sort_components(components)] == ["C", "B", "A"]
+    e = make_component("E")
+    b = make_component("B", affects=[a, d], depends_on=[c, e])
+
+    for left in ((a, d), (d, a)):
+        for right in ((c, e), (e, c)):
+            components = [*left, b, *right]
+            assert _sort_components(components) == [*right, b, *left]
