@@ -32,7 +32,7 @@ class RDMFunderVocabularyUISchema(DictOnlySchema):
 
     name = VocabularyI18nStrUIField()
 
-    identifier = NRIdentifierWithSchemaUISchema()
+    identifier = ma.fields.Nested(RDMIdentifierWithSchemaUISchema())
 
 
 class RDMRoleVocabularyUISchema(DictOnlySchema):
@@ -55,15 +55,15 @@ class RDMAwardVocabularyUISchema(DictOnlySchema):
 
     number = ma.fields.String()
 
-    identifier = ma.fields.List(ma.fields.Nested(NRAwardIdentifierUISchema()))
+    identifier = ma.fields.List(ma.fields.Nested(RDMAwardIdentifierUISchema()))
 
     acronym = ma.fields.String()
 
     program = ma.fields.String()
 
-    subjects = ma.fields.List(ma.fields.Nested(NRAwardSubjectsUISchema()))
+    subjects = ma.fields.List(ma.fields.Nested(RDMAwardSubjectsUISchema()))
 
-    organizations = ma.fields.List(ma.fields.Nested(NRAwardOrganizationsUISchema()))
+    organizations = ma.fields.List(ma.fields.Nested(RDMAwardOrganizationsUISchema()))
 
 
 class RDMFundersUISchema(ma.Schema):
@@ -71,9 +71,9 @@ class RDMFundersUISchema(ma.Schema):
     class Meta:
         unknown = ma.RAISE
 
-    funder = ma_fields.Nested(lambda: NRFunderVocabularyUISchema())
+    funder = ma_fields.Nested(lambda: RDMFunderVocabularyUISchema())
 
-    award = ma_fields.Nested(lambda: NRAwardVocabularyUISchema())
+    award = ma_fields.Nested(lambda: RDMAwardVocabularyUISchema())
 
 
 class RDMPersonOrOrganizationsUISchema(ma.Schema):
@@ -88,7 +88,7 @@ class RDMPersonOrOrganizationsUISchema(ma.Schema):
 
     family_name = ma.fields.String()
 
-    identifiers = ma.fields.List(ma.fields.Nested(NRIdentifierWithSchemaUISchema()))
+    identifiers = ma.fields.List(ma.fields.Nested(RDMIdentifierWithSchemaUISchema()))
 
 
 class RDMAffiliationsVocabularyUISchema(DictOnlySchema):
@@ -106,8 +106,8 @@ class RDMCreatorsUISchema(ma.Schema):
     class Meta:
         unknown = ma.RAISE
 
-    role = ma.fields.Nested(lambda: NRRoleVocabularyUISchema())
+    role = ma.fields.Nested(lambda: RDMRoleVocabularyUISchema())
 
-    affiliations = ma.fields.List(ma_fields.Nested(lambda: NRAffiliationsVocabularyUISchema()))
+    affiliations = ma.fields.List(ma_fields.Nested(lambda: RDMAffiliationsVocabularyUISchema()))
 
-    person_or_org = ma_fields.Nested(NRPersonOrOrganizationsUISchema())
+    person_or_org = ma_fields.Nested(RDMPersonOrOrganizationsUISchema())
