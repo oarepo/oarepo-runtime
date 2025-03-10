@@ -23,7 +23,7 @@ class MultilingualAwardSchema(AwardRelationSchema):
     @pre_load()
     def convert_to_multilingual(self, data, many, **kwargs):
         if "title" in data:
-            lang = get_locale
+            lang = get_locale()
             data["title"] = {lang: data["title"]}
         return data
 

@@ -1,28 +1,28 @@
 import marshmallow as ma
 from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
 
-class NRIdentifierWithSchemaUISchema(ma.Schema):
+class RDMIdentifierWithSchemaUISchema(ma.Schema):
     scheme = ma.fields.String(
         required=True,
     )
     identifier = ma.fields.String(required=True)
 
-class NRAwardIdentifierUISchema(ma.Schema):
+class RDMAwardIdentifierUISchema(ma.Schema):
     identifier = ma.fields.String()
 
-class NRAwardSubjectsUISchema(ma.Schema):
+class RDMAwardSubjectsUISchema(ma.Schema):
     _id = ma.fields.String(data_key="id")
 
     subject = ma.fields.String()
 
-class NRAwardOrganizationsUISchema(ma.Schema):
+class RDMAwardOrganizationsUISchema(ma.Schema):
     schema = ma.fields.String()
 
     _id = ma.fields.String(data_key="id")
 
     organization = ma.fields.String()
 
-class NRFunderVocabularyUISchema(DictOnlySchema):
+class RDMFunderVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -35,7 +35,7 @@ class NRFunderVocabularyUISchema(DictOnlySchema):
     identifier = NRIdentifierWithSchemaUISchema()
 
 
-class NRRoleVocabularyUISchema(DictOnlySchema):
+class RDMRoleVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -43,7 +43,7 @@ class NRRoleVocabularyUISchema(DictOnlySchema):
 
     _version = String(data_key="@v", attribute="@v")
 
-class NRAwardVocabularyUISchema(DictOnlySchema):
+class RDMAwardVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -66,7 +66,7 @@ class NRAwardVocabularyUISchema(DictOnlySchema):
     organizations = ma.fields.List(ma.fields.Nested(NRAwardOrganizationsUISchema()))
 
 
-class NRFundersUISchema(ma.Schema):
+class RDMFundersUISchema(ma.Schema):
     """Funding ui schema."""
     class Meta:
         unknown = ma.RAISE
@@ -76,7 +76,7 @@ class NRFundersUISchema(ma.Schema):
     award = ma_fields.Nested(lambda: NRAwardVocabularyUISchema())
 
 
-class NRPersonOrOrganizationsUISchema(ma.Schema):
+class RDMPersonOrOrganizationsUISchema(ma.Schema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -91,7 +91,7 @@ class NRPersonOrOrganizationsUISchema(ma.Schema):
     identifiers = ma.fields.List(ma.fields.Nested(NRIdentifierWithSchemaUISchema()))
 
 
-class NRAffiliationsVocabularyUISchema(DictOnlySchema):
+class RDMAffiliationsVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -101,7 +101,7 @@ class NRAffiliationsVocabularyUISchema(DictOnlySchema):
 
     name = VocabularyI18nStrUIField()
 
-class NRCreatorsUISchema(ma.Schema):
+class RDMCreatorsUISchema(ma.Schema):
     """Funding ui schema."""
     class Meta:
         unknown = ma.RAISE
