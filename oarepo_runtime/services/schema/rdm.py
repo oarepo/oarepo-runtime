@@ -31,5 +31,5 @@ class MultilingualAwardSchema(AwardRelationSchema):
 class FundingSchema(ma.Schema):
     """Funding schema."""
 
-    funder = fields.Nested(FunderRelationSchema, required=True)
-    award = fields.Nested(MultilingualAwardSchema)
+    funder = ma_fields.Nested(FunderRelationSchema, required=True)
+    award = ma_fields.Nested(MultilingualAwardSchema)
