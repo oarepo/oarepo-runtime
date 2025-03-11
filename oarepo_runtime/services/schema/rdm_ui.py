@@ -1,5 +1,6 @@
 import marshmallow as ma
 from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
+from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
 
 class RDMIdentifierWithSchemaUISchema(ma.Schema):
     scheme = ma.fields.String(
@@ -39,17 +40,17 @@ class RDMRoleVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
-    _id = String(data_key="id", attribute="id")
+    _id = ma.fields.String(data_key="id", attribute="id")
 
-    _version = String(data_key="@v", attribute="@v")
+    _version = ma.fields.String(data_key="@v", attribute="@v")
 
 class RDMAwardVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
-    _id = String(data_key="id", attribute="id")
+    _id = ma.fields.String(data_key="id", attribute="id")
 
-    _version = String(data_key="@v", attribute="@v")
+    _version = ma.fields.String(data_key="@v", attribute="@v")
 
     title = VocabularyI18nStrUIField()
 
@@ -71,9 +72,9 @@ class RDMFundersUISchema(ma.Schema):
     class Meta:
         unknown = ma.RAISE
 
-    funder = ma_fields.Nested(lambda: RDMFunderVocabularyUISchema())
+    funder = ma.fields.Nested(lambda: RDMFunderVocabularyUISchema())
 
-    award = ma_fields.Nested(lambda: RDMAwardVocabularyUISchema())
+    award = ma.fields.Nested(lambda: RDMAwardVocabularyUISchema())
 
 
 class RDMPersonOrOrganizationUISchema(ma.Schema):
@@ -108,6 +109,6 @@ class RDMCreatorsUISchema(ma.Schema):
 
     role = ma.fields.Nested(lambda: RDMRoleVocabularyUISchema())
 
-    affiliations = ma.fields.List(ma_fields.Nested(lambda: RDMAffiliationVocabularyUISchema()))
+    affiliations = ma.fields.List(ma.fields.Nested(lambda: RDMAffiliationVocabularyUISchema()))
 
-    person_or_org = ma_fields.Nested(RDMPersonOrOrganizationUISchema())
+    person_or_org = ma.fields.Nested(RDMPersonOrOrganizationUISchema())
