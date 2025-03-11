@@ -10,12 +10,12 @@ class RDMIdentifierWithSchemaUISchema(ma.Schema):
 class RDMAwardIdentifierUISchema(ma.Schema):
     identifier = ma.fields.String()
 
-class RDMAwardSubjectsUISchema(ma.Schema):
+class RDMAwardSubjectUISchema(ma.Schema):
     _id = ma.fields.String(data_key="id")
 
     subject = ma.fields.String()
 
-class RDMAwardOrganizationsUISchema(ma.Schema):
+class RDMAwardOrganizationUISchema(ma.Schema):
     schema = ma.fields.String()
 
     _id = ma.fields.String(data_key="id")
@@ -61,9 +61,9 @@ class RDMAwardVocabularyUISchema(DictOnlySchema):
 
     program = ma.fields.String()
 
-    subjects = ma.fields.List(ma.fields.Nested(RDMAwardSubjectsUISchema()))
+    subjects = ma.fields.List(ma.fields.Nested(RDMAwardSubjectUISchema()))
 
-    organizations = ma.fields.List(ma.fields.Nested(RDMAwardOrganizationsUISchema()))
+    organizations = ma.fields.List(ma.fields.Nested(RDMAwardOrganizationUISchema()))
 
 
 class RDMFundersUISchema(ma.Schema):
@@ -76,7 +76,7 @@ class RDMFundersUISchema(ma.Schema):
     award = ma_fields.Nested(lambda: RDMAwardVocabularyUISchema())
 
 
-class RDMPersonOrOrganizationsUISchema(ma.Schema):
+class RDMPersonOrOrganizationUISchema(ma.Schema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -91,7 +91,7 @@ class RDMPersonOrOrganizationsUISchema(ma.Schema):
     identifiers = ma.fields.List(ma.fields.Nested(RDMIdentifierWithSchemaUISchema()))
 
 
-class RDMAffiliationsVocabularyUISchema(DictOnlySchema):
+class RDMAffiliationVocabularyUISchema(DictOnlySchema):
     class Meta:
         unknown = ma.INCLUDE
 
@@ -108,6 +108,6 @@ class RDMCreatorsUISchema(ma.Schema):
 
     role = ma.fields.Nested(lambda: RDMRoleVocabularyUISchema())
 
-    affiliations = ma.fields.List(ma_fields.Nested(lambda: RDMAffiliationsVocabularyUISchema()))
+    affiliations = ma.fields.List(ma_fields.Nested(lambda: RDMAffiliationVocabularyUISchema()))
 
-    person_or_org = ma_fields.Nested(RDMPersonOrOrganizationsUISchema())
+    person_or_org = ma_fields.Nested(RDMPersonOrOrganizationUISchema())
