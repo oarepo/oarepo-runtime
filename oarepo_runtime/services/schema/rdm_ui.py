@@ -33,7 +33,7 @@ class RDMFunderVocabularyUISchema(DictOnlySchema):
 
     name = VocabularyI18nStrUIField()
 
-    identifier = ma.fields.Nested(RDMIdentifierWithSchemaUISchema())
+    identifiers = ma.fields.List(ma.fields.Nested(RDMIdentifierWithSchemaUISchema()))
 
 
 class RDMRoleVocabularyUISchema(DictOnlySchema):
