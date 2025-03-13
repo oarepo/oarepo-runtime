@@ -5,22 +5,29 @@ from oarepo_runtime.services.relations.errors import InvalidRelationError
 from .base import Relation, RelationResult
 from .lookup import LookupResult
 
-
 class PIDRelationResult(RelationResult):
     def resolve(self, id_):
         """Resolve the value using the record class."""
         # TODO: handle permissions here !!!!!!
         try:
             pid_field_context = self.field.pid_field
-            if hasattr(pid_field_context, "pid_type"):
-                pid_type = pid_field_context.pid_type
-            else:
+            try:
+                pid_type = getattr(pid_field_context, "pid_type", None)
+            except:
+                pass
+
+            if pid_type is None:
                 pid_field = pid_field_context.field
-                pid_type = (
-                    pid_field._provider.pid_type
-                    if pid_field._provider
-                    else pid_field._pid_type
-                )
+                if pid_field._provider:
+                    if hasattr(pid_field._provider, "pid_type"):
+                        pid_type = pid_field._provider.pid_type
+                    else:
+                        pid_type = self.field.pid_field.record_cls.__name__
+                else:
+                    if hasattr(pid_field, "_pid_type"):
+                        pid_type = pid_field._pid_type
+                    else:
+                        pid_type = self.field.pid_field.record_cls.__name__
         except Exception as e:
             raise InvalidRelationError(
                 f"PID type for field {self.field.key} has not been found or there was an exception accessing it.",
