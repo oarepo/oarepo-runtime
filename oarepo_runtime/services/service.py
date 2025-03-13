@@ -9,7 +9,7 @@ from invenio_records_resources.services import LinksTemplate
 
 
 class SearchAllRecordsService(RDMRecordService):
-    def search_all(
+    def search_all_records(
         self,
         identity,
         params=None,

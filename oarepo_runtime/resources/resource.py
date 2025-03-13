@@ -50,7 +50,7 @@ class BaseRecordResource(RDMRecordResource):
 
         GET /all/records
         """
-        hits = self.service.search_all(
+        hits = self.service.search_all_records(
             identity=g.identity,
             params=resource_requestctx.args,
             search_preference=search_preference(),
