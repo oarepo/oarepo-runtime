@@ -21,7 +21,7 @@ class SearchAllRecordsService(RDMRecordService):
         """Search for drafts records matching the querystring."""
         self.require_permission(
             identity,
-            "search_all",
+            "search_all_records",
             params=params,
             extra_filter=extra_filter,
             **kwargs,

@@ -27,14 +27,13 @@ class BaseRecordResource(RDMRecordResource):
             return f"{route}{self.config.url_prefix}"
 
         routes = self.config.routes
-        url_rules = super().create_url_rules()
+        url_rules = super(RDMRecordResource, self).create_url_rules()
         url_rules += [
             route("DELETE", p(routes["delete-record"]), self.delete_record),
             route("POST", p(routes["restore-record"]), self.restore_record),
             route("POST", p(routes["set-record-quota"]), self.set_record_quota),
             # TODO: move to users?
             route("POST", routes["set-user-quota"], self.set_user_quota),
-            route("GET", p(routes["item-revision-list"]), self.item_revision_list),
             route("GET", s(routes["all-prefix"]), self.search_all_records),
         ]
 
