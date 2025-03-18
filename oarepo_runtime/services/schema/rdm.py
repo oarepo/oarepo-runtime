@@ -10,8 +10,8 @@ from invenio_vocabularies.contrib.awards.schema import AwardRelationSchema
 from invenio_vocabularies.contrib.funders.schema import FunderRelationSchema
 from invenio_i18n.selectors import get_locale
 
-class RDMRecordMixin(ma.Schema):
 
+class RDMRecordMixin(ma.Schema):
     versions = NestedAttribute(VersionsSchema, dump_only=True)
     deletion_status = ma_fields.Nested(DeletionStatusSchema, dump_only=True)
 
@@ -22,7 +22,7 @@ class MultilingualAwardSchema(AwardRelationSchema):
 
     @pre_load()
     def convert_to_multilingual(self, data, many, **kwargs):
-        if "title" in data:
+        if "title" in data and type(data["title"]) is str:
             lang = get_locale()
             data["title"] = {lang: data["title"]}
         return data

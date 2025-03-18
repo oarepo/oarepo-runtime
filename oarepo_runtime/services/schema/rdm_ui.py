@@ -2,19 +2,23 @@ import marshmallow as ma
 from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
 from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
 
+
 class RDMIdentifierWithSchemaUISchema(ma.Schema):
     scheme = ma.fields.String(
         required=True,
     )
     identifier = ma.fields.String(required=True)
 
+
 class RDMAwardIdentifierUISchema(ma.Schema):
     identifier = ma.fields.String()
+
 
 class RDMAwardSubjectUISchema(ma.Schema):
     _id = ma.fields.String(data_key="id")
 
     subject = ma.fields.String()
+
 
 class RDMAwardOrganizationUISchema(ma.Schema):
     schema = ma.fields.String()
@@ -22,6 +26,7 @@ class RDMAwardOrganizationUISchema(ma.Schema):
     _id = ma.fields.String(data_key="id")
 
     organization = ma.fields.String()
+
 
 class RDMFunderVocabularyUISchema(DictOnlySchema):
     class Meta:
@@ -31,7 +36,7 @@ class RDMFunderVocabularyUISchema(DictOnlySchema):
 
     _version = ma.fields.String(data_key="@v", attribute="@v")
 
-    name = VocabularyI18nStrUIField()
+    name = ma.fields.String()
 
     identifiers = ma.fields.List(ma.fields.Nested(RDMIdentifierWithSchemaUISchema()))
 
@@ -43,6 +48,7 @@ class RDMRoleVocabularyUISchema(DictOnlySchema):
     _id = ma.fields.String(data_key="id", attribute="id")
 
     _version = ma.fields.String(data_key="@v", attribute="@v")
+
 
 class RDMAwardVocabularyUISchema(DictOnlySchema):
     class Meta:
@@ -69,6 +75,7 @@ class RDMAwardVocabularyUISchema(DictOnlySchema):
 
 class RDMFundersUISchema(ma.Schema):
     """Funding ui schema."""
+
     class Meta:
         unknown = ma.RAISE
 
@@ -100,15 +107,19 @@ class RDMAffiliationVocabularyUISchema(DictOnlySchema):
 
     _version = ma.fields.String(data_key="@v", attribute="@v")
 
-    name = VocabularyI18nStrUIField()
+    name = ma.fields.String()
+
 
 class RDMCreatorsUISchema(ma.Schema):
     """Funding ui schema."""
+
     class Meta:
         unknown = ma.RAISE
 
     role = ma.fields.Nested(lambda: RDMRoleVocabularyUISchema())
 
-    affiliations = ma.fields.List(ma.fields.Nested(lambda: RDMAffiliationVocabularyUISchema()))
+    affiliations = ma.fields.List(
+        ma.fields.Nested(lambda: RDMAffiliationVocabularyUISchema())
+    )
 
     person_or_org = ma.fields.Nested(RDMPersonOrOrganizationUISchema())
