@@ -1,9 +1,5 @@
 from invenio_access.permissions import system_identity
 from invenio_records_resources.proxies import current_service_registry
-from invenio_requests.proxies import (
-    current_requests_service as current_invenio_requests_service,
-)
-from oarepo_requests.proxies import current_oarepo_requests_service
 
 from oarepo_runtime.datastreams.types import StreamBatch, StreamEntry
 from oarepo_runtime.datastreams.writers import BaseWriter
@@ -30,6 +26,11 @@ class PublishWriter(BaseWriter):
                 self._write_entry(entry)
 
     def _write_entry(self, entry: StreamEntry):
+        from invenio_requests.proxies import (
+            current_requests_service as current_invenio_requests_service,
+        )
+        from oarepo_requests.proxies import current_oarepo_requests_service
+
         draft = self._service.read_draft(self._identity, entry.id)
         request = current_oarepo_requests_service.create(
             identity=self._identity,
