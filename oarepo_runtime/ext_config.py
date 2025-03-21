@@ -9,6 +9,7 @@ from oarepo_runtime.datastreams.writers.attachments_file import AttachmentsFileW
 from oarepo_runtime.datastreams.writers.attachments_service import (
     AttachmentsServiceWriter,
 )
+from oarepo_runtime.datastreams.writers.publish import PublishWriter
 from oarepo_runtime.datastreams.writers.service import ServiceWriter
 from oarepo_runtime.datastreams.writers.yaml import YamlWriter
 from oarepo_runtime.records.entity_resolvers import UserResolver
@@ -50,6 +51,7 @@ DATASTREAMS_WRITERS = {
     "attachments_service": AttachmentsServiceWriter,
     "yaml": YamlWriter,
     "attachments_file": AttachmentsFileWriter,
+    "publish": PublishWriter,
 }
 
 DATASTREAMS_TRANSFORMERS = {}
