@@ -4,9 +4,10 @@ from .base import (
     Relation,
     RelationResult,
     RelationsField,
+    UnstrictRelationResult
 )
 from .internal import InternalRelation
-from .pid_relation import PIDRelation
+from .pid_relation import PIDRelation, UnstrictPIDRelation
 
 __all__ = (
     "Relation",
@@ -16,4 +17,6 @@ __all__ = (
     "RelationsField",
     "InternalRelation",
     "PIDRelation",
+    "UnstrictPIDRelation",
+    "UnstrictRelationResult"
 )
