@@ -173,6 +173,8 @@ class RelationResult:
 
     def resolve(self, id_):
         raise NotImplementedError("Please implement this method in your subclass")
+
+
 class UnstrictRelationResult(RelationResult):
 
     def _resolve_lookup_result(self, relation):
@@ -180,6 +182,8 @@ class UnstrictRelationResult(RelationResult):
             raise InvalidRelationValue(
                 f"Value at path {relation.path} must be dict, found {relation.value}"
             )
+        if "id" not in relation.value:
+            return relation.value
         relation_id = self._lookup_id(relation)
         resolved_object = self.resolve(relation_id, relation.value)
         if not resolved_object:
@@ -197,8 +201,6 @@ class UnstrictRelationResult(RelationResult):
             self._get_dereferenced_value(data, obj, relation)
 
         return data
-
-
 
 
 class Relation:
