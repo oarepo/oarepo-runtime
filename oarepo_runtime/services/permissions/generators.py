@@ -38,6 +38,7 @@ class RecordOwners(Generator):
                 return dsl.Q("terms", **{"parent.access.owned_by.user": users})
             else:
                 return dsl.Q("terms", **{"parent.owners.user": users})
+        return dsl.Q("match_none")
 
 
 class UserWithRole(Generator):
@@ -59,12 +60,12 @@ class UserWithRole(Generator):
 class IfDraftType(ConditionalGenerator):
     def __init__(
         self,
-        draft_types: list[
-            Literal["initial"] | Literal["metadata"] | Literal["new_version"]
-        ]
-        | Literal["initial"]
-        | Literal["metadata"]
-        | Literal["new_version"],
+        draft_types: (
+            list[Literal["initial"] | Literal["metadata"] | Literal["new_version"]]
+            | Literal["initial"]
+            | Literal["metadata"]
+            | Literal["new_version"]
+        ),
         then_=None,
         else_=None,
     ):
