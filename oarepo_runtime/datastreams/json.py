@@ -1,4 +1,4 @@
-from typing import List, Mapping, Union
+from typing import Union
 
-JSON = Union[str, int, float, bool, None, Mapping[str, "JSON"], List["JSON"]]
-JSONObject = Mapping[str, "JSON"]
+JSON = Union[str, int, float, bool, None, dict[str, "JSON"], list["JSON"]]
+JSONObject = dict[str, "JSON"]

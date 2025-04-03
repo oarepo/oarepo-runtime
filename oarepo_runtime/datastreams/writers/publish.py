@@ -8,7 +8,13 @@ from oarepo_runtime.datastreams.writers.utils import record_invenio_exceptions
 
 class PublishWriter(BaseWriter):
     def __init__(
-        self, *, service, request_name="publish_draft", identity=None, **kwargs
+        self,
+        *,
+        service,
+        request_name="publish_draft",
+        identity=None,
+        direct_call=False,
+        **kwargs
     ):
         if isinstance(service, str):
             service = current_service_registry.get(service)
@@ -16,6 +22,7 @@ class PublishWriter(BaseWriter):
         self._service = service
         self._identity = identity or system_identity
         self._request_name = request_name
+        self._direct_call = direct_call
 
     def write(self, batch: StreamBatch) -> StreamBatch:
         for entry in batch.ok_entries:
@@ -26,24 +33,27 @@ class PublishWriter(BaseWriter):
                 self._write_entry(entry)
 
     def _write_entry(self, entry: StreamEntry):
-        from invenio_requests.proxies import (
-            current_requests_service as current_invenio_requests_service,
-        )
-        from oarepo_requests.proxies import current_oarepo_requests_service
+        if self._direct_call:
+            self._service.publish(self._identity, entry.id)
+        else:
+            from invenio_requests.proxies import (
+                current_requests_service as current_invenio_requests_service,
+            )
+            from oarepo_requests.proxies import current_oarepo_requests_service
 
-        draft = self._service.read_draft(self._identity, entry.id)
-        request = current_oarepo_requests_service.create(
-            identity=self._identity,
-            data=None,
-            request_type=self._request_name,
-            topic=draft._record,
-        )
+            draft = self._service.read_draft(self._identity, entry.id)
+            request = current_oarepo_requests_service.create(
+                identity=self._identity,
+                data=None,
+                request_type=self._request_name,
+                topic=draft._record,
+            )
 
-        submit_result = current_invenio_requests_service.execute_action(
-            self._identity, request.id, "submit"
-        )
-        accept_result = current_invenio_requests_service.execute_action(
-            self._identity, request.id, "accept"
-        )
+            submit_result = current_invenio_requests_service.execute_action(
+                self._identity, request.id, "submit"
+            )
+            accept_result = current_invenio_requests_service.execute_action(
+                self._identity, request.id, "accept"
+            )
 
-        self._service.read(self._identity, draft["id"])
+            self._service.read(self._identity, draft["id"])
