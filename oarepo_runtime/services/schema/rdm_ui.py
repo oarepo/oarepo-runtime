@@ -3,6 +3,7 @@ from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
 from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
 from idutils import to_url
 
+
 class RDMIdentifierWithSchemaUISchema(ma.Schema):
     scheme = ma.fields.String(
         required=True,
@@ -58,6 +59,8 @@ class RDMRoleVocabularyUISchema(DictOnlySchema):
     _id = ma.fields.String(data_key="id", attribute="id")
 
     _version = ma.fields.String(data_key="@v", attribute="@v")
+
+    title = VocabularyI18nStrUIField()
 
 
 class RDMAwardVocabularyUISchema(DictOnlySchema):
