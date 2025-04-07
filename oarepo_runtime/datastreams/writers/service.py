@@ -4,7 +4,7 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.uow import UnitOfWork
 
 from ...uow import BulkUnitOfWork
-from ..types import StreamBatch, StreamEntry
+from ..types import StreamBatch, StreamEntry, StreamEntryError
 from . import BaseWriter
 from .utils import record_invenio_exceptions
 
@@ -38,10 +38,26 @@ class ServiceWriter(BaseWriter):
         self._update = update
 
     def _resolve(self, id_):
-        try:
-            return self._service.read(self._identity, id_)
-        except PIDDoesNotExistError:
-            return None
+        if hasattr(self._service, "read_draft"):
+            try:
+                # try to read the draft first
+                return self._service.read_draft(self._identity, id_)
+            except PIDDoesNotExistError:
+                pass
+            try:
+                # if the draft does not exist, read the published record
+                # and create a draft for it
+                rec = self._service.read(self._identity, id_)
+                return self._service.edit(self._identity, id_)
+            except PIDDoesNotExistError:
+                pass
+
+        else:
+            try:
+                return self._service.read(self._identity, id_)
+            except PIDDoesNotExistError:
+                pass
+        return None
 
     def _get_stream_entry_id(self, entry: StreamEntry):
         return entry.id
@@ -92,6 +108,16 @@ class ServiceWriter(BaseWriter):
             stream_entry.id = repository_entry.id
 
             stream_entry.context["revision_id"] = repository_entry._record.revision_id
+            if repository_entry.errors:
+                for err in repository_entry.errors:
+                    field = err.get("field")
+                    messages = err.get("messages")
+                    for message in messages:
+                        stream_entry.errors.append(
+                            StreamEntryError(
+                                code="validation", message=message, location=field
+                            )
+                        )
 
     def try_update(self, entry_id, entry, **service_kwargs):
         current = self._resolve(entry_id)
@@ -99,9 +125,15 @@ class ServiceWriter(BaseWriter):
             updated = dict(current.to_dict(), **entry)
             # might raise exception here but that's ok - we know that the entry
             # exists in db as it was _resolved
-            return self._service.update(
-                self._identity, entry_id, updated, **service_kwargs
-            )
+            if hasattr(self._service, "update_draft"):
+                # try to update draft first
+                return self._service.update_draft(
+                    self._identity, entry_id, updated, **service_kwargs
+                )
+            else:
+                return self._service.update(
+                    self._identity, entry_id, updated, **service_kwargs
+                )
 
     def _delete_entry(self, stream_entry: StreamEntry, uow=None):
         entry_id = self._get_stream_entry_id(stream_entry)
@@ -110,4 +142,25 @@ class ServiceWriter(BaseWriter):
         service_kwargs = {}
         if uow:
             service_kwargs["uow"] = uow
-        self._service.delete(self._identity, entry_id, **service_kwargs)
+        deletion_exceptions = []
+        deletion_tries = 0
+
+        # if the service has drafts, try to delete it first
+        if hasattr(self._service, "delete_draft"):
+            # delete draft
+            deletion_tries += 1
+            try:
+                self._service.delete_draft(self._identity, entry_id, **service_kwargs)
+            except Exception as e:
+                deletion_exceptions.append(e)
+
+        # delete the record if it was published
+        deletion_tries += 1
+        try:
+            self._service.delete(self._identity, entry_id, **service_kwargs)
+        except Exception as e:
+            deletion_exceptions.append(e)
+
+        if len(deletion_exceptions) == deletion_tries:
+            # all deletion attempts failed
+            raise deletion_exceptions[-1]
