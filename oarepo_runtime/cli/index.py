@@ -1,4 +1,5 @@
 import sys
+import traceback
 from io import StringIO
 
 import click
@@ -7,7 +8,6 @@ from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_records_resources.proxies import current_service_registry
 from invenio_search.proxies import current_search
-import traceback
 from werkzeug.utils import ImportStringError, import_string
 
 try:
@@ -157,7 +157,7 @@ def reindex(model, bulk_size, verbose):
                 count += len(bulk) // 2
                 for index_item_result in index_result["items"]:
                     result = index_item_result["index"]
-                    if result["status"] != 200:
+                    if result["status"] not in (200, 201):
                         errors += 1
                         click.secho(
                             f"Error indexing record with id {result['_id']}",
@@ -245,11 +245,9 @@ def users_record_generator(model_class):
     except Exception as e:
         click.secho(f"Could not index {model_class}: {e}", fg="red", file=sys.stderr)
 
-priorities = [
-    'vocabular',
-    'users',
-    'groups'
-]
+
+priorities = ["vocabular", "users", "groups"]
+
 
 def sort_services(services):
     def idx(x):
@@ -257,7 +255,9 @@ def sort_services(services):
             if p in x:
                 return idx, x
         return len(priorities), x
+
     services.sort(key=idx)
     return services
+
 
 RECORD_GENERATORS = {"users": users_record_generator}
