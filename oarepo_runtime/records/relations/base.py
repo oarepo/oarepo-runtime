@@ -47,7 +47,7 @@ class RelationResult:
             )
         relation_id = self._lookup_id(relation)
         resolved_object = self.resolve(relation_id)
-        if not resolved_object:
+        if resolved_object is None:
             raise InvalidRelationValue(f"Could not resolve relation id {relation_id}.")
         return resolved_object
 
