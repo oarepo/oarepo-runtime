@@ -56,4 +56,5 @@ class PublishWriter(BaseWriter):
                 self._identity, request.id, "accept"
             )
 
-            self._service.read(self._identity, draft["id"])
+            data = self._service.read(self._identity, draft["id"])
+            entry.entry = data.to_dict()
