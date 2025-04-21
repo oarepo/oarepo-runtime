@@ -39,7 +39,7 @@ class OaiHarvesterPermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [SystemProcess()]
     can_draft_read_files = [SystemProcess()]
     can_draft_update_files = [SystemProcess()]
-
+    can_draft_delete_files = [SystemProcess()]
 
 
 class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
@@ -76,6 +76,7 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [SystemProcess()]
     can_draft_read_files = [SystemProcess()]
     can_draft_update_files = [SystemProcess()]
+    can_draft_delete_files = [SystemProcess()]
 
     can_add_community = [SystemProcess()]
     can_remove_community = [SystemProcess()]
@@ -83,7 +84,6 @@ class ReadOnlyPermissionPolicy(RecordPermissionPolicy):
     can_read_deleted = [SystemProcess()]
     can_manage_record_access = [SystemProcess()]
     can_lift_embargo = [SystemProcess()]
-
 
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):
@@ -120,6 +120,7 @@ class EveryonePermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [SystemProcess(), AnyUser()]
     can_draft_read_files = [SystemProcess(), AnyUser()]
     can_draft_update_files = [SystemProcess(), AnyUser()]
+    can_draft_delete_files = [SystemProcess(), AnyUser()]
 
     can_add_community = [SystemProcess(), AnyUser()]
     can_remove_community = [SystemProcess(), AnyUser()]
@@ -148,6 +149,7 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_update_files = [SystemProcess(), AuthenticatedUser()]
     can_list_files = [SystemProcess(), AuthenticatedUser()]
     can_manage_files = [SystemProcess(), AuthenticatedUser()]
+    can_delete_files = [SystemProcess(), AuthenticatedUser()]
 
     can_edit = [SystemProcess(), AuthenticatedUser()]
     can_new_version = [SystemProcess(), AuthenticatedUser()]
@@ -163,10 +165,10 @@ class AuthenticatedPermissionPolicy(RecordPermissionPolicy):
     can_draft_commit_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_read_files = [SystemProcess(), AuthenticatedUser()]
     can_draft_update_files = [SystemProcess(), AuthenticatedUser()]
+    can_draft_delete_files = [SystemProcess(), AuthenticatedUser()]
 
     can_add_community = [SystemProcess(), AuthenticatedUser()]
     can_remove_community = [SystemProcess(), AuthenticatedUser()]
 
-    can_delete_files = [SystemProcess(), AuthenticatedUser()]
     can_manage_record_access = [SystemProcess(), AuthenticatedUser()]
     can_lift_embargo = [SystemProcess(), AuthenticatedUser()]
