@@ -12,11 +12,6 @@ from invenio_i18n import gettext as _
 
 def validate_identifier(value):
     try:
-        if value["scheme"].lower() == "isbn":
-            canonical_isbn = canonical(value["identifier"])
-            value["identifier"] = mask(canonical_isbn)
-            return value["identifier"]
-
         original_identifier = (value["identifier"] or '').strip()
         normalized_identifier = normalize_pid(
             value["identifier"], value["scheme"].lower()
@@ -25,6 +20,15 @@ def validate_identifier(value):
             # the normalize_pid library has problems with isbn - does not raise an exception
             # but returns an empty string
             raise ValueError()
+        
+        # normalized_pid is changing from 10 length ISBN to 13 length ISBN
+        if value["scheme"].lower() == "isbn":    
+            canonical_isbn = canonical(value["identifier"])
+            if original_identifier and not canonical_isbn:  # just check in case it returns empty string
+                raise ValueError() 
+            value["identifier"] = mask(canonical_isbn)
+            return value
+
         value["identifier"] = normalized_identifier
     except:
         raise ValidationError({
