@@ -206,7 +206,16 @@ def generate_bulk_data(record_generator, record_indexer, bulk_size):
             index = record_indexer.record_to_index(record)
             body = record_indexer._prepare_record(record, index)
             index = record_indexer._prepare_index(index)
-            data.append({"index": {"_index": index, "_id": body["uuid"]}})
+            data.append(
+                {
+                    "index": {
+                        "_index": index,
+                        "version": record.revision_id,
+                        "version_type": "external_gte",
+                        "_id": body["uuid"],
+                    }
+                }
+            )
             data.append(body)
             if len(data) >= bulk_size:
                 yield data

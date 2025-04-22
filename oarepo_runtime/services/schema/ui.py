@@ -2,6 +2,9 @@ import datetime
 import re
 
 import marshmallow as ma
+from marshmallow.fields import Dict, Nested
+from marshmallow_utils.fields import SanitizedUnicode
+from invenio_rdm_records.services.schemas.pids import PIDSchema
 from babel.dates import format_date
 from babel_edtf import format_edtf
 from flask import current_app
@@ -19,12 +22,16 @@ from marshmallow_utils.fields import (
     FormatEDTF,
     FormatTime,
 )
+from invenio_rdm_records.services.schemas.parent import RDMParentSchema
 from marshmallow_utils.fields.babel import BabelFormatField
 
 from oarepo_runtime.i18n import gettext
 from oarepo_runtime.i18n import lazy_gettext as _
 
 from .marshmallow import RDMBaseRecordSchema
+
+from invenio_rdm_records.services.schemas.record import validate_scheme
+from idutils import to_url
 
 
 def current_default_locale():
@@ -179,10 +186,44 @@ class AccessStatusField(ma.fields.Field):
             }
 
 
+# to be able to have access to entire pids object
+class PIDsField(Dict):
+    """Custom Dict field for PIDs that adds URLs after serialization."""
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        """Serialize the PIDs and add URLs to them."""
+        serialized = super()._serialize(value, attr, obj, **kwargs)
+
+        if serialized:
+            for scheme, pid in serialized.items():
+                if scheme and pid and isinstance(pid, dict) and pid.get("identifier"):
+                    url = to_url(pid["identifier"], scheme.lower(), url_scheme="https")
+                    if url:
+                        pid["url"] = url
+
+        return serialized
+
+
+class InvenioRDMParentUISchema(RDMParentSchema):
+    """Parent schema."""
+
+    pids = PIDsField(
+        keys=SanitizedUnicode(validate=validate_scheme),
+        values=Nested(PIDSchema),
+    )
+
+
 class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
+    """RDM UI schema."""
+
     is_draft = ma.fields.Boolean(dump_only=True)
     access_status = AccessStatusField(attribute="access", dump_only=True)
     versions = ma.fields.Nested(VersionsSchema, dump_only=True)
+    pids = PIDsField(
+        keys=SanitizedUnicode(validate=validate_scheme),
+        values=Nested(PIDSchema),
+    )
+    parent = ma.fields.Nested(InvenioRDMParentUISchema)
 
     def hide_tombstone(self, data):
         """Hide tombstone info if the record isn't deleted and metadata if it is."""
