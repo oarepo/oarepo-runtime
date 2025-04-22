@@ -11,10 +11,10 @@ class ExportableResponseHandler(ResponseHandler):
 
 class OAIExportableResponseHandler(ExportableResponseHandler):
 
-    def __init__(self, serializer, export_code, name, oai_code, oai_schema, oai_namespace, oai_serializer, headers=None):
+    def __init__(self, serializer, export_code, name, oai_metadata_prefix, oai_schema, oai_namespace,
+                 headers=None):
         """Constructor."""
-        self.oai_code = oai_code
+        self.oai_metadata_prefix = oai_metadata_prefix
         self.oai_schema = oai_schema
         self.oai_namespace = oai_namespace
-        self.oai_serializer = oai_serializer
         super().__init__(serializer, export_code, name, headers)
