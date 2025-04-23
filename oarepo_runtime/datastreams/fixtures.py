@@ -28,7 +28,7 @@ class FixturesCallback(StatsKeepingDataStreamCallback):
 
 
 def load_fixtures(
-    fixture_dir=None,
+    fixture_dir_or_catalogue=None,
     include=None,
     exclude=None,
     system_fixtures=True,
@@ -54,8 +54,13 @@ def load_fixtures(
     exclude = [re.compile(x) for x in (exclude or [])]
     fixtures = set()
 
-    if fixture_dir:
-        catalogue = DataStreamCatalogue(Path(fixture_dir) / "catalogue.yaml")
+    if fixture_dir_or_catalogue:
+        if Path(fixture_dir_or_catalogue).is_dir():
+            fixture_catalogue = Path(fixture_dir_or_catalogue) / "catalogue.yaml"
+        else:
+            fixture_catalogue = Path(fixture_dir_or_catalogue)
+
+        catalogue = DataStreamCatalogue(fixture_catalogue)
         _load_fixtures_from_catalogue(
             catalogue,
             fixtures,
@@ -201,7 +206,7 @@ def default_config_generator(service_id, use_files=False):
     ]
     if use_files:
         writers.append(
-            {"writer": "attachments_file", "target": f"files"},
+            {"writer": "attachments_file", "target": "files"},
         )
 
     yield service_id, [
@@ -229,11 +234,11 @@ def fixtures_asynchronous_callback(*args, callback, **kwargs):
             )
         else:
             batch = None
-            log.info(f"Fixtures progress: %s", callback)
+            log.info("Fixtures progress: %s", callback)
 
         if "error" in callback:
             log.error(
-                f"Error in loading fixtures: %s\n%s\n%s",
+                "Error in loading fixtures: %s\n%s\n%s",
                 callback,
                 "\n".join(args),
                 "\n".join(f"{kwarg}: {value}" for kwarg, value in kwargs.items()),
@@ -250,11 +255,11 @@ def fixtures_asynchronous_callback(*args, callback, **kwargs):
             for entry in batch.entries:
                 if entry.errors:
                     log.error(
-                        f"Errors in entry %s of batch %s:\npayload %s\n",
+                        "Errors in entry %s of batch %s:\npayload %s\n",
                         entry.seq,
                         batch.seq,
                         entry.entry,
                         "\n".join(str(x) for x in entry.errors),
                     )
-    except Exception as e:
+    except Exception:
         print(f"Error in fixtures callback: {callback=}, {args=}, {kwargs=}")
