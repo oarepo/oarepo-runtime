@@ -2,6 +2,7 @@ from invenio_access.permissions import system_identity
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.uow import UnitOfWork
+from sqlalchemy.exc import NoResultFound
 
 from ...uow import BulkUnitOfWork
 from ..types import StreamBatch, StreamEntry, StreamEntryError
@@ -56,6 +57,9 @@ class ServiceWriter(BaseWriter):
             try:
                 return self._service.read(self._identity, id_)
             except PIDDoesNotExistError:
+                pass
+            except NoResultFound:
+                # vocabularies do not raise a PIDDoesNotExistError, they raise sql exception
                 pass
         return None
 
