@@ -24,7 +24,7 @@ def fixtures():
 
 
 @fixtures.command()
-@click.argument("fixture_dir", required=False)
+@click.argument("fixture_dir_or_catalogue", required=False)
 @click.option("--include", multiple=True)
 @click.option("--exclude", multiple=True)
 @click.option("--system-fixtures/--no-system-fixtures", default=True, is_flag=True)
@@ -43,7 +43,7 @@ def fixtures():
 )
 @with_appcontext
 def load(
-    fixture_dir=None,
+    fixture_dir_or_catalogue=None,
     include=None,
     exclude=None,
     system_fixtures=None,
@@ -61,7 +61,7 @@ def load(
     else:
         callback = fixtures_asynchronous_callback.s()
 
-    if fixture_dir:
+    if fixture_dir_or_catalogue:
         system_fixtures = False
 
     if not identity:
@@ -84,7 +84,7 @@ def load(
 
     with current_app.wsgi_app.mounts["/api"].app_context():
         load_fixtures(
-            fixture_dir,
+            fixture_dir_or_catalogue,
             _make_list(include),
             _make_list(exclude),
             system_fixtures=system_fixtures,
@@ -110,7 +110,12 @@ def dump(fixture_dir, include, exclude, verbose):
     callback = TQDMCallback(verbose=verbose)
 
     with current_app.wsgi_app.mounts["/api"].app_context():
-        dump_fixtures(fixture_dir, _make_list(include), _make_list(exclude))
+        dump_fixtures(
+            fixture_dir,
+            _make_list(include),
+            _make_list(exclude),
+            callback=TQDMCallback(verbose=verbose),
+        )
         _show_stats(callback, "Dump fixtures")
 
 
