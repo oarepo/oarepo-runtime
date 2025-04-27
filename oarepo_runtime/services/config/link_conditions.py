@@ -7,10 +7,10 @@ from invenio_records.api import RecordBase
 from invenio_records_resources.records.api import FileRecord, Record
 
 from ...datastreams.utils import (
-    get_file_service_for_file_record_class,
     get_file_service_for_record_class,
     get_record_service_for_record,
 )
+from ...records.drafts import get_draft
 
 log = getLogger(__name__)
 
@@ -74,6 +74,25 @@ class has_permission(Condition):
             )
         except Exception as e:
             log.exception(f"Unexpected exception {e}.")
+
+
+class has_draft_permission(Condition):
+    def __init__(self, action_name):
+        self.action_name = action_name
+
+    def __call__(self, obj: RecordBase, ctx: dict):
+        draft_record = get_draft(obj)
+        if not draft_record:
+            return False
+        ctx["draft_record"] = draft_record
+        service = get_record_service_for_record(obj)
+        try:
+            return service.check_permission(
+                action_name=self.action_name, record=draft_record, **ctx
+            )
+        except Exception as e:
+            log.exception(f"Unexpected exception {e}.")
+            return False
 
 
 class has_file_permission(has_permission):
