@@ -2,36 +2,35 @@ import datetime
 import re
 
 import marshmallow as ma
-from marshmallow.fields import Dict, Nested
-from marshmallow_utils.fields import SanitizedUnicode
-from invenio_rdm_records.services.schemas.pids import PIDSchema
 from babel.dates import format_date
 from babel_edtf import format_edtf
 from flask import current_app
+from idutils import to_url
 from invenio_rdm_records.records.systemfields.access.field.record import (
     AccessStatusEnum,
 )
 from invenio_rdm_records.resources.serializers.ui.fields import (
     UIObjectAccessStatus as InvenioUIObjectAccessStatus,
 )
+from invenio_rdm_records.services.schemas.parent import RDMParentSchema
+from invenio_rdm_records.services.schemas.pids import PIDSchema
+from invenio_rdm_records.services.schemas.record import validate_scheme
 from invenio_rdm_records.services.schemas.versions import VersionsSchema
+from marshmallow.fields import Dict, Nested
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
     FormatDatetime,
     FormatEDTF,
     FormatTime,
+    SanitizedUnicode,
 )
-from invenio_rdm_records.services.schemas.parent import RDMParentSchema
 from marshmallow_utils.fields.babel import BabelFormatField
 
 from oarepo_runtime.i18n import gettext
 from oarepo_runtime.i18n import lazy_gettext as _
 
 from .marshmallow import RDMBaseRecordSchema
-
-from invenio_rdm_records.services.schemas.record import validate_scheme
-from idutils import to_url
 
 
 def current_default_locale():
@@ -54,6 +53,15 @@ class LocalizedMixin:
             if "locale" in self.context:
                 return self.context["locale"]
         return current_default_locale()
+
+    def format_value(self, value):
+        """Format the value, gracefully handling exceptions."""
+        try:
+            return super().format_value(value)
+        except Exception as e:
+            # Handle the exception gracefully
+            current_app.logger.error(f"Error formatting value '{value}': {e}")
+            return f"«Error formatting value '{value}'»"
 
 
 # localized date field
