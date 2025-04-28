@@ -15,11 +15,7 @@ class DraftLink(RecordLink):
         """Variables for the URI template."""
         # Some records don't have record.pid.pid_value yet (e.g. drafts)
         RecordLink.vars(record, vars)
-        if "draft_record" not in vars:
-            draft_record = get_draft(record)
-            vars["draft_record"] = draft_record
-        else:
-            draft_record = vars["draft_record"]
+        draft_record = get_draft(record)
 
         if draft_record:
             pid_value = getattr(draft_record.pid, "pid_value", None)

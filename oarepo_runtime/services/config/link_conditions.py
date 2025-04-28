@@ -84,7 +84,6 @@ class has_draft_permission(Condition):
         draft_record = get_draft(obj)
         if not draft_record:
             return False
-        ctx["draft_record"] = draft_record
         service = get_record_service_for_record(obj)
         try:
             return service.check_permission(
