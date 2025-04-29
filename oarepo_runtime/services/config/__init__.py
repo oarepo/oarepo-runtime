@@ -1,5 +1,7 @@
+from .draft_link import DraftLink
 from .link_conditions import (
     has_draft,
+    has_draft_permission,
     has_file_permission,
     has_permission,
     has_permission_file_service,
@@ -28,4 +30,6 @@ __all__ = (
     "has_permission_file_service",
     "has_file_permission",
     "has_published_record",
+    "has_draft_permission",
+    "DraftLink",
 )
