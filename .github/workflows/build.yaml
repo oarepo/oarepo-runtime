@@ -58,6 +58,7 @@ jobs:
       - name: Runs Opensearch
         uses: ankane/setup-opensearch@v1
         with:
+          opensearch-version: 2
           plugins: analysis-icu
 
       - name: Start Redis
@@ -68,7 +69,6 @@ jobs:
       - name: Run tests
         run: |
           ./run-tests.sh
-      
 
       - name: Build package to publish
         run: |
