@@ -33,7 +33,13 @@ class Condition:
             (Condition,),
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
-
+    
+class to_oarepo_condition(Condition):
+    # wrapper allowing to __and__ or __or__ outside functions with oarepo conditions
+    def __init__(self, condition):
+        self.condition = condition
+    def __call__(self, obj, ctx):
+        return self.condition(obj, ctx)
 
 class is_published_record(Condition):
     """Shortcut for links to determine if record is a published record."""
