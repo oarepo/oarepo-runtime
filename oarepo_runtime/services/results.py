@@ -106,13 +106,14 @@ class RecordList(BaseRecordList):
         for hit in self._results:
             # Load dump
             hit_dict = hit.to_dict()
-            if hit_dict.get("record_status") == "draft":
-                record = self._service.draft_cls.loads(hit_dict)
-            else:
-                record = self._service.record_cls.loads(hit_dict)
 
-            # Project the record
             try:
+                # Project the record
+                if hit_dict.get("record_status") == "draft":
+                    record = self._service.draft_cls.loads(hit_dict)
+                else:
+                    record = self._service.record_cls.loads(hit_dict)
+
                 projection = self._schema.dump(
                     record,
                     context=dict(
@@ -138,10 +139,10 @@ class RecordList(BaseRecordList):
                         expand=self._expand,
                     )
                 yield projection
-            except Exception:
+            except Exception as e:
                 # ignore record with error, put it to log so that it gets to glitchtip
                 # but don't break the whole search
-                log.exception("Error while dumping record %s", hit.id)
+                log.exception("Error while dumping record %s", hit_dict, exc_info=e)
 
 
 class ArrayRecordItem(RecordItem):
