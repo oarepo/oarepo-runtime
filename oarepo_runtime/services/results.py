@@ -139,10 +139,10 @@ class RecordList(BaseRecordList):
                         expand=self._expand,
                     )
                 yield projection
-            except Exception as e:
+            except Exception:
                 # ignore record with error, put it to log so that it gets to glitchtip
                 # but don't break the whole search
-                log.exception("Error while dumping record %s", hit_dict, exc_info=e)
+                log.exception("Error while dumping record %s", hit_dict)
 
 
 class ArrayRecordItem(RecordItem):
