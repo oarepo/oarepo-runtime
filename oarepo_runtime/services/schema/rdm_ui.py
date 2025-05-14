@@ -21,7 +21,7 @@ class RDMIdentifierWithSchemaUISchema(ma.Schema):
                 )
                 if url:
                     value["url"] = url
-        except:
+        except Exception:
             pass
         return value
 
