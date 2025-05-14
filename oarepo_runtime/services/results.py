@@ -1,3 +1,5 @@
+import logging
+
 from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
@@ -5,6 +7,8 @@ from invenio_records_resources.services.records.results import (
 from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
+
+log = logging.getLogger(__name__)
 
 
 class ResultsComponent:
@@ -44,14 +48,12 @@ class RecordItem(BaseRecordItem):
 
 
 def postprocess_error_messages(field_path: str, messages: any):
-    """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio.
-
-    """
+    """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
     if not isinstance(messages, list):
         yield {"field": field_path, "messages": messages}
     else:
-        str_messages = [ msg for msg in messages if isinstance(msg, str) ]
-        non_str_messages = [ msg for msg in messages if not isinstance(msg, str) ]
+        str_messages = [msg for msg in messages if isinstance(msg, str)]
+        non_str_messages = [msg for msg in messages if not isinstance(msg, str)]
 
         if str_messages:
             yield {"field": field_path, "messages": str_messages}
@@ -65,10 +67,13 @@ def postprocess_errors(errors: list[dict]):
     converted_errors = []
     for error in errors:
         if error.get("messages"):
-            converted_errors.extend(postprocess_error_messages(error["field"], error["messages"]))
+            converted_errors.extend(
+                postprocess_error_messages(error["field"], error["messages"])
+            )
         else:
             converted_errors.append(error)
     return converted_errors
+
 
 class RecordList(BaseRecordList):
     components = []
@@ -101,37 +106,43 @@ class RecordList(BaseRecordList):
         for hit in self._results:
             # Load dump
             hit_dict = hit.to_dict()
-            if hit_dict.get("record_status") == "draft":
-                record = self._service.draft_cls.loads(hit_dict)
-            else:
-                record = self._service.record_cls.loads(hit_dict)
 
-            # Project the record
-            projection = self._schema.dump(
-                record,
-                context=dict(
-                    identity=self._identity,
-                    record=record,
-                ),
-            )
-            if hasattr(self._service.config, "links_search_item"):
-                links_tpl = self._service.config.search_item_links_template(
-                    self._service.config.links_search_item
+            try:
+                # Project the record
+                if hit_dict.get("record_status") == "draft":
+                    record = self._service.draft_cls.loads(hit_dict)
+                else:
+                    record = self._service.record_cls.loads(hit_dict)
+
+                projection = self._schema.dump(
+                    record,
+                    context=dict(
+                        identity=self._identity,
+                        record=record,
+                    ),
                 )
-                projection["links"] = links_tpl.expand(self._identity, record)
-            elif self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(
-                    self._identity, record
-                )
-            # todo optimization viz FieldsResolver
-            for c in self.components:
-                c.update_data(
-                    identity=self._identity,
-                    record=record,
-                    projection=projection,
-                    expand=self._expand,
-                )
-            yield projection
+                if hasattr(self._service.config, "links_search_item"):
+                    links_tpl = self._service.config.search_item_links_template(
+                        self._service.config.links_search_item
+                    )
+                    projection["links"] = links_tpl.expand(self._identity, record)
+                elif self._links_item_tpl:
+                    projection["links"] = self._links_item_tpl.expand(
+                        self._identity, record
+                    )
+                # todo optimization viz FieldsResolver
+                for c in self.components:
+                    c.update_data(
+                        identity=self._identity,
+                        record=record,
+                        projection=projection,
+                        expand=self._expand,
+                    )
+                yield projection
+            except Exception:
+                # ignore record with error, put it to log so that it gets to glitchtip
+                # but don't break the whole search
+                log.exception("Error while dumping record %s", hit_dict)
 
 
 class ArrayRecordItem(RecordItem):
