@@ -1,7 +1,8 @@
 import marshmallow as ma
-from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
-from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
 from idutils import to_url
+from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
+
+from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
 
 
 class RDMIdentifierWithSchemaUISchema(ma.Schema):
@@ -12,12 +13,16 @@ class RDMIdentifierWithSchemaUISchema(ma.Schema):
 
     @ma.post_dump
     def add_url(self, value, **kwargs):
-        if "identifier" in value and "scheme" in value:
-            url = to_url(
-                value["identifier"], value["scheme"].lower(), url_scheme="https"
-            )
-            if url:
-                value["url"] = url
+        try:
+            # ignore errors here
+            if "identifier" in value and "scheme" in value:
+                url = to_url(
+                    value["identifier"], value["scheme"].lower(), url_scheme="https"
+                )
+                if url:
+                    value["url"] = url
+        except Exception:
+            pass
         return value
 
 

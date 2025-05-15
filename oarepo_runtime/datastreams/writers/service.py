@@ -64,7 +64,7 @@ class ServiceWriter(BaseWriter):
         return None
 
     def _get_stream_entry_id(self, entry: StreamEntry):
-        return entry.id
+        return entry.id or entry.entry.get("id")
 
     def write(self, batch: StreamBatch):
         """Writes the input entry using the given service."""
