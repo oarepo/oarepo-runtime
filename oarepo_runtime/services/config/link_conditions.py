@@ -34,7 +34,7 @@ class Condition:
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
     
-class to_oarepo_condition(Condition):
+class composite_condition(Condition):
     # wrapper allowing to __and__ or __or__ outside functions with oarepo conditions
     def __init__(self, condition):
         self.condition = condition
