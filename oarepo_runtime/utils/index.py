@@ -9,7 +9,3 @@ def prefixed_index(index):
         ),
         using = current_search_client
     )
-
-def refresh(index):
-    index = prefixed_index(index)
-    index.refresh()
