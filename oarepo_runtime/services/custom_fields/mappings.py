@@ -9,16 +9,15 @@ from invenio_records_resources.services.custom_fields.mappings import (
 )
 from invenio_records_resources.services.records.config import RecordServiceConfig
 from invenio_records_resources.services.records.service import RecordService
-from invenio_search import current_search_client
-from invenio_search.engine import dsl, search
-from invenio_search.utils import build_alias_name
-
+from invenio_search.engine import search
 from deepmerge import always_merger
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 import json
-import os
 
 from pathlib import Path
+
+from oarepo_runtime.utils.index import prefixed_index
+
 
 class Mapping(InvenioMapping):
     @classmethod
@@ -95,21 +94,11 @@ def prepare_cf_index(record_class, config, path=[]):
 
         # upload mapping
         try:
-            record_index = dsl.Index(
-                build_alias_name(
-                    config.record_cls.index._name,
-                ),
-                using=current_search_client,
-            )
+            record_index = prefixed_index(config.record_cls.index)
             update_index(record_index, settings, mapping)
 
             if hasattr(config, "draft_cls"):
-                draft_index = dsl.Index(
-                    build_alias_name(
-                        config.draft_cls.index._name,
-                    ),
-                    using=current_search_client,
-                )
+                draft_index = prefixed_index(config.draft_cls.index)
                 update_index(draft_index, settings, mapping, dynamic_templates)
 
         except search.RequestError as e:
@@ -166,22 +155,12 @@ def prepare_parent_mapping(parent_class, config):
     })
     # upload mapping
     try:
-        record_index = dsl.Index(
-            build_alias_name(
-                config.record_cls.index._name,
-            ),
-            using=current_search_client,
-        )
+        record_index = prefixed_index(config.record_cls.index)
         update_index(record_index, {}, parent_mapping_merged)
 
         if hasattr(config, "draft_cls"):
-            draft_index = dsl.Index(
-                build_alias_name(
-                    config.draft_cls.index._name,
-                ),
-                using=current_search_client,
-            )
-            update_index(record_index, {}, parent_mapping_merged)
+            draft_index = prefixed_index(config.draft_cls.index) # draft index isn't used; this was a bug a suppose
+            update_index(draft_index, {}, parent_mapping_merged)
 
     except search.RequestError as e:
         click.secho("An error occurred while creating parent mapping.", fg="red")
