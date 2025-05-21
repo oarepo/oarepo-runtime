@@ -66,7 +66,7 @@ class PathTraversal:
         root = PathPrefix("", None)
         for path_idx, pth in enumerate(self.paths):
             node = root
-            split_path = pth.split("/")
+            split_path = pth.lstrip("/").split("/")
             for idx, entry in enumerate(split_path):
                 try:
                     node = next(x for x in node.sub_prefixes if x.key == entry)
