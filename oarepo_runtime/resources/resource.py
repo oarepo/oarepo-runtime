@@ -13,6 +13,33 @@ from invenio_records_resources.resources.records.resource import (
 from invenio_records_resources.resources.records.utils import search_preference
 
 
+class SearchAllResourceMixin:
+
+    def create_url_rules(self):
+        """Create the URL rules for the record resource."""
+        rules = super().create_url_rules()
+        rules.append(route("GET", f"/all{self.config.url_prefix}", self.search_all_records))
+        return rules
+
+    @request_extra_args
+    @request_search_args
+    @request_view_args
+    @response_handler(many=True)
+    def search_all_records(self):
+        """Perform a search over all records. Permission generators for search_all_records
+        and read_all_records must be in place and must be used to filter the results so that
+        no information is leaked.
+
+        GET /all/records
+        """
+        hits = self.service.search_all_records(
+            identity=g.identity,
+            params=resource_requestctx.args,
+            search_preference=search_preference(),
+            expand=resource_requestctx.args.get("expand", False),
+        )
+        return hits.to_dict(), 200
+
 class BaseRecordResource(RDMRecordResource):
 
     def create_url_rules(self):
