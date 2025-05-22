@@ -1,5 +1,24 @@
 import json
+from flask_babel import get_locale
 
+from flask import session
+
+def test_multilang_facets(
+    sample_data, client_with_credentials_curator, search_clear
+):
+    res = client_with_credentials_curator.get("/records2/")
+    data = json.loads(res.data.decode("UTF-8"))
+    aggs = data["aggregations"]
+
+    assert "metadata_subjects" in aggs
+    print(aggs["metadata_subjects"])
+    assert get_locale().language == "en"
+
+    assert aggs["metadata_subjects"] == {'buckets': [{'doc_count': 1,
+              'is_selected': False,
+              'key': 'jej',
+              'label': 'jej'}],
+ 'label': 'metadata/subjects.label'}
 
 def test_facets_with_role_facets(
     sample_data, client_with_credentials_curator, search_clear

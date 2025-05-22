@@ -53,3 +53,14 @@ record:
           facet-class: oarepo_runtime.services.facets.year_histogram.YearAutoHistogramFacet
           facet-groups: [ 'default', 'curator' ]
         type: edtf
+      subjects: i18nStr
+
+settings:
+  supported-langs:
+    cs:
+      keyword:
+        type: keyword
+      text:
+        analyzer: czech
+    en:
+      text: {}

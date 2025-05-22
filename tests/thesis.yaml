@@ -63,3 +63,12 @@ profiles:
   - draft
   - files
   - draft_files
+settings:
+  supported-langs:
+    cs:
+      keyword:
+        type: keyword
+      text:
+        analyzer: czech
+    en:
+      text: {}
