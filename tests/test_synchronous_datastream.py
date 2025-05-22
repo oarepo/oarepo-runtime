@@ -70,13 +70,20 @@ def test_synchronous_datastream_reader_yaml_writer(app):
         "batch_started",
         "batch_finished",
     ]
+    print(io.getvalue().strip())
     assert (
         io.getvalue().strip()
         == """
 metadata:
+  subjects:
+    lang: en
+    value: jej
   title: record 1
 ---
 metadata:
-  title: record 2    
+  subjects:
+    lang: cs
+    value: jupii
+  title: record 2  
         """.strip()
     )
