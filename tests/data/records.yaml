@@ -1,5 +1,12 @@
 metadata:
   title: record 1
+  subjects:
+    lang: "en"
+    value: "jej"
+
 ---
 metadata:
   title: record 2
+  subjects:
+    lang: "cs"
+    value: "jupii"

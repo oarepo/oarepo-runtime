@@ -13,7 +13,7 @@ from .max_facet import MaxFacet
 from .nested_facet import NestedLabeledFacet
 from .params import FilteredFacetsParam, GroupedFacetsParam
 from .year_histogram import YearAutoHistogramFacet
-
+from .multilingual_facet import MultilingualFacet
 __all__ = [
     "LabelledValuesTermsFacet",
     "DateFacet",
@@ -29,4 +29,5 @@ __all__ = [
     "GroupedFacetsParam",
     "FilteredFacetsParam",
     "YearAutoHistogramFacet",
+    "MultilingualFacet"
 ]

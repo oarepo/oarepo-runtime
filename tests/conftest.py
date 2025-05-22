@@ -294,13 +294,14 @@ def sample_data(db, app, identity, search_clear, location):
     from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
-
     load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
         titles.add(rec["metadata"]["title"])
     assert titles == {"record 1", "record 2"}
+
+
 
 
 @pytest.fixture()
