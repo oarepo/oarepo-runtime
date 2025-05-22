@@ -17,7 +17,7 @@ fi
 $PYTHON -m venv $BUILDER_VENV
 . $BUILDER_VENV/bin/activate
 pip install -U setuptools pip wheel
-pip install -U oarepo-model-builder oarepo-model-builder-files ~/cesnet/12/oarepo-model-builder-multilingual
+pip install -U oarepo-model-builder oarepo-model-builder-files oarepo-model-builder-multilingual
 
 if test -d records2 ; then
   rm -rf records2
@@ -25,7 +25,7 @@ fi
 
 oarepo-compile-model ./tests/records2.yaml --output-directory records2 --profile record,files -vvv
 
-pip install -U oarepo-model-builder-drafts oarepo-model-builder-drafts-files ~/cesnet/12/oarepo-model-builder-multilingual
+pip install -U oarepo-model-builder-drafts oarepo-model-builder-drafts-files oarepo-model-builder-multilingual
 if test -d thesis ; then
   rm -rf thesis
 fi
