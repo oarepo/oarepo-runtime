@@ -100,10 +100,17 @@ class MultilayerFormatEDTF(BabelFormatField):
             return super().parse(value, **kwargs)
         raise ValueError("Not a valid date")
 
+class TimezoneMixin:
+    @property
+    def tzinfo(self):
+        from oarepo_runtime.ext import timezone
+        try:
+            return timezone.get()
+        except LookupError:
+            return
 
-class LocalizedDateTime(LocalizedMixin, FormatDatetime):
+class LocalizedDateTime(TimezoneMixin, LocalizedMixin, FormatDatetime):
     pass
-
 
 class LocalizedTime(LocalizedMixin, FormatTimeString):
     pass
