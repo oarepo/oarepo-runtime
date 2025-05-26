@@ -12,7 +12,7 @@ from invenio_users_resources.records.api import UserAggregate
 
 timezone = ContextVar('timezone')
 def on_identity_changed(sender, identity):
-    if "timezone" not in session:
+    if "timezone" not in session and "_user_id" in session:
         user = UserAggregate.get_record(session["_user_id"])
         if "timezone" in user.preferences:
             session["timezone"] = user.preferences["timezone"]
