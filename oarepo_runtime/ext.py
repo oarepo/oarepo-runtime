@@ -6,16 +6,22 @@ import oarepo_runtime.cli.cf  # noqa, just to register
 
 from .cli import oarepo as oarepo_cmd
 from .datastreams.ext import OARepoDataStreamsExt
-from contextvars import ContextVar
 from flask import session
 from invenio_users_resources.records.api import UserAggregate
 
-timezone = ContextVar('timezone')
+from .proxies import current_timezone
+
+def set_timezone():
+    from flask import session
+    if "timezone" in session:
+        current_timezone.set(session["timezone"])
+
 def on_identity_changed(sender, identity):
     if "timezone" not in session and "_user_id" in session:
         user = UserAggregate.get_record(session["_user_id"])
         if "timezone" in user.preferences:
             session["timezone"] = user.preferences["timezone"]
+    set_timezone()
 
 class OARepoRuntime(object):
     """OARepo extension of Invenio-Vocabularies."""
@@ -35,11 +41,7 @@ class OARepoRuntime(object):
 
         from flask_principal import identity_changed
         identity_changed.connect(on_identity_changed, self.app)
-        @app.before_request
-        def set_timezone():
-            from flask import session
-            if "timezone" in session:
-                timezone.set(session["timezone"])
+        app.before_request(set_timezone)
 
     @cached_property
     def owner_entity_resolvers(self):
