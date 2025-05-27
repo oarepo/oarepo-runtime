@@ -112,7 +112,7 @@ class TimezoneMixin: #i'm not sure about where this should be used
 class LocalizedDateTime(TimezoneMixin, LocalizedMixin, FormatDatetime):
     pass
 
-class LocalizedTime(TimezoneMixin, LocalizedMixin, FormatTimeString):
+class LocalizedTime(LocalizedMixin, FormatTimeString):
     pass
 
 
