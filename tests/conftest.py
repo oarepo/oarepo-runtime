@@ -34,7 +34,7 @@ from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.info.views import InfoResource, InfoConfig
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
-pytest_plugins = ("celery.contrib.pytest", "pytest_oarepo.fixtures", "pytest_oarepo.users")
+pytest_plugins = ("celery.contrib.pytest", "pytest_oarepo.fixtures", "pytest_oarepo.users", "pytest_oarepo.records")
 
 
 logging.basicConfig(
@@ -73,7 +73,6 @@ class StatusTransformer(BaseTransformer):
 class FailingWriter(BaseWriter):
     def write(self, batch: StreamBatch) -> Union[StreamBatch, None]:
         raise Exception("Failing writer")
-
 
 @pytest.fixture(scope="module")
 def app_config(app_config):

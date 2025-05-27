@@ -110,7 +110,7 @@ def test_localized_edtf():
 
 def test_localized_datetime():
     # current default locale
-    current_timezone.set(pytz.timezone("Europe/London"))
+    current_timezone.set(pytz.timezone("Etc/GMT-2"))
     value = "2000-02-15T12:20:15+02:00"
     assert (
         normalize_whitespace(LocalizedDateTime().format_value(value))
