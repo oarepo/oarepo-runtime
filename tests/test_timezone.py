@@ -14,7 +14,6 @@ def test_ui_serialization(db, users, logged_client, record_factory, location, se
     record = record_factory(users[0].identity)
     african_client = logged_client(users[3])
     mexican_client = logged_client(users[4])
-    ThesisRecord.index.refresh()
     u = african_client.get(f"{BASE_URL}{record['id']}", headers={"Accept": "application/vnd.inveniordm.v1+json"}).json["created"]
     m = mexican_client.get(f"{BASE_URL}{record['id']}", headers={"Accept": "application/vnd.inveniordm.v1+json"}).json["created"]
 
