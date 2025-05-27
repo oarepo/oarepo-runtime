@@ -30,7 +30,7 @@ class SearchAllRecordsService(RDMRecordService):
         params = params or {}
 
         search_opts = (
-            getattr(self.config, "search_all", None) or self.config.search_drafts
+            getattr(self.config, "search_all", None) or self.config.search
         )
 
         search_result = self._search(

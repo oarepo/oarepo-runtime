@@ -12,7 +12,6 @@ from invenio_records_resources.resources.records.resource import (
 )
 from invenio_records_resources.resources.records.utils import search_preference
 
-
 class BaseRecordResource(RDMRecordResource):
 
     def create_url_rules(self):
@@ -29,11 +28,6 @@ class BaseRecordResource(RDMRecordResource):
         routes = self.config.routes
         url_rules = super(RDMRecordResource, self).create_url_rules()
         url_rules += [
-            route("DELETE", p(routes["delete-record"]), self.delete_record),
-            route("POST", p(routes["restore-record"]), self.restore_record),
-            route("POST", p(routes["set-record-quota"]), self.set_record_quota),
-            # TODO: move to users?
-            route("POST", routes["set-user-quota"], self.set_user_quota),
             route("GET", s(routes["all-prefix"]), self.search_all_records),
         ]
 
