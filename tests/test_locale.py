@@ -70,6 +70,16 @@ def test_localized_date_timezone(app):
             "dtm": "Jan 31, 2020, 1:21:00 PM",
         }
 
+        input_data = {"dt": "2020-06-29", "tm": "12:21", "dtm": "2020-06-29T12:21"}
+        assert replace_ws(
+            TestSchema(context={"locale": get_locale()}).dump(input_data)
+        ) == {
+            "dt": "Jun 29, 2020",
+            "tm": "12:21:00 PM",
+            "dtm": "Jun 29, 2020, 2:21:00 PM",
+        }
+
+
 class EnumSchema(ma.Schema):
     e = LocalizedEnum(value_prefix="e.")
 
