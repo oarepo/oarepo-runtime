@@ -34,7 +34,7 @@ from oarepo_runtime.datastreams.fixtures import FixturesCallback
 from oarepo_runtime.info.views import InfoResource, InfoConfig
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
-pytest_plugins = ("celery.contrib.pytest",)
+pytest_plugins = ("celery.contrib.pytest", "pytest_oarepo.fixtures", "pytest_oarepo.users")
 
 
 logging.basicConfig(
@@ -169,22 +169,6 @@ def identity():
 
 
 @pytest.fixture(scope="module")
-def more_identities():
-    """Simple identity to interact with the service."""
-    i2 = Identity(2)
-    i2.provides.add(UserNeed(2))
-    i2.provides.add(any_user)
-    i2.provides.add(authenticated_user)
-
-    i3 = Identity(3)
-    i3.provides.add(UserNeed(3))
-    i3.provides.add(any_user)
-    i3.provides.add(authenticated_user)
-
-    return [i2, i3]
-
-
-@pytest.fixture(scope="module")
 def non_system_identity():
     """Simple identity to interact with the service."""
     i = Identity(1)
@@ -217,27 +201,6 @@ def user(app, db):
 def location(location):
     return location
 """
-
-
-@pytest.fixture()
-def more_users(app, db, user):
-    """Create example user."""
-    with db.session.begin_nested():
-        datastore = app.extensions["security"].datastore
-        user2 = datastore.create_user(
-            email="user_two@cesnet.cz",
-            password=hash_password("password"),
-            active=True,
-        )
-        datastore = app.extensions["security"].datastore
-        user3 = datastore.create_user(
-            email="user_three@cesnet.cz",
-            password=hash_password("password"),
-            active=True,
-        )
-    db.session.commit()
-    return [user, user2, user3]
-
 
 @pytest.fixture()
 def admin_role(app, db):

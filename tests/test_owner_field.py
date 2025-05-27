@@ -56,45 +56,19 @@ def patch_owner_permissions(service, monkeypatch, service_config, owners_permiss
         service_config, "base_permission_policy_cls", owners_permissions
     )
 
-
-@pytest.fixture()
-def client_logged_as(client, more_users):
-    """Logs in a user to the client."""
-
-    def log_user(user_email):
-        """Log the user."""
-        available_users = more_users
-
-        user = next((u for u in available_users if u.email == user_email), None)
-        login_user(user, remember=True)
-        login_user_via_session(client, email=user_email)
-        return client
-
-    return log_user
-
-
-@pytest.fixture()
-def logged_client_request(client_logged_as):
-    def _logged_client_post(user, method, *args, **kwargs):
-        applied_client = client_logged_as(user.email)
-        return getattr(applied_client, method)(*args, **kwargs)
-
-    return _logged_client_post
-
-
-def test_owners(app, service, identity, more_users, more_identities, search_clear):
+def test_owners(app, service, identity, users, search_clear):
     rec = service.create(identity, data={"metadata": {"title": "blah"}})
     assert len(rec._obj.parent.owners.to_dict()) == 1
     assert "owners" not in rec.data["parent"]
     record_id = rec.data["id"]
     updated_rec1 = service.update_draft(
-        more_identities[0], id_=record_id, data={"metadata": {"title": "blahblah"}}
+        users[1].identity, id_=record_id, data={"metadata": {"title": "blahblah"}}
     )
     assert len(updated_rec1._obj.parent.owners.to_dict()) == 2
     updated_read = service.read_draft(identity, id_=record_id)
     assert len(updated_read._obj.parent.owners.to_dict()) == 2
     updated_rec2 = service.update_draft(
-        more_identities[0], id_=record_id, data={"metadata": {"title": "blahblah"}}
+        users[1].identity, id_=record_id, data={"metadata": {"title": "blahblah"}}
     )
     assert len(updated_rec2._obj.parent.owners.to_dict()) == 2
     # publish
@@ -111,10 +85,10 @@ def test_owners(app, service, identity, more_users, more_identities, search_clea
     publish_res = service.publish(system_identity, id_=record_id)
     published = service.read(identity, id_=record_id)
     assert len(published._obj.parent.owners.to_dict()) == 2
-    updated_rec = service.new_version(more_identities[1], id_=record_id)
+    updated_rec = service.new_version(users[2].identity, id_=record_id)
     assert len(updated_rec._obj.parent.owners.to_dict()) == 2
     updated_rec = service.update_draft(
-        more_identities[1],
+        users[2].identity,
         id_=updated_rec.data["id"],
         data={"metadata": {"title": "blahblah"}},
     )
@@ -124,13 +98,12 @@ def test_owners(app, service, identity, more_users, more_identities, search_clea
 # it's prob the location fixture doing database problems in debug mode for some reason
 def test_permissions(
     service,
-    more_users,
-    more_identities,
+    users,
     patch_owner_permissions,
     search_clear,
 ):
-    identity1 = more_identities[0]
-    identity2 = more_identities[1]
+    identity1 = users[0].identity
+    identity2 = users[1].identity
 
     rec = service.create(identity1, data={"metadata": {"title": "blah"}})
     id_ = rec.data["id"]
@@ -150,29 +123,24 @@ def test_permissions(
     assert read.data["metadata"]["title"] == "blahblah"
 
 
-def _test_search_mixed(more_users, logged_client_request):
+def _test_search_mixed(users, logged_client):
     BASE_URL = "/thesis/"
-    user1 = more_users[0]
-    user2 = more_users[1]
+    user1_client = logged_client(users[1])
+    user2_client = logged_client(users[2])
 
-    draft1 = logged_client_request(
-        user1,
-        "post",
+    draft1 = user1_client.post(
         BASE_URL,
         json={"metadata": {"title": "draft1-1"}, "files": {"enabled": False}},
     )
-    draft2 = logged_client_request(
-        user1, "post", BASE_URL, json={"metadata": {"title": "draft1-2"}}
+    draft2 = user1_client.post( BASE_URL, json={"metadata": {"title": "draft1-2"}}
     )
-    draft3 = logged_client_request(
-        user2, "post", BASE_URL, json={"metadata": {"title": "draft2-1"}}
+    draft3 = user2_client.post( BASE_URL, json={"metadata": {"title": "draft2-1"}}
     )
-    publish1 = logged_client_request(
-        user1, "post", f"{BASE_URL}{draft1.json['id']}/draft/actions/publish"
+    publish1 = user1_client.post( f"{BASE_URL}{draft1.json['id']}/draft/actions/publish"
     )
     ThesisRecord.index.refresh()
     ThesisDraft.index.refresh()
-    search_2 = logged_client_request(user1, "get", f"/user{BASE_URL}").json["hits"][
+    search_2 = user1_client.get( f"/user{BASE_URL}").json["hits"][
         "hits"
     ]
     assert set([obj["id"] for obj in search_2]) == {
@@ -185,27 +153,21 @@ def _test_search_mixed(more_users, logged_client_request):
     )
 
 
-def test_search_drafts(more_users, logged_client_request, search_clear):
+def test_search_drafts(users, logged_client, search_clear):
     BASE_URL = "/thesis/"
-    user1 = more_users[1]
-    user2 = more_users[2]
+    user1_client = logged_client(users[1])
+    user2_client = logged_client(users[2])
 
-    draft1 = logged_client_request(
-        user1, "post", BASE_URL, json={"metadata": {"title": "draft1-1"}}
-    )
-    draft2 = logged_client_request(
-        user1, "post", BASE_URL, json={"metadata": {"title": "draft1-2"}}
-    )
-    draft3 = logged_client_request(
-        user2, "post", BASE_URL, json={"metadata": {"title": "draft2-1"}}
-    )
+    draft1 = user1_client.post(BASE_URL, json={"metadata": {"title": "draft1-1"}})
+    draft2 = user1_client.post(BASE_URL, json={"metadata": {"title": "draft1-2"}})
+    draft3 = user2_client.post(BASE_URL, json={"metadata": {"title": "draft2-1"}})
 
     def get_ids(result):
         return [x["id"] for x in result["hits"]["hits"]]
 
     ThesisDraft.index.refresh()
-    search_1 = logged_client_request(user1, "get", f"/user{BASE_URL}")
-    search_2 = logged_client_request(user2, "get", f"/user{BASE_URL}")
+    search_1 = user1_client.get( f"/user{BASE_URL}")
+    search_2 = user2_client.get( f"/user{BASE_URL}")
     assert len(search_1.json["hits"]["hits"]) == 2
     search_1_ids = get_ids(search_1.json)
     assert draft1.json["id"] in search_1_ids
@@ -216,11 +178,11 @@ def test_search_drafts(more_users, logged_client_request, search_clear):
     assert draft3.json["id"] in search_2_ids
 
 
-def test_drafts_published_mixed(more_users, logged_client_request, search_clear):
-    _test_search_mixed(more_users, logged_client_request)
+def test_drafts_published_mixed(users, logged_client, search_clear):
+    _test_search_mixed(users, logged_client)
 
 
 def test_drafts_published_mixed_with_permissions(
-    more_users, logged_client_request, patch_owner_permissions, search_clear
+    users, logged_client, patch_owner_permissions, search_clear
 ):
-    _test_search_mixed(more_users, logged_client_request)
+    _test_search_mixed(users, logged_client)

@@ -8,13 +8,13 @@ from .cli import oarepo as oarepo_cmd
 from .datastreams.ext import OARepoDataStreamsExt
 from flask import session
 from invenio_users_resources.records.api import UserAggregate
-
+import pytz
 from .proxies import current_timezone
 
 def set_timezone():
     from flask import session
     if "timezone" in session:
-        current_timezone.set(session["timezone"])
+        current_timezone.set(pytz.timezone(session["timezone"]))
 
 def on_identity_changed(sender, identity):
     if "timezone" not in session and "_user_id" in session:
