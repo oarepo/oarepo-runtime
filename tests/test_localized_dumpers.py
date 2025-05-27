@@ -2,6 +2,7 @@ import datetime
 
 import marshmallow
 
+from oarepo_runtime.proxies import current_timezone
 from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
@@ -9,7 +10,7 @@ from oarepo_runtime.services.schema.ui import (
     LocalizedEDTFInterval,
     LocalizedEnum,
 )
-
+import pytz
 
 def LocalizedSchema(locale, field, **kwargs):
     return type(
@@ -109,6 +110,7 @@ def test_localized_edtf():
 
 def test_localized_datetime():
     # current default locale
+    current_timezone.set(pytz.timezone("Etc/GMT-2"))
     value = "2000-02-15T12:20:15+02:00"
     assert (
         normalize_whitespace(LocalizedDateTime().format_value(value))
