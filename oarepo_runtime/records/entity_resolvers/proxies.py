@@ -1,8 +1,10 @@
-from invenio_pidstore.errors import PIDUnregistered
+from invenio_pidstore.errors import PIDUnregistered, PIDDoesNotExistError
 from invenio_records_resources.references.entity_resolvers.records import (
     RecordProxy as InvenioRecordProxy,
 )
 from sqlalchemy.exc import NoResultFound
+from invenio_access.permissions import system_identity
+from invenio_records_resources.references.entity_resolvers.results import ServiceResultProxy as InvenioServiceResultProxy
 
 
 def set_field(result, resolved_dict, field_name):
@@ -34,6 +36,15 @@ class RecordProxy(InvenioRecordProxy):
                 "title": "Deleted record",
             },
         }
+
+class WithDeletedServiceResultProxy(InvenioServiceResultProxy):
+    """Resolver proxy for a result item entity."""
+
+    def _resolve(self):
+        """Resolve the result item from the proxy's reference dict."""
+        id_ = self._parse_ref_dict_id()
+        # TODO: Make identity customizable
+        return self.service.read(system_identity, id_, include_deleted=True).to_dict()
 
 
 class DraftProxy(RecordProxy):
