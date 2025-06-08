@@ -4,7 +4,7 @@ from oarepo_vocabularies.services.ui_schema import VocabularyI18nStrUIField
 
 from oarepo_runtime.services.schema.marshmallow import DictOnlySchema
 
-from .i18n import MultilingualField
+from .i18n_ui import MultilingualUIField
 
 
 class RDMIdentifierWithSchemaUISchema(ma.Schema):
@@ -153,4 +153,4 @@ class RDMSubjectUISchema(ma.Schema):
 
     _id = ma.fields.String(data_key="id")
 
-    subject = MultilingualField()
+    subject = MultilingualUIField()
