@@ -1,5 +1,6 @@
 from .assets import assets
 from .base import as_command, oarepo
+from .cf import cf
 from .check import check
 from .configuration import configuration_command
 from .fixtures import fixtures
@@ -17,4 +18,5 @@ __all__ = (
     "fixtures",
     "configuration_command",
     "permissions",
+    "cf",
 )
