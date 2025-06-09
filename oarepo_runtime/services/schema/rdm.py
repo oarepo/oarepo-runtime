@@ -15,6 +15,8 @@ from marshmallow_utils.fields import (
 from marshmallow_utils.fields.nestedattr import NestedAttribute
 from marshmallow_utils.schemas.identifier import IdentifierSchema
 
+from .i18n import MultilingualField
+
 
 class RDMRecordMixin(ma.Schema):
     versions = NestedAttribute(VersionsSchema, dump_only=True)
@@ -60,3 +62,14 @@ class RelatedRecordIdentifierField(IdentifierSet):
             *args,
             **kwargs
         )
+
+
+class RDMSubjectSchema(ma.Schema):
+    """Subject ui schema."""
+
+    class Meta:
+        unknown = ma.RAISE
+
+    _id = ma.fields.String(data_key="id")
+
+    subject = MultilingualField()

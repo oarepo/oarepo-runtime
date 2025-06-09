@@ -1,11 +1,32 @@
 from functools import cached_property
 
+import pytz
+from flask import current_app, session
+from invenio_accounts.models import User
 from invenio_base.utils import obj_or_import_string
-
-import oarepo_runtime.cli.cf  # noqa, just to register
 
 from .cli import oarepo as oarepo_cmd
 from .datastreams.ext import OARepoDataStreamsExt
+from .proxies import current_timezone
+
+
+def set_timezone():
+    if "timezone" in session:
+        current_timezone.set(pytz.timezone(session["timezone"]))
+    else:
+        default_user_timezone = current_app.config.get("BABEL_DEFAULT_TIMEZONE")
+        if default_user_timezone:
+            current_timezone.set(pytz.timezone(default_user_timezone))
+        else:
+            current_timezone.set(None)
+
+
+def on_identity_changed(sender, identity):
+    if "timezone" not in session and "_user_id" in session:
+        user = User.query.filter_by(id=session["_user_id"]).first()
+        if user and "timezone" in user.preferences:
+            session["timezone"] = user.preferences["timezone"]
+    set_timezone()
 
 
 class OARepoRuntime(object):
@@ -24,6 +45,11 @@ class OARepoRuntime(object):
         app.extensions["oarepo-datastreams"] = OARepoDataStreamsExt(app)
         app.cli.add_command(oarepo_cmd)
 
+        from flask_principal import identity_changed
+
+        identity_changed.connect(on_identity_changed, self.app)
+        app.before_request(set_timezone)
+
     @cached_property
     def owner_entity_resolvers(self):
         return [
@@ -33,9 +59,10 @@ class OARepoRuntime(object):
     @cached_property
     def rdm_excluded_components(self):
         return [
-            obj_or_import_string(x) for x in self.app.config.get("RDM_EXCLUDED_COMPONENTS", [])
+            obj_or_import_string(x)
+            for x in self.app.config.get("RDM_EXCLUDED_COMPONENTS", [])
         ]
-        
+
     def init_config(self, app):
         """Initialize configuration."""
         from . import ext_config
