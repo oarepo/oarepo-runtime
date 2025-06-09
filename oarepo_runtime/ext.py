@@ -28,12 +28,6 @@ def on_identity_changed(sender, identity):
             session["timezone"] = user.preferences["timezone"]
     set_timezone()
 
-timezone = ContextVar('timezone')
-def on_identity_changed(sender, identity):
-    if "timezone" not in session:
-        user = UserAggregate.get_record(session["_user_id"])
-        if "timezone" in user.preferences:
-            session["timezone"] = user.preferences["timezone"]
 
 class OARepoRuntime(object):
     """OARepo extension of Invenio-Vocabularies."""
