@@ -122,6 +122,7 @@ def app_config(app_config):
     # only API app is running
     app_config["SITE_API_URL"] = "https://127.0.0.1:5000/"
     app_config["SERVER_NAME"] = "127.0.0.1:5000"
+    app_config["PREFERRED_URL_SCHEME"] = "https"
 
     # for ui tests
     app_config["APP_THEME"] = ["semantic-ui"]
