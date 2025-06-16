@@ -37,11 +37,18 @@ class ICUField(MappingSystemFieldMixin, SystemField):
         ret = []
         for l in lookup_key(data, f"{self.source_field}"):
             if isinstance(l.value, str):
+                # take single value as being always the the language provided
                 ret.append(l.value)
             elif isinstance(l.value, dict):
+                # expected to be {"cs": "", "en": ""}
                 val = l.value.get(language)
                 if val:
                     ret.append(val)
+                elif "lang" in l.value:
+                    # for [{"lang": "", "value": ""}, ...] we get each item separately
+                    # that's why we do not iterate over l.value
+                    if l.value["lang"] == language:
+                        ret.append(l.value["value"])
         return ret
 
     def search_dump(self, data, record):
@@ -132,23 +139,24 @@ class ICUSuggestField(ICUField):
         }
 
 
-class ICUSearchField(ICUField):
-    """
-    A field that adds stemming-aware search field
-    """
+class ICUSearchAnalyzerMixin:
 
     default_stemming_analyzers = {
         "stemming_analyzer_cs": {
             "tokenizer": "standard",
-            "filter": ["stemming_filter_cs"],
+            "filter": ["stemming_filter_cs", "lowercase"],
         },
         "stemming_analyzer_en": {
             "tokenizer": "standard",
-            "filter": ["stemming_filter_en"],
+            "filter": ["stemming_filter_en", "lowercase"],
         },
         "ascii_folding_analyzer": {
             "tokenizer": "standard",
-            "filter": ["ascii_folding_filter"],
+            "filter": ["ascii_folding_filter", "lowercase"],
+        },
+        "lowercase_analyzer": {
+            "tokenizer": "standard",
+            "filter": ["lowercase"],
         },
     }
 
@@ -165,6 +173,25 @@ class ICUSearchField(ICUField):
         },
         "ascii_folding_filter": {"type": "asciifolding", "preserve_original": True},
     }
+
+    @property
+    def mapping_settings(self):
+        return {
+            "analysis": {
+                "analyzer": current_app.config.get(
+                    "OAREPO_ICU_SEARCH_ANALYZERS", self.default_stemming_analyzers
+                ),
+                "filter": current_app.config.get(
+                    "OAREPO_ICU_SEARCH_FILTERS", self.default_stemming_filters
+                ),
+            }
+        }
+
+
+class ICUSearchField(ICUSearchAnalyzerMixin, ICUField):
+    """
+    A field that adds stemming-aware search field
+    """
 
     def __init__(self, source_field, key=None):
         super().__init__(source_field=source_field, key=key)
@@ -187,6 +214,11 @@ class ICUSearchField(ICUField):
                                     "analyzer": f"stemming_analyzer_{lang}",
                                     "boost": 0.5,
                                 },
+                                "lowercase": {
+                                    "type": "text",
+                                    "boost": 0.8,
+                                    "analyzer": "lowercase_analyzer",
+                                },
                                 "ascii_folded": {
                                     "type": "text",
                                     "analyzer": "ascii_folding_analyzer",
@@ -200,15 +232,59 @@ class ICUSearchField(ICUField):
             },
         }
 
+    def get_values(self, data, language):
+        return super().get_values(data, language=language)
+
+
+class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
+    """
+    A system field that makes the field searchable in OpenSearch,
+    regardless if it is indexed/analyzed, embedded in Nested or not.
+
+    It creates a top-level mapping field and copies
+    content of {source_field} into it. It also provides the correct mapping
+    for the field based on the current configuration of the application.
+
+    Unlike the ICU, this field is a single-language and the language should
+    be provided when initializing the field.
+    It defaults to the BABEL_DEFAULT_LOCALE if not provided.
+    """
+
+    def __init__(self, *, source_field, key=None, language=None):
+        super().__init__(source_field=source_field, key=key)
+        self.language = language
+
     @property
-    def mapping_settings(self):
-        return {
-            "analysis": {
-                "analyzer": current_app.config.get(
-                    "OAREPO_ICU_SEARCH_ANALYZERS", self.default_stemming_analyzers
-                ),
-                "filter": current_app.config.get(
-                    "OAREPO_ICU_SEARCH_FILTERS", self.default_stemming_filters
-                ),
+    def mapping(self):
+        language = self.language or current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
+        mapping_settings = self.languages.get(language, None)
+        if mapping_settings:
+            mapping_settings = mapping_settings.get("search")
+        if not mapping_settings:
+            mapping_settings = {
+                "type": "text",
+                "boost": 1,
+                "fields": {
+                    "stemmed": {
+                        "type": "text",
+                        "analyzer": f"stemming_analyzer_{language}",
+                        "boost": 0.5,
+                    },
+                    "ascii_folded": {
+                        "type": "text",
+                        "analyzer": "ascii_folding_analyzer",
+                        "boost": 0.3,
+                    },
+                },
             }
-        }
+
+        return {self.attr_name: mapping_settings}
+
+    def search_dump(self, data, record):
+        """Dump custom field."""
+        data[self.attr_name] = self.get_values(data, language=self.language)
+
+    @classmethod
+    def search_load(cls, data, record_cls):
+        """Load custom field."""
+        data.pop(cls.attr_name, None)

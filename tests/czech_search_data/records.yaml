@@ -1,0 +1,21 @@
+metadata:
+  title: prvni
+  extra_title:
+    - lang: cs
+      value: Záznam
+---
+metadata:
+  title: druhy
+  extra_title:
+    - lang: cs
+      value: Více záznamů
+  detail:
+    title: Malý detail
+---
+metadata:
+  title: treti
+  extra_title:
+    - lang: cs
+      value: Něco jiného
+  detail:
+    title: Velký detail
