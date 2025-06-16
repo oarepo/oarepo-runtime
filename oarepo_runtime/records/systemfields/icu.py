@@ -193,8 +193,9 @@ class ICUSearchField(ICUSearchAnalyzerMixin, ICUField):
     A field that adds stemming-aware search field
     """
 
-    def __init__(self, source_field, key=None):
+    def __init__(self, source_field, key=None, boost=1):
         super().__init__(source_field=source_field, key=key)
+        self.boost = boost
 
     @property
     def mapping(self):
@@ -207,22 +208,22 @@ class ICUSearchField(ICUSearchAnalyzerMixin, ICUField):
                         "search",
                         {
                             "type": "text",
-                            "boost": 1,
+                            "boost": 1 * self.boost,
                             "fields": {
                                 "stemmed": {
                                     "type": "text",
                                     "analyzer": f"stemming_analyzer_{lang}",
-                                    "boost": 0.5,
+                                    "boost": 0.5 * self.boost,
                                 },
                                 "lowercase": {
                                     "type": "text",
-                                    "boost": 0.8,
+                                    "boost": 0.8 * self.boost,
                                     "analyzer": "lowercase_analyzer",
                                 },
                                 "ascii_folded": {
                                     "type": "text",
                                     "analyzer": "ascii_folding_analyzer",
-                                    "boost": 0.3,
+                                    "boost": 0.3 * self.boost,
                                 },
                             },
                         },
@@ -250,9 +251,10 @@ class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
     It defaults to the BABEL_DEFAULT_LOCALE if not provided.
     """
 
-    def __init__(self, *, source_field, key=None, language=None):
+    def __init__(self, *, source_field, key=None, language=None, boost=1):
         super().__init__(source_field=source_field, key=key)
         self.language = language
+        self.boost = boost
 
     @property
     def mapping(self):
@@ -263,17 +265,22 @@ class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
         if not mapping_settings:
             mapping_settings = {
                 "type": "text",
-                "boost": 1,
+                "boost": 1 * self.boost,
                 "fields": {
                     "stemmed": {
                         "type": "text",
                         "analyzer": f"stemming_analyzer_{language}",
-                        "boost": 0.5,
+                        "boost": 0.5 * self.boost,
+                    },
+                    "lowercase": {
+                        "type": "text",
+                        "boost": 0.8 * self.boost,
+                        "analyzer": "lowercase_analyzer",
                     },
                     "ascii_folded": {
                         "type": "text",
                         "analyzer": "ascii_folding_analyzer",
-                        "boost": 0.3,
+                        "boost": 0.3 * self.boost,
                     },
                 },
             }
