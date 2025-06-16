@@ -16,10 +16,10 @@ def test_info_endpoint(client_with_credentials_admin, info_blueprint):
         "invenio_version": repository_info["invenio_version"],
         "transfers": ["L", "F", "R", "M"],
         "links": {
-            "self": "http://localhost/.well-known/repository/",
-            "api": "http://localhost/api",
-            "models": "http://localhost/.well-known/repository/models",
-            "requests": "http://localhost/requests/",
+            "self": "https://127.0.0.1:5000/.well-known/repository/",
+            "api": "https://127.0.0.1:5000/api",
+            "models": "https://127.0.0.1:5000/.well-known/repository/models",
+            "requests": "https://127.0.0.1:5000/requests/",
         },
         "features": ["drafts", "requests", "communities"],
     }

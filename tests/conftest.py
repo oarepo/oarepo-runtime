@@ -21,20 +21,25 @@ import pytest
 from flask_principal import Identity, Need, RoleNeed, UserNeed
 from flask_security import login_user
 from flask_security.utils import hash_password
-from flask_webpackext.ext import FlaskWebpackExt
 from invenio_access import ActionUsers, current_access
-from invenio_access.permissions import any_user, authenticated_user, system_process
+from invenio_access.permissions import any_user, system_process
 from invenio_accounts.proxies import current_datastore
 from invenio_accounts.testutils import login_user_via_session
-from invenio_app.factory import create_api as _create_api, create_ui as _create_ui
+from invenio_app.factory import create_api as _create_api
+from invenio_app.factory import create_ui as _create_ui
 from invenio_records_resources.services.custom_fields import KeywordCF
 
 from oarepo_runtime.datastreams import BaseTransformer, BaseWriter, StreamBatch
 from oarepo_runtime.datastreams.fixtures import FixturesCallback
-from oarepo_runtime.info.views import InfoResource, InfoConfig
+from oarepo_runtime.info.views import InfoConfig, InfoResource
 from oarepo_runtime.services.custom_fields.mappings import prepare_cf_indices
 
-pytest_plugins = ("celery.contrib.pytest", "pytest_oarepo.fixtures", "pytest_oarepo.users", "pytest_oarepo.records")
+pytest_plugins = (
+    "celery.contrib.pytest",
+    "pytest_oarepo.fixtures",
+    "pytest_oarepo.users",
+    "pytest_oarepo.records",
+)
 
 
 logging.basicConfig(
@@ -73,6 +78,7 @@ class StatusTransformer(BaseTransformer):
 class FailingWriter(BaseWriter):
     def write(self, batch: StreamBatch) -> Union[StreamBatch, None]:
         raise Exception("Failing writer")
+
 
 @pytest.fixture(scope="module")
 def app_config(app_config):
@@ -114,7 +120,8 @@ def app_config(app_config):
     ]
 
     # only API app is running
-    app_config["SITE_API_URL"] = "http://localhost/"
+    app_config["SITE_API_URL"] = "https://127.0.0.1:5000/"
+    app_config["SERVER_NAME"] = "127.0.0.1:5000"
 
     # for ui tests
     app_config["APP_THEME"] = ["semantic-ui"]
@@ -201,6 +208,7 @@ def location(location):
     return location
 """
 
+
 @pytest.fixture()
 def admin_role(app, db):
     """Create some roles."""
@@ -256,14 +264,13 @@ def sample_data(db, app, identity, search_clear, location):
     from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
+
     load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
     titles = set()
     for rec in current_service.scan(identity):
         titles.add(rec["metadata"]["title"])
     assert titles == {"record 1", "record 2"}
-
-
 
 
 @pytest.fixture()
@@ -280,6 +287,7 @@ def sample_data_system_field(db, app, identity, search_clear, location):
     for rec in current_service.scan(identity):
         titles.add(rec["metadata"]["title"])
     assert titles == {"record 1", "record 2"}
+
 
 @pytest.fixture()
 def info_blueprint(app):
