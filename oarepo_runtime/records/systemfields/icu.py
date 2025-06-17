@@ -1,3 +1,4 @@
+from abc import abstractmethod, abstractproperty
 from functools import cached_property
 from typing import Dict
 
@@ -8,17 +9,16 @@ from oarepo_runtime.records.relations.lookup import lookup_key
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 
 
-class ICUField(MappingSystemFieldMixin, SystemField):
+class ICUBase(MappingSystemFieldMixin, SystemField):
     """
-    A system field that acts as an opensearch "proxy" to another field.
-    It creates a top-level mapping field with the same name and copies
-    content of {another field}.language into {mapping field}.language.
-
-    The language accessor can be modified by overriding get_values method.
+    Base class for ICU system fields.
+    It provides the basic functionality for ICU fields, such as
+    getting the attribute name and handling the key.
     """
 
-    def __init__(self, *, source_field, key=None):
-        super().__init__(key)
+    def __init__(self, source_field=None, key=None):
+        super().__init__(key=key)
+        self._attr_name = key or self.__class__.__name__.lower()
         self.source_field = source_field
 
     @cached_property
@@ -51,6 +51,45 @@ class ICUField(MappingSystemFieldMixin, SystemField):
                         ret.append(l.value["value"])
         return ret
 
+    @abstractproperty
+    def mapping(self):
+        """
+        The mapping for the field. It should return a dictionary with the
+        mapping for the field, based on the current configuration of the application.
+        """
+        raise NotImplementedError("Subclasses must implement the mapping property.")
+
+    @abstractmethod
+    def search_dump(self, data, record):
+        """
+        Dump custom field. This method should be implemented by subclasses
+        to provide the functionality for dumping the field data into the
+        OpenSearch data structure.
+        """
+        raise NotImplementedError("Subclasses must implement the search_dump method.")
+
+    def search_load(self, data, record_cls):
+        """
+        Just remove the field from the data on load.
+        """
+        data.pop(self.attr_name, None)
+
+    def __get__(self, instance, owner):
+        return self
+
+
+class ICUField(ICUBase):
+    """
+    A system field that acts as an opensearch "proxy" to another field.
+    It creates a top-level mapping field with the same name and copies
+    content of {another field}.language into {mapping field}.language.
+
+    The language accessor can be modified by overriding get_values method.
+    """
+
+    def __init__(self, *, source_field, key=None):
+        super().__init__(source_field=source_field, key=key)
+
     def search_dump(self, data, record):
         ret = {}
         for lang in self.languages:
@@ -61,12 +100,6 @@ class ICUField(MappingSystemFieldMixin, SystemField):
                 ret[lang] = r
         if ret:
             data[self.attr_name] = ret
-
-    def search_load(self, data, record_cls):
-        data.pop(self.attr_name, None)
-
-    def __get__(self, instance, owner):
-        return self
 
 
 class ICUSortField(ICUField):
@@ -195,7 +228,10 @@ class ICUSearchAnalyzerMixin:
 
 class ICUSearchField(ICUSearchAnalyzerMixin, ICUField):
     """
-    A field that adds stemming-aware search field
+    A field that adds stemming-aware search field for multilingual data (
+        e.g. data that contains {"cs": "...", "en": "..."}
+        or [{"lang": "cs", "value": "..."}, ...]
+    )
     """
 
     def __init__(self, source_field, key=None, boost=1):
@@ -242,7 +278,25 @@ class ICUSearchField(ICUSearchAnalyzerMixin, ICUField):
         return super().get_values(data, language=language)
 
 
-class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
+class SingleLanguageSearchField(ICUSearchAnalyzerMixin, ICUBase):
+    """
+    A base class for single-language search fields - that is, data contain a text
+    value in a pre-defined, single language.
+    """
+
+    def __init__(self, *, source_field, key=None, language=None, boost=1):
+        super().__init__(source_field=source_field, key=key)
+        self.language = language
+        self.boost = boost
+
+    def search_dump(self, data, record):
+        """Dump custom field."""
+        ret = self.get_values(data, language=self.language)
+        if ret:
+            data[self.attr_name] = ret
+
+
+class FulltextIndexField(SingleLanguageSearchField):
     """
     A system field that makes the field searchable in OpenSearch,
     regardless if it is indexed/analyzed, embedded in Nested or not.
@@ -255,11 +309,6 @@ class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
     be provided when initializing the field.
     It defaults to the BABEL_DEFAULT_LOCALE if not provided.
     """
-
-    def __init__(self, *, source_field, key=None, language=None, boost=1):
-        super().__init__(source_field=source_field, key=key)
-        self.language = language
-        self.boost = boost
 
     @property
     def mapping(self):
@@ -292,18 +341,12 @@ class FulltextIndexField(ICUSearchAnalyzerMixin, ICUField):
 
         return {self.attr_name: mapping_settings}
 
-    def search_dump(self, data, record):
-        """Dump custom field."""
-        ret = self.get_values(data, language=self.language)
-        if ret:
-            data[self.attr_name] = ret
-
     def search_load(self, data, record_cls):
         """Load custom field."""
         data.pop(self.attr_name, None)
 
 
-class TermIndexField(ICUSearchAnalyzerMixin, ICUField):
+class TermIndexField(SingleLanguageSearchField):
     """
     A system field that makes the field searchable in OpenSearch,
     regardless if it is indexed/analyzed, embedded in Nested or not.
@@ -317,11 +360,6 @@ class TermIndexField(ICUSearchAnalyzerMixin, ICUField):
     It defaults to the BABEL_DEFAULT_LOCALE if not provided.
     """
 
-    def __init__(self, *, source_field, key=None, language=None, boost=1):
-        super().__init__(source_field=source_field, key=key)
-        self.language = language
-        self.boost = boost
-
     @property
     def mapping(self):
         mapping_settings = {
@@ -331,13 +369,3 @@ class TermIndexField(ICUSearchAnalyzerMixin, ICUField):
         }
 
         return {self.attr_name: mapping_settings}
-
-    def search_dump(self, data, record):
-        """Dump custom field."""
-        ret = self.get_values(data, language=self.language)
-        if ret:
-            data[self.attr_name] = ret
-
-    def search_load(self, data, record_cls):
-        """Load custom field."""
-        data.pop(self.attr_name, None)
