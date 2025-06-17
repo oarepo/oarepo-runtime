@@ -237,9 +237,13 @@ class DataStreamCallback:
 
     def batch_started(self, batch):
         log.info("Batch started: %s", batch.seq)
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("Content: %s", batch)
 
     def batch_finished(self, batch: StreamBatch):
         log.info("Batch finished: %s", batch.seq)
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("Content: %s", batch)
         for err in batch.errors:
             log.error("Failed batch: %s: %s", err, batch.seq)
         if self.log_error_entry:
