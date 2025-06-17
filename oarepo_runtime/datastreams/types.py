@@ -236,7 +236,7 @@ class DataStreamCallback:
         self.log_error_entry = log_error_entry
 
     def batch_started(self, batch):
-        log.info("Batch started: %s", batch)
+        log.info("Batch started: %s", batch.seq)
 
     def batch_finished(self, batch: StreamBatch):
         log.info("Batch finished: %s", batch.seq)
