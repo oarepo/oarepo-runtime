@@ -4,6 +4,7 @@ from .icu import (
     ICUSearchField,
     ICUSortField,
     ICUSuggestField,
+    TermIndexField,
 )
 from .mapping import MappingSystemFieldMixin, SystemFieldDumperExt
 from .selectors import (
@@ -29,4 +30,5 @@ __all__ = (
     "FirstItemSelector",
     "FilteredSelector",
     "MultiSelector",
+    "TermIndexField",
 )
