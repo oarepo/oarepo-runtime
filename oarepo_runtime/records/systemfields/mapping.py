@@ -16,12 +16,10 @@ class MappingSystemFieldMixin:
     def dynamic_templates(self):
         return []
 
-    @classmethod
-    def search_dump(cls, data, record):
+    def search_dump(self, data, record):
         """Dump custom field."""
 
-    @classmethod
-    def search_load(cls, data, record_cls):
+    def search_load(self, data, record_cls):
         """Load custom field."""
 
 
