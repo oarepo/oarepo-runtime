@@ -155,11 +155,11 @@ class StreamEntry:
     def __str__(self):
         ret = [
             f"Entry #{self.seq}: id {self.id or 'not yet set'}, filtered: {self.filtered}, deleted: {self.deleted}",
-            f"Content:",
+            "Content:",
             textwrap.indent(
                 json.dumps(self.entry, ensure_ascii=False, indent=4), "    "
             ),
-            f"Context:",
+            "Context:",
             textwrap.indent(
                 json.dumps(self.context, ensure_ascii=False, indent=4), "    "
             ),
@@ -238,14 +238,14 @@ class DataStreamCallback:
     def batch_started(self, batch):
         log.info("Batch started: %s", batch)
 
-    def batch_finished(self, batch):
-        log.info("Batch finished: %s", batch)
+    def batch_finished(self, batch: StreamBatch):
+        log.info("Batch finished: %s", batch.seq)
         for err in batch.errors:
-            log.error("Failed batch: %s: %s", err, batch)
+            log.error("Failed batch: %s: %s", err, batch.seq)
         if self.log_error_entry:
             for entry in batch.entries:
                 if entry.errors:
-                    log.error("Failed entry: %s", entry)
+                    log.error("Failed entry: %s in batch %s", entry, batch.seq)
 
     def reader_error(self, reader, exception):
         log.error("Reader error: %s: %s", reader, exception)
