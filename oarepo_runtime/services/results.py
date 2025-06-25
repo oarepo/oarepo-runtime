@@ -144,6 +144,12 @@ class RecordList(BaseRecordList):
                 # but don't break the whole search
                 log.exception("Error while dumping record %s", hit_dict)
 
+    def to_dict(self):
+        ret = super().to_dict()
+        ret["params"] = {**(self._params or {})}
+        return ret
+
+
 
 class ArrayRecordItem(RecordItem):
     """Single record result."""
