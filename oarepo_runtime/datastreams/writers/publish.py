@@ -13,7 +13,7 @@ class PublishWriter(BaseWriter):
         service,
         request_name="publish_draft",
         identity=None,
-        direct_call=False,
+        direct_call=True,
         **kwargs
     ):
         if isinstance(service, str):
@@ -34,27 +34,31 @@ class PublishWriter(BaseWriter):
 
     def _write_entry(self, entry: StreamEntry):
         if self._direct_call:
-            self._service.publish(self._identity, entry.id)
+            data = self._service.publish(self._identity, entry.id)
         else:
-            from invenio_requests.proxies import (
-                current_requests_service as current_invenio_requests_service,
-            )
-            from oarepo_requests.proxies import current_oarepo_requests_service
+            data = self._publish_via_request(self._identity, entry.id)
+        
+        entry.entry = data.to_dict()
 
-            draft = self._service.read_draft(self._identity, entry.id)
-            request = current_oarepo_requests_service.create(
-                identity=self._identity,
-                data=None,
-                request_type=self._request_name,
-                topic=draft._record,
-            )
+    def _publish_via_request(self, identity, entry_id):
+        from invenio_requests.proxies import (
+            current_requests_service as current_invenio_requests_service,
+        )
+        from oarepo_requests.proxies import current_oarepo_requests_service
 
-            submit_result = current_invenio_requests_service.execute_action(
-                self._identity, request.id, "submit"
-            )
-            accept_result = current_invenio_requests_service.execute_action(
-                self._identity, request.id, "accept"
-            )
+        draft = self._service.read_draft(identity, entry_id)
+        request = current_oarepo_requests_service.create(
+            identity=identity,
+            data=None,
+            request_type=self._request_name,
+            topic=draft._record,
+        )
 
-            data = self._service.read(self._identity, draft["id"])
-            entry.entry = data.to_dict()
+        submit_result = current_invenio_requests_service.execute_action(
+            identity, request.id, "submit"
+        )
+        accept_result = current_invenio_requests_service.execute_action(
+            identity, request.id, "accept"
+        )
+
+        return self._service.read(identity, draft["id"])
