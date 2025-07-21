@@ -18,15 +18,17 @@ class MultilingualDumper(SearchDumperExt):
     def dump(self, record, data):
         for path in self.path_traversal.iter(data):
             rec = path[-1].current
-            if rec["lang"] in self.SUPPORTED_LANGS:
-                el_name = path[-1].key + "_" + rec["lang"]
+            lang = rec.get("lang", None)
+            if lang and lang in self.SUPPORTED_LANGS:
+                el_name = path[-1].key + "_" + lang
                 path[-1].parent_data.setdefault(el_name, []).append(rec["value"])
         return data
 
     def load(self, data, record_cls):
         for path in self.path_traversal.iter(data):
             rec = path[-1].current
-            if rec["lang"] in self.SUPPORTED_LANGS:
-                el_name = path[-1].key + "_" + rec["lang"]
+            lang = rec.get("lang", None)
+            if lang and lang in self.SUPPORTED_LANGS:
+                el_name = path[-1].key + "_" + lang
                 path[-1].parent_data.pop(el_name, None)
         return data
