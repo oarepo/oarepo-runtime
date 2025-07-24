@@ -1,34 +1,16 @@
-from .icu import (
-    FulltextIndexField,
-    ICUField,
-    ICUSearchField,
-    ICUSortField,
-    ICUSuggestField,
-    TermIndexField,
-)
-from .mapping import MappingSystemFieldMixin, SystemFieldDumperExt
-from .selectors import (
-    FilteredSelector,
-    FirstItemSelector,
-    MultiSelector,
-    PathSelector,
-    Selector,
-)
-from .synthetic import SyntheticSystemField
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""Records system fields."""
 
-__all__ = (
-    "ICUField",
-    "ICUSuggestField",
-    "ICUSortField",
-    "ICUSearchField",
-    "FulltextIndexField",
-    "MappingSystemFieldMixin",
-    "SystemFieldDumperExt",
-    "SyntheticSystemField",
-    "PathSelector",
-    "Selector",
-    "FirstItemSelector",
-    "FilteredSelector",
-    "MultiSelector",
-    "TermIndexField",
-)
+from __future__ import annotations
+
+from .mapping import MappingSystemFieldMixin
+from .publication_status import PublicationStatusSystemField
+
+__all__ = ("MappingSystemFieldMixin", "PublicationStatusSystemField")

@@ -1,39 +1,56 @@
-import inspect
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""System fields mapping."""
 
-from invenio_records.dumpers import SearchDumperExt
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, override
+
+if TYPE_CHECKING:
+    from invenio_records.api import RecordBase
+    from invenio_records.dumpers import Dumper
+    from invenio_records.systemfields import SystemField
+else:
+    SystemField = object
 
 
-class MappingSystemFieldMixin:
+class MappingSystemFieldMixin(SystemField):
+    """Mixin class that provides default mapping, mapping settings, and dynamic templates for system fields."""
+
     @property
-    def mapping(self):
+    def mapping(self) -> dict:
+        """Return the default mapping for the system field."""
         return {}
 
     @property
-    def mapping_settings(self):
+    def mapping_settings(self) -> dict:
+        """Return the default mapping settings for the system field."""
         return {}
 
     @property
-    def dynamic_templates(self):
+    def dynamic_templates(self) -> list:
+        """Return the default dynamic templates for the system field."""
         return []
 
-    def search_dump(self, data, record):
-        """Dump custom field."""
+    # The following methods are added just for typing purposes.
+    @override
+    def pre_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:  # type: ignore[misc]
+        """Dump record to the data - pre-dump phase."""
 
-    def search_load(self, data, record_cls):
-        """Load custom field."""
+    @override
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:  # type: ignore[misc]
+        """Dump record to the data - post-dump phase."""
 
+    @override
+    def pre_load(self, data: dict, loader: Dumper | None = None) -> None:  # type: ignore[misc]
+        """Load record from the data - pre-load phase."""
 
-class SystemFieldDumperExt(SearchDumperExt):
-    def dump(self, record, data):
-        """Dump custom fields."""
-        for cf in inspect.getmembers(
-            type(record), lambda x: isinstance(x, MappingSystemFieldMixin)
-        ):
-            cf[1].search_dump(data, record=record)
-
-    def load(self, data, record_cls):
-        """Load custom fields."""
-        for cf in inspect.getmembers(
-            record_cls, lambda x: isinstance(x, MappingSystemFieldMixin)
-        ):
-            cf[1].search_load(data, record_cls=record_cls)
+    @override
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:  # type: ignore[misc]
+        """Load record from the data - post-load phase."""

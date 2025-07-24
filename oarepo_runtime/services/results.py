@@ -1,5 +1,21 @@
-import logging
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
 
+"""Service results."""
+
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING, Any
+
+from invenio_access.permissions import Identity
+from invenio_records.api import RecordBase
 from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
@@ -8,26 +24,50 @@ from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
+if TYPE_CHECKING:
+    from invenio_access.permissions import Identity
+    from invenio_records.api import RecordBase
+
 log = logging.getLogger(__name__)
 
 
-class ResultsComponent:
-    def update_data(self, identity, record, projection, expand):
-        raise NotImplementedError
+class ResultComponent:
+    """Base class for result components that can modify the serialized record data."""
+
+    def __init__(
+        self,
+        record_item: BaseRecordItem | None = None,
+        record_list: BaseRecordList | None = None,
+    ):
+        """Initialize the result component."""
+        self._record_item = record_item
+        self._record_list = record_list
+
+    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
+        """Update the projection data with additional information.
+
+        :param identity: The identity of the user making the request.
+        :param record: The record being processed.
+        :param projection: The current projection of the record.
+        :param expand: Whether to expand the record data.
+        """
+        raise NotImplementedError  # pragma: no cover
 
 
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components = []
+    components: tuple[type[ResultComponent], ...] = ()
+    """A list of components that can modify the serialized record data."""
 
     @property
-    def data(self):
+    def data(self) -> Any:
+        """Property to get the record."""
         if self._data:
             return self._data
         _data = super().data
         for c in self.components:
-            c.update_data(
+            c(record_item=self).update_data(
                 identity=self._identity,
                 record=self._record,
                 projection=_data,
@@ -36,57 +76,55 @@ class RecordItem(BaseRecordItem):
         return _data
 
     @property
-    def errors(self):
-        return postprocess_errors(self._errors)
+    def errors(self) -> list[dict]:
+        """Get the processed errors."""
+        return self.postprocess_errors(self._errors or [])
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         """Get a dictionary for the record."""
         res = self.data
         if self._errors:
             res["errors"] = self.errors
         return res
 
-
-def postprocess_error_messages(field_path: str, messages: any):
-    """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
-    if not isinstance(messages, list):
-        yield {"field": field_path, "messages": messages}
-    else:
-        str_messages = [msg for msg in messages if isinstance(msg, str)]
-        non_str_messages = [msg for msg in messages if not isinstance(msg, str)]
-
-        if str_messages:
-            yield {"field": field_path, "messages": str_messages}
+    def postprocess_error_messages(self, field_path: str, messages: Any) -> Any:
+        """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
+        if not isinstance(messages, list):
+            yield {"field": field_path, "messages": messages}
         else:
-            for non_str_msg in non_str_messages:
-                yield from _iter_errors_dict(non_str_msg, field_path)
+            str_messages = [msg for msg in messages if isinstance(msg, str)]
+            non_str_messages = [msg for msg in messages if not isinstance(msg, str)]
 
+            if str_messages:
+                yield {"field": field_path, "messages": str_messages}
+            else:
+                for non_str_msg in non_str_messages:
+                    yield from _iter_errors_dict(non_str_msg, field_path)
 
-def postprocess_errors(errors: list[dict]):
-    """Postprocess errors."""
-    converted_errors = []
-    for error in errors:
-        if error.get("messages"):
-            converted_errors.extend(
-                postprocess_error_messages(error["field"], error["messages"])
-            )
-        else:
-            converted_errors.append(error)
-    return converted_errors
+    def postprocess_errors(self, errors: list[dict]) -> list[dict]:
+        """Postprocess errors."""
+        converted_errors = []
+        for error in errors:
+            if error.get("messages"):
+                converted_errors.extend(self.postprocess_error_messages(error["field"], error["messages"]))
+            else:
+                converted_errors.append(error)
+        return converted_errors
 
 
 class RecordList(BaseRecordList):
-    components = []
+    """List of records result."""
+
+    components: tuple[type[ResultComponent], ...] = ()
 
     @property
-    def aggregations(self):
+    def aggregations(self) -> Any:
         """Get the search result aggregations."""
         try:
             result = super().aggregations
             if result is None:
-                return result
-
-            for key in result.keys():
+                return result  # pragma: no cover
+            for key in result:
                 if "buckets" in result[key]:
                     for bucket in result[key]["buckets"]:
                         val = bucket["key"]
@@ -96,12 +134,12 @@ class RecordList(BaseRecordList):
                             bucket["key"] = str(val)
                         if not isinstance(label, str):
                             bucket["label"] = str(label)
-            return result
-        except AttributeError:
-            return None
+        except AttributeError:  # pragma: no cover
+            return None  # pragma: no cover
+        return result
 
     @property
-    def hits(self):
+    def hits(self) -> Any:
         """Iterator over the hits."""
         for hit in self._results:
             # Load dump
@@ -109,87 +147,38 @@ class RecordList(BaseRecordList):
 
             try:
                 # Project the record
-                if hit_dict.get("record_status") == "draft":
+                # TODO: check if this logic is correct
+                versions = hit_dict.get("versions", {})
+                if versions.get("is_latest_draft") and not versions.get("is_latest"):
                     record = self._service.draft_cls.loads(hit_dict)
                 else:
                     record = self._service.record_cls.loads(hit_dict)
 
                 projection = self._schema.dump(
                     record,
-                    context=dict(
-                        identity=self._identity,
-                        record=record,
-                    ),
+                    context={
+                        "identity": self._identity,
+                        "record": record,
+                    },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(
-                        self._service.config.links_search_item
-                    )
+                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
+                else:
+                    links_tpl = self._links_item_tpl
+
+                if links_tpl:
                     projection["links"] = links_tpl.expand(self._identity, record)
-                elif self._links_item_tpl:
-                    projection["links"] = self._links_item_tpl.expand(
-                        self._identity, record
-                    )
-                # todo optimization viz FieldsResolver
+
+                # TODO: optimization viz FieldsResolver
                 for c in self.components:
-                    c.update_data(
+                    c(record_list=self).update_data(
                         identity=self._identity,
                         record=record,
                         projection=projection,
                         expand=self._expand,
                     )
                 yield projection
-            except Exception:
+            except Exception:  # pragma: no cover
                 # ignore record with error, put it to log so that it gets to glitchtip
                 # but don't break the whole search
                 log.exception("Error while dumping record %s", hit_dict)
-
-
-class ArrayRecordItem(RecordItem):
-    """Single record result."""
-
-    @property
-    def id(self):
-        """Get the record id."""
-        return self._record["id"]
-
-
-class ArrayRecordList(RecordList):
-    # move to runtime
-
-    @property
-    def total(self):
-        """Get total number of hits."""
-        return len(self._results)
-
-    @property
-    def aggregations(self):
-        """Get the search result aggregations."""
-        return None
-
-    @property
-    def hits(self):
-        """Iterator over the hits."""
-        for hit in self._results:
-            # Project the record
-            projection = self._schema.dump(
-                hit,
-                context=dict(
-                    identity=self._identity,
-                    record=hit,
-                ),
-            )
-            if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(self._identity, hit)
-            if self._nested_links_item:
-                for link in self._nested_links_item:
-                    link.expand(self._identity, hit, projection)
-
-            for c in self.components:
-                c.update_data(
-                    identity=self._identity,
-                    record=hit,
-                    projection=projection,
-                    expand=self._expand,
-                )
-            yield projection

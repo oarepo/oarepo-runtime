@@ -1,8 +1,24 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+"""Proxies."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from flask import current_app
 from werkzeug.local import LocalProxy
-from contextvars import ContextVar
 
-current_timezone = ContextVar('timezone') #idk how or exactly why to use the LocalProxy here
-current_datastreams = LocalProxy(lambda: current_app.extensions["oarepo-datastreams"])
-current_oarepo = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])
-"""Helper proxy to get the current datastreams."""
+if TYPE_CHECKING:
+    from oarepo_runtime.ext import OARepoRuntime
+
+    current_runtime: OARepoRuntime
+
+current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]

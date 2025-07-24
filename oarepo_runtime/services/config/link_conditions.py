@@ -1,126 +1,120 @@
-import warnings
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+"""Link conditions module."""
+
+from __future__ import annotations
+
 from abc import abstractmethod
 from logging import getLogger
+from typing import Any
 
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
-from invenio_records.api import RecordBase
-from invenio_records_resources.records.api import FileRecord, Record
+from invenio_records_resources.records.api import FileRecord, RecordBase
 
-from ...datastreams.utils import (
-    get_file_service_for_record_class,
-    get_record_service_for_record,
-)
-from ...records.drafts import get_draft
+from oarepo_runtime.proxies import current_runtime
+from oarepo_runtime.records.drafts import get_draft
 
 log = getLogger(__name__)
 
 
 class Condition:
-    @abstractmethod
-    def __call__(self, obj, ctx: dict):
-        raise NotImplementedError
+    """Base class for defining conditions with callable logic."""
 
-    def __and__(self, other):
+    @abstractmethod
+    def __call__(self, obj: RecordBase, ctx: dict):
+        """Abstract method to be implemented in subclasses to define a condition."""
+        raise NotImplementedError  # pragma: no cover
+
+    def __and__(self, other: Any):
+        """Combine two conditions using a logical AND."""
         return type(
-            "CompositeCondition",
+            "And",
             (Condition,),
             {"__call__": lambda _, obj, ctx: self(obj, ctx) and other(obj, ctx)},
         )()
 
-    def __or__(self, other):
+    def __or__(self, other: Any):
+        """Combine two conditions using a logical OR."""
         return type(
-            "CompositeCondition",
+            "Or",
             (Condition,),
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
 
 
-class is_published_record(Condition):
-    """Shortcut for links to determine if record is a published record."""
+class has_permission(Condition):  # noqa: N801
+    """A condition to check if a user has the specified permission for a given record."""
 
-    def __call__(self, obj: Record, ctx: dict):
-        return not getattr(obj, "is_draft", False)
-
-
-class is_draft_record(Condition):
-    """Shortcut for links to determine if record is a draft record."""
-
-    def __call__(self, obj: Record, ctx: dict):
-        return getattr(obj, "is_draft", False)
-
-
-class has_draft(Condition):
-    """Shortcut for links to determine if record is either a draft or a published one with a draft associated."""
-
-    def __call__(self, obj: Record, ctx: dict):
-        if getattr(obj, "is_draft", False):
-            return True
-        if getattr(obj, "has_draft", False):
-            return True
-        return False
-
-
-class has_permission(Condition):
-    def __init__(self, action_name):
+    def __init__(self, action_name: str):
+        """Initialize the condition with the specified action name."""
         self.action_name = action_name
 
     def __call__(self, obj: RecordBase, ctx: dict):
+        """Evaluate the condition by checking the permission for a given record."""
         if isinstance(obj, FileRecord):
             obj = obj.record
-        service = get_record_service_for_record(obj)
+        service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(
-                action_name=self.action_name, record=obj, **ctx
-            )
-        except Exception as e:
-            log.exception(f"Unexpected exception {e}.")
+            return service.check_permission(action_name=self.action_name, record=obj, **ctx)
+        except Exception:  # pragma: no cover
+            log.exception("Unexpected exception.")
 
 
-class has_draft_permission(Condition):
-    def __init__(self, action_name):
+class has_draft_permission(Condition):  # noqa: N801
+    """A condition to check if a user has the specified permission for a draft record."""
+
+    def __init__(self, action_name: str):
+        """Initialize the condition with the specified action name."""
         self.action_name = action_name
 
     def __call__(self, obj: RecordBase, ctx: dict):
+        """Valuates the condition by checking the permission for a draft record."""
+        _ = ctx
         draft_record = get_draft(obj)
         if not draft_record:
             return False
-        service = get_record_service_for_record(obj)
+        service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(
-                action_name=self.action_name, record=draft_record, **ctx
-            )
-        except Exception as e:
-            log.exception(f"Unexpected exception {e}.")
+            return service.check_permission(action_name=self.action_name, record=draft_record, **ctx)
+        except Exception:  # pragma: no cover
+            log.exception("Unexpected exception.")
             return False
 
 
-class has_file_permission(has_permission):
+class has_draft(Condition):  # noqa: N801
+    """Shortcut for links to determine if record is either a draft or a published one with a draft associated."""
+
     def __call__(self, obj: RecordBase, ctx: dict):
-        if isinstance(obj, FileRecord):
-            obj = obj.record
-        service = get_file_service_for_record_class(type(obj))
-        try:
-            return service.check_permission(
-                action_name=self.action_name, record=obj, **ctx
-            )
-        except Exception as e:
-            log.exception(f"Unexpected exception {e}.")
+        """Check if the given record has draft."""
+        _ = ctx
+        return bool(getattr(obj, "is_draft", False)) or bool(getattr(obj, "has_draft", False))
 
 
-class has_permission_file_service(has_file_permission):
-    def __init__(self, action_name):
-        warnings.warn(
-            "has_permission_file_service is deprecated, use has_file_permission instead",
-            DeprecationWarning,
-        )
-        super().__init__(action_name)
+class has_published_record(Condition):  # noqa: N801
+    """Shortcut for links to determine if the given record has a published PID."""
 
-
-class has_published_record(Condition):
-    def __call__(self, obj: Record, ctx: dict):
-        service = get_record_service_for_record(obj)
+    def __call__(self, obj: RecordBase, ctx: dict):
+        """Check if the given record has a published PID."""
+        _ = ctx
+        service = current_runtime.get_record_service_for_record(obj)
         try:
             service.record_cls.pid.resolve(obj["id"])
         except (PIDUnregistered, PIDDoesNotExistError):
             return False
         return True
+
+
+class is_published_record(Condition):  # noqa: N801
+    """Shortcut for links to determine if record is a published record."""
+
+    def __call__(self, obj: RecordBase, ctx: dict):
+        """Check if the given record is draft."""
+        _ = ctx
+        return not getattr(obj, "is_draft", False)

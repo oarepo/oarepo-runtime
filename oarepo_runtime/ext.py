@@ -1,102 +1,84 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+"""Extension preset for runtime module."""
+
+from __future__ import annotations
+
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, cast
 
-import pytz
-from flask import current_app, session
-from invenio_accounts.models import User
-from invenio_base.utils import obj_or_import_string
+from flask import current_app
+from invenio_records_resources.proxies import current_service_registry
+from invenio_records_resources.records.api import RecordBase
 
-from .cli import oarepo as oarepo_cmd
-from .datastreams.ext import OARepoDataStreamsExt
-from .proxies import current_timezone
+from . import config
 
+if TYPE_CHECKING:  # pragma: no cover
+    from flask import Flask
+    from invenio_records_resources.services.base.service import Service
+    from invenio_records_resources.services.records import RecordService
 
-def set_timezone():
-    if "timezone" in session:
-        current_timezone.set(pytz.timezone(session["timezone"]))
-    else:
-        default_user_timezone = current_app.config.get("BABEL_DEFAULT_TIMEZONE")
-        if default_user_timezone:
-            current_timezone.set(pytz.timezone(default_user_timezone))
-        else:
-            current_timezone.set(None)
+    from .api import Model
 
 
-def on_identity_changed(sender, identity):
-    if "timezone" not in session and "_user_id" in session:
-        user = User.query.filter_by(id=session["_user_id"]).first()
-        if user and "timezone" in user.preferences:
-            session["timezone"] = user.preferences["timezone"]
-    set_timezone()
+class OARepoRuntime:
+    """OARepo base of invenio oarepo client."""
 
-
-class OARepoRuntime(object):
-    """OARepo extension of Invenio-Vocabularies."""
-
-    def __init__(self, app=None):
+    def __init__(self, app: Flask | None = None):
         """Extension initialization."""
         if app:
             self.init_app(app)
 
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         """Flask application initialization."""
-        self.init_config(app)
         self.app = app
+        self.init_config(app)
         app.extensions["oarepo-runtime"] = self
-        app.extensions["oarepo-datastreams"] = OARepoDataStreamsExt(app)
-        app.cli.add_command(oarepo_cmd)
 
-        from flask_principal import identity_changed
+    def init_config(self, app: Flask) -> None:
+        """Initialize the configuration for the extension."""
+        app.config.setdefault("OAREPO_MODELS", {})
+        for k, v in config.OAREPO_MODELS.items():
+            if k not in app.config["OAREPO_MODELS"]:
+                app.config["OAREPO_MODELS"][k] = v
 
-        identity_changed.connect(on_identity_changed, self.app)
-        app.before_request(set_timezone)
+    @property
+    def models(self) -> dict[str, Model]:
+        """Return the models registered in the extension."""
+        return cast("dict[str, Model]", current_app.config["OAREPO_MODELS"])
 
     @cached_property
-    def owner_entity_resolvers(self):
-        return [
-            obj_or_import_string(x) for x in self.app.config["OWNER_ENTITY_RESOLVERS"]
-        ]
+    def models_by_record_class(self) -> dict[type[RecordBase], Model]:
+        """Return a mapping of record classes to their models."""
+        ret = {model.record_cls: model for model in self.models.values() if model.record_cls is not None}
+        ret.update({model.draft_cls: model for model in self.models.values() if model.draft_cls is not None})
+        return ret
 
-    @cached_property
-    def rdm_excluded_components(self):
-        return [
-            obj_or_import_string(x)
-            for x in self.app.config.get("RDM_EXCLUDED_COMPONENTS", [])
-        ]
+    @property
+    def services(self) -> dict[str, Service]:
+        """Return the services registered in the extension."""
+        _services = current_service_registry._services  # type: ignore[attr-defined]  # noqa: SLF001
+        return cast("dict[str, Service]", _services)
 
-    def init_config(self, app):
-        """Initialize configuration."""
-        from . import ext_config
+    def get_record_service_for_record(self, record: Any) -> RecordService:
+        """Retrieve the associated service for a given record."""
+        if record is None:
+            raise ValueError("Need to pass a record instance, got None")
+        return self.get_record_service_for_record_class(type(record))
 
-        if "OAREPO_PERMISSIONS_PRESETS" not in app.config:
-            app.config["OAREPO_PERMISSIONS_PRESETS"] = {}
-
-        for k in ext_config.OAREPO_PERMISSIONS_PRESETS:
-            if k not in app.config["OAREPO_PERMISSIONS_PRESETS"]:
-                app.config["OAREPO_PERMISSIONS_PRESETS"][k] = (
-                    ext_config.OAREPO_PERMISSIONS_PRESETS[k]
-                )
-
-        for k in dir(ext_config):
-            if k == "DEFAULT_DATASTREAMS_EXCLUDES":
-                app.config.setdefault(k, []).extend(getattr(ext_config, k))
-
-            elif k.startswith("DATASTREAMS_"):
-                val = getattr(ext_config, k)
-                if isinstance(val, dict):
-                    self.add_non_existing(app.config.setdefault(k, {}), val)
-                else:
-                    app.config.setdefault(k, val)
-
-            elif k == "HAS_DRAFT_CUSTOM_FIELD":
-                app.config.setdefault(k, getattr(ext_config, k))
-
-            elif k == "OAREPO_FACET_GROUP_NAME":
-                app.config.setdefault(k, getattr(ext_config, k))
-
-            elif k == "OWNER_ENTITY_RESOLVERS":
-                app.config.setdefault(k, []).extend(getattr(ext_config, k))
-
-    def add_non_existing(self, target, source):
-        for val_k, val_value in source.items():
-            if val_k not in target:
-                target[val_k] = val_value
+    def get_record_service_for_record_class(self, record_cls: type[RecordBase]) -> RecordService:
+        """Retrieve the service associated with a given record class."""
+        for t in record_cls.mro():
+            if t is RecordBase:
+                break
+            if t in self.models_by_record_class:
+                model = self.models_by_record_class[t]
+                return model.service
+        raise KeyError(f"No service found for record class '{record_cls.__name__}'.")
