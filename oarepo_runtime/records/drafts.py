@@ -1,7 +1,6 @@
 from invenio_records_resources.records.api import Record
 
-from oarepo_runtime.datastreams.utils import get_record_service_for_record
-
+from oarepo_runtime.services.utils import get_record_service_for_record
 
 def has_draft(record: Record) -> bool:
     return get_draft(record) is not None

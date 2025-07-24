@@ -1,7 +1,7 @@
+"""todo refactor - SystemFieldsExt: remove this class, using only SystemField‘s pre_load/post_dump """
 import inspect
 
 from invenio_records.dumpers import SearchDumperExt
-
 
 class MappingSystemFieldMixin:
     @property
@@ -21,7 +21,6 @@ class MappingSystemFieldMixin:
 
     def search_load(self, data, record_cls):
         """Load custom field."""
-
 
 class SystemFieldDumperExt(SearchDumperExt):
     def dump(self, record, data):

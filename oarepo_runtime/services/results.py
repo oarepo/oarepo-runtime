@@ -1,20 +1,14 @@
 import logging
 
-from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
 )
+from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
 log = logging.getLogger(__name__)
-
-
-class ResultsComponent:
-    def update_data(self, identity, record, projection, expand):
-        raise NotImplementedError
-
 
 class RecordItem(BaseRecordItem):
     """Single record result."""
@@ -46,7 +40,6 @@ class RecordItem(BaseRecordItem):
             res["errors"] = self.errors
         return res
 
-
 def postprocess_error_messages(field_path: str, messages: any):
     """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
     if not isinstance(messages, list):
@@ -60,7 +53,6 @@ def postprocess_error_messages(field_path: str, messages: any):
         else:
             for non_str_msg in non_str_messages:
                 yield from _iter_errors_dict(non_str_msg, field_path)
-
 
 def postprocess_errors(errors: list[dict]):
     """Postprocess errors."""
@@ -143,53 +135,3 @@ class RecordList(BaseRecordList):
                 # ignore record with error, put it to log so that it gets to glitchtip
                 # but don't break the whole search
                 log.exception("Error while dumping record %s", hit_dict)
-
-
-class ArrayRecordItem(RecordItem):
-    """Single record result."""
-
-    @property
-    def id(self):
-        """Get the record id."""
-        return self._record["id"]
-
-
-class ArrayRecordList(RecordList):
-    # move to runtime
-
-    @property
-    def total(self):
-        """Get total number of hits."""
-        return len(self._results)
-
-    @property
-    def aggregations(self):
-        """Get the search result aggregations."""
-        return None
-
-    @property
-    def hits(self):
-        """Iterator over the hits."""
-        for hit in self._results:
-            # Project the record
-            projection = self._schema.dump(
-                hit,
-                context=dict(
-                    identity=self._identity,
-                    record=hit,
-                ),
-            )
-            if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(self._identity, hit)
-            if self._nested_links_item:
-                for link in self._nested_links_item:
-                    link.expand(self._identity, hit, projection)
-
-            for c in self.components:
-                c.update_data(
-                    identity=self._identity,
-                    record=hit,
-                    projection=projection,
-                    expand=self._expand,
-                )
-            yield projection

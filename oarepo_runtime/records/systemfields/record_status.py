@@ -8,7 +8,6 @@ class RecordStatusResult:
         self.record = record
         self.attr_name = attr_name
 
-
 class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
     @property
     def mapping(self):
