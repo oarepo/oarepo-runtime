@@ -66,3 +66,24 @@ msgstr "restricted access"
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
 msgid "access.status.metadata-only"
 msgstr "metadata only access"
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:105
+msgid "Recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:109
+msgid "Least recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:121
+msgid "Version"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:30
+#, python-brace-format
+msgid "Both '{lang_name}' and '{value_name}' fields must be provided."
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:28
+msgid "Both language and text must be provided."
+msgstr ""
