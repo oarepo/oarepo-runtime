@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-02-17 10:27+0100\n"
+"POT-Creation-Date: 2025-07-29 15:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,56 +17,75 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/search.py:71
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/search.py:175
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:80
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:224
 msgid "By Title"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/search.py:75
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/translations/default_translations.py:5
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:84
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:101
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/translations/default_translations.py:5
 msgid "Best match"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/search.py:79
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/translations/default_translations.py:3
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:88
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:113
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/translations/default_translations.py:3
 msgid "Newest"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/search.py:83
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/translations/default_translations.py:4
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:92
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:117
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/translations/default_translations.py:4
 msgid "Oldest"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:132
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:105
+msgid "Recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:109
+msgid "Least recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:121
+msgid "Version"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:28
+msgid "Both language and text must be provided."
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
 msgid "True"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:132
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
 msgid "False"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:152
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:175
 msgid "access.status.open"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:153
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:176
 msgid "access.status.embargoed"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:154
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:177
 msgid "access.status.restricted"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:178
 msgid "access.status.metadata-only"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/services/schema/validation.py:31
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/validation.py:35
 #, python-format
 msgid "Invalid value %(identifier)s of identifier type %(type)s"
 msgstr ""
 
-#: /home/dusanst/Projects/oarepo-runtime/oarepo_runtime/translations/default_translations.py:6
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/translations/default_translations.py:6
 msgid "Contact"
 msgstr ""
 

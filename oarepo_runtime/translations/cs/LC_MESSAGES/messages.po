@@ -67,3 +67,19 @@ msgstr "omezený přístup"
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
 msgid "access.status.metadata-only"
 msgstr "pouze metadata"
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:105
+msgid "Recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:109
+msgid "Least recently updated"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/search.py:121
+msgid "Version"
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:28
+msgid "Both language and text must be provided."
+msgstr "Musí být vyplněn jazyk i hodnota."
