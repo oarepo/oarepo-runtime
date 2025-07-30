@@ -15,7 +15,6 @@ it for each project.
 def get_i18n_schema(
     lang_name, value_name, value_field="marshmallow_utils.fields.SanitizedHTML"
 ):
-
     class I18nMixin:
         @validates(lang_name)
         def validate_lang(self, value):
@@ -24,8 +23,13 @@ def get_i18n_schema(
 
         @pre_load
         def pre_load_func(self, data, **kwargs):
+            errors = {}
             if not data.get(lang_name) or not data.get(value_name):
-                raise ValidationError(_("Both language and text must be provided."))
+                errors[lang_name] = [_("Both language and text must be provided.")]
+                errors[value_name] = [_("Both language and text must be provided.")]
+
+                if errors:
+                    raise ValidationError(errors)
             return data
 
     value_field_class = obj_or_import_string(value_field)
