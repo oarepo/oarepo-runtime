@@ -5,6 +5,8 @@ from oarepo_runtime.datastreams.types import StreamBatch, StreamEntry
 from oarepo_runtime.datastreams.writers import BaseWriter
 from oarepo_runtime.datastreams.writers.utils import record_invenio_exceptions
 
+from ...utils.identity_utils import get_user_and_identity
+
 
 class PublishWriter(BaseWriter):
     def __init__(
@@ -20,6 +22,10 @@ class PublishWriter(BaseWriter):
             service = current_service_registry.get(service)
 
         self._service = service
+        if isinstance(identity, str):
+            _, identity = get_user_and_identity(email=identity)
+        elif isinstance(identity, int):
+            _, identity = get_user_and_identity(user_id=identity)
         self._identity = identity or system_identity
         self._request_name = request_name
         self._direct_call = direct_call
@@ -37,7 +43,7 @@ class PublishWriter(BaseWriter):
             data = self._service.publish(self._identity, entry.id)
         else:
             data = self._publish_via_request(self._identity, entry.id)
-        
+
         entry.entry = data.to_dict()
 
     def _publish_via_request(self, identity, entry_id):

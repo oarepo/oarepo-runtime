@@ -5,6 +5,7 @@ from invenio_records_resources.services.uow import UnitOfWork
 from sqlalchemy.exc import NoResultFound
 
 from ...uow import BulkUnitOfWork
+from ...utils.identity_utils import get_user_and_identity
 from ..types import StreamBatch, StreamEntry, StreamEntryError
 from . import BaseWriter
 from .utils import record_invenio_exceptions
@@ -35,6 +36,10 @@ class ServiceWriter(BaseWriter):
             service = current_service_registry.get(service)
 
         self._service = service
+        if isinstance(identity, str):
+            _, identity = get_user_and_identity(email=identity)
+        elif isinstance(identity, int):
+            _, identity = get_user_and_identity(user_id=identity)
         self._identity = identity or system_identity
         self._update = update
 
