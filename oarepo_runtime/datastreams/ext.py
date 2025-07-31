@@ -26,7 +26,10 @@ class OARepoDataStreamsExt:
             if inst.name not in config_classes:
                 raise KeyError(f"'{inst.name}' not found in config {config_name}")
             reader_class = config_classes[inst.name]
-            return reader_class(**(inst.kwargs or {}), **kwargs, identity=identity)
+            all_kwargs = {**(inst.kwargs or {}), **kwargs}
+            if "identity" not in all_kwargs:
+                all_kwargs["identity"] = identity
+            return reader_class(**all_kwargs)
         else:
             return inst
 

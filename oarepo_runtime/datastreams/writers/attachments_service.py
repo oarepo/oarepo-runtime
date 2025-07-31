@@ -5,6 +5,7 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.uow import UnitOfWork
 
 from ...uow import BulkUnitOfWork
+from ...utils.identity_utils import get_user_and_identity
 from ..types import StreamBatch, StreamEntry
 from ..utils import attachments_requests, get_file_service_for_record_service
 from . import BaseWriter
@@ -35,6 +36,10 @@ class AttachmentsServiceWriter(BaseWriter):
         if isinstance(service, str):
             service = current_service_registry.get(service)
 
+        if isinstance(identity, str):
+            _, identity = get_user_and_identity(email=identity)
+        elif isinstance(identity, int):
+            _, identity = get_user_and_identity(user_id=identity)
         self._identity = identity or system_identity
         self._update = update
 
