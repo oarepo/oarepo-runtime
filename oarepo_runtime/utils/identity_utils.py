@@ -20,7 +20,15 @@ def get_user_and_identity(user_id=None, username=None, email=None):
 
     identity = Identity(user.id)
     identity.provides.add(UserNeed(user.id))
-    api_app = current_app.wsgi_app.mounts["/api"]
+    if (
+        hasattr(current_app.wsgi_app, "mounts")
+        and "/api" in current_app.wsgi_app.mounts
+    ):
+        # called from UI
+        api_app = current_app.wsgi_app.mounts["/api"]
+    else:
+        # called from API
+        api_app = current_app
     with api_app.app_context():
         with current_app.test_request_context("/api"):
             identity_loaded.send(api_app, identity=identity)
