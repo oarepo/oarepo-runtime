@@ -16,7 +16,7 @@ from invenio_rdm_records.services.schemas.parent import RDMParentSchema
 from invenio_rdm_records.services.schemas.pids import PIDSchema
 from invenio_rdm_records.services.schemas.record import validate_scheme
 from invenio_rdm_records.services.schemas.versions import VersionsSchema
-from marshmallow.fields import Dict, Nested
+from marshmallow.fields import Dict, Nested, Raw
 from marshmallow_utils.fields import (
     BabelGettextDictField,
     FormatDate,
@@ -239,6 +239,8 @@ class InvenioRDMUISchema(InvenioUISchema, RDMBaseRecordSchema):
         values=Nested(PIDSchema),
     )
     parent = ma.fields.Nested(InvenioRDMParentUISchema)
+    access = ma.fields.Raw(attribute="access", data_key="access", dump_only=True)
+    files = ma.fields.Raw(attribute="files", data_key="files", dump_only=True)
 
     def hide_tombstone(self, data):
         """Hide tombstone info if the record isn't deleted and metadata if it is."""
