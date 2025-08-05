@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-07-29 15:53+0200\n"
+"POT-Creation-Date: 2025-08-05 11:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,7 +53,16 @@ msgid "Version"
 msgstr ""
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:28
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:29
 msgid "Both language and text must be provided."
+msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/rdm.py:103
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/rdm.py:127
+msgid ""
+"It is necessary to choose organization from the controlled vocabulary. To"
+" add organization, please go to https://nusl.techlib.cz/cs/migrace-nusl"
+"/navrh-novych-hesel/"
 msgstr ""
 
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/ui.py:155
