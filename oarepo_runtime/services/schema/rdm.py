@@ -1,10 +1,17 @@
+import re
 from functools import partial
 
 import marshmallow as ma
+from invenio_access.permissions import system_identity
+from invenio_i18n import gettext as _
 from invenio_i18n.selectors import get_locale
-from invenio_rdm_records.services.schemas.metadata import record_identifiers_schemes
+from invenio_rdm_records.services.schemas.metadata import (
+    CreatorSchema,
+    record_identifiers_schemes,
+)
 from invenio_rdm_records.services.schemas.tombstone import DeletionStatusSchema
 from invenio_rdm_records.services.schemas.versions import VersionsSchema
+from invenio_records_resources.proxies import current_service_registry
 from invenio_vocabularies.contrib.awards.schema import AwardRelationSchema
 from invenio_vocabularies.contrib.funders.schema import FunderRelationSchema
 from marshmallow import fields as ma_fields
@@ -49,7 +56,7 @@ class RecordIdentifierField(IdentifierSet):
                 partial(IdentifierSchema, allowed_schemes=record_identifiers_schemes)
             ),
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -60,7 +67,7 @@ class RelatedRecordIdentifierField(IdentifierSet):
                 partial(IdentifierSchema, allowed_schemes=record_identifiers_schemes)
             ),
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -73,3 +80,67 @@ class RDMSubjectSchema(ma.Schema):
     _id = ma.fields.String(data_key="id")
 
     subject = MultilingualField()
+
+
+class RDMNTKCreatorsSchema(CreatorSchema):
+    """NTK version of RDM creators schema.
+
+    This version makes sure that organizations are selected from the
+    list of organizations in the system. Record will not be valid if
+    organization is not in the system.
+    """
+
+    @ma.validates_schema
+    def check_organization_or_affiliation(self, data, **kwargs):
+        """Check if organization is in the system."""
+        person_or_org = data.get("person_or_org", {})
+        if person_or_org.get("type") == "personal":
+            affiliations = data.get("affiliations", [])
+            for affiliation in affiliations:
+                if not self.from_vocabulary(affiliation):
+                    raise ma.ValidationError(
+                        _(
+                            "It is necessary to choose organization from the controlled vocabulary. "
+                            "To add organization, please go to "
+                            "https://nusl.techlib.cz/cs/migrace-nusl/navrh-novych-hesel/"
+                        ),
+                        field_name="affiliations",
+                    )
+        else:
+            # organization
+            name = person_or_org.get("name")
+            affiliations = current_service_registry.get("affiliations")
+            found = [
+                x["name"]
+                for x in affiliations.search(
+                    system_identity,
+                    q=f'name.suggest:"{escape_opensearch_query(name)}"',
+                    size=100,
+                ).hits
+            ]
+            if name not in found:
+                raise ma.ValidationError(
+                    _(
+                        "It is necessary to choose organization from the controlled vocabulary. "
+                        "To add organization, please go to "
+                        "https://nusl.techlib.cz/cs/migrace-nusl/navrh-novych-hesel/"
+                    ),
+                    field_name="person_or_org",
+                )
+        return data
+
+    def from_vocabulary(self, affiliation):
+        """Check if affiliation is from the vocabulary."""
+        if "id" not in affiliation:
+            return False
+        return True
+
+
+def escape_opensearch_query(value: str) -> str:
+    """
+    Escapes special characters in a string for safe use in OpenSearch query syntax.
+    """
+    # Escape each special character with a backslash
+    escaped = re.sub(r'([\\+\-=&|><!(){}\[\]^"~*?:/])', r"\\\1", value)
+
+    return escaped

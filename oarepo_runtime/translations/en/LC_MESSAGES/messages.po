@@ -87,3 +87,11 @@ msgstr ""
 #: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/i18n.py:28
 msgid "Both language and text must be provided."
 msgstr ""
+
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/rdm.py:103
+#: /Users/m/w/cesnet/oarepo-runtime/oarepo_runtime/services/schema/rdm.py:127
+msgid ""
+"It is necessary to choose organization from the controlled vocabulary. To "
+"add organization, please go to https://nusl.techlib.cz/cs/migrace-"
+"nusl/navrh-novych-hesel/"
+msgstr ""
