@@ -10,16 +10,17 @@
 
 from __future__ import annotations
 
-import inspect
-from typing import TYPE_CHECKING
-
-from invenio_records.dumpers import SearchDumperExt
+from typing import TYPE_CHECKING, override
 
 if TYPE_CHECKING:
-    from invenio_records_resources.records import Record
+    from invenio_records.api import RecordBase
+    from invenio_records.dumpers import Dumper
+    from invenio_records.systemfields import SystemField
+else:
+    SystemField = object
 
 
-class MappingSystemFieldMixin:
+class MappingSystemFieldMixin(SystemField):
     """Mixin class that provides default mapping, mapping settings, and dynamic templates for system fields."""
 
     @property
@@ -37,22 +38,19 @@ class MappingSystemFieldMixin:
         """Return the default dynamic templates for the system field."""
         return []
 
-    def search_dump(self, data: dict, record: Record) -> None:
-        """Dump custom field."""
+    # The following methods are added just for typing purposes.
+    @override
+    def pre_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None):  # type: ignore[misc]
+        """Called before a record is dumped."""
 
-    def search_load(self, data: dict, record_cls: type[Record]) -> None:
-        """Load custom field."""
+    @override
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None):  # type: ignore[misc]
+        """Called after a record is dumped."""
 
+    @override
+    def pre_load(self, data: dict, loader: Dumper | None = None):  # type: ignore[misc]
+        """Called before a record is loaded."""
 
-class SystemFieldDumperExt(SearchDumperExt):
-    """System field dumper."""
-
-    def dump(self, record: Record, data: dict) -> None:
-        """Dump custom fields."""
-        for cf in inspect.getmembers(type(record), lambda x: isinstance(x, MappingSystemFieldMixin)):
-            cf[1].search_dump(data, record=record)
-
-    def load(self, data: dict, record_cls: type[Record]) -> None:
-        """Load custom fields."""
-        for cf in inspect.getmembers(record_cls, lambda x: isinstance(x, MappingSystemFieldMixin)):
-            cf[1].search_load(data, record_cls=record_cls)
+    @override
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None):  # type: ignore[misc]
+        """Called after a record is loaded."""

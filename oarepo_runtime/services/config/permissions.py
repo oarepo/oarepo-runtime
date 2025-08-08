@@ -1,0 +1,63 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
+"""Everyone permissions."""
+
+from __future__ import annotations
+
+from typing import ClassVar
+
+from invenio_records_permissions import RecordPermissionPolicy
+from invenio_records_permissions.generators import AnyUser, Generator, SystemProcess
+
+type GeneratorList = list[Generator]
+
+
+class EveryonePermissionPolicy(RecordPermissionPolicy):
+    """Record policy for read-only repository."""
+
+    can_search: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_read: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_create: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_update: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_delete: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_manage: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+
+    can_create_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_set_content_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_get_content_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_commit_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_read_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_update_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_delete_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_list_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_manage_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+
+    can_edit: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_new_version: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_search_drafts: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_read_draft: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_search_versions: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_update_draft: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_delete_draft: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_publish: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_create_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_set_content_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_get_content_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_commit_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_read_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_update_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_draft_delete_files: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+
+    can_add_community: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_remove_community: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+
+    can_read_deleted: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_manage_record_access: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]
+    can_lift_embargo: ClassVar[GeneratorList] = [SystemProcess(), AnyUser()]

@@ -11,7 +11,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import warnings
+from typing import TYPE_CHECKING, Any
+
+from flask import current_app
+from invenio_records_resources.proxies import current_service_registry
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -29,3 +33,19 @@ class OARepoRuntime:
         """Flask application initialization."""
         self.app = app
         app.extensions["oarepo-runtime"] = self
+
+    def get_record_service_for_record(self, record: Any) -> Any:
+        """Retrieve the associated service for a given record."""
+        if not record:
+            return None
+        return self.get_record_service_for_record_class(type(record))
+
+    def get_record_service_for_record_class(self, record_cls: Any) -> Any:
+        """Retrieve the service associated with a given record class."""
+        warnings.warn(
+            "The implementation for `get_record_service_for_record` "
+            "needs to be changed to use different configuration."
+        )
+
+        service_id = current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][record_cls]
+        return current_service_registry.get(service_id)

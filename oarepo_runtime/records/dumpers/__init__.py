@@ -13,12 +13,13 @@ from __future__ import annotations
 from typing import Any, ClassVar
 
 from invenio_records.dumpers import SearchDumper as InvenioSearchDumper
+from invenio_records.dumpers import SearchDumperExt
 
 
 class SearchDumper(InvenioSearchDumper):
     """A custom dumper class that extends the InvenioSearchDumper."""
 
-    extensions: ClassVar[list] = []
+    extensions: ClassVar[list[SearchDumperExt]] = []
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize the SearchDumper with custom extensions."""

@@ -14,6 +14,8 @@ from __future__ import annotations
 import logging
 from typing import Any, ClassVar
 
+from invenio_access.permissions import Identity
+from invenio_records.api import RecordBase
 from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
@@ -25,10 +27,17 @@ from invenio_records_resources.services.records.results import (
 log = logging.getLogger(__name__)
 
 
+class ResultComponent:
+    def update_data(
+        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
+    ):
+        raise NotImplementedError
+
+
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components: ClassVar[list] = []
+    components: ClassVar[list[ResultComponent]] = []
 
     @property
     def data(self) -> Any:
@@ -48,7 +57,7 @@ class RecordItem(BaseRecordItem):
     @property
     def errors(self) -> list[dict]:
         """Get the processed errors."""
-        return postprocess_errors(self._errors or [])
+        return self.postprocess_errors(self._errors or [])
 
     def to_dict(self) -> Any:
         """Get a dictionary for the record."""
@@ -57,37 +66,37 @@ class RecordItem(BaseRecordItem):
             res["errors"] = self.errors
         return res
 
-
-def postprocess_error_messages(field_path: str, messages: Any) -> Any:
-    """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
-    if not isinstance(messages, list):
-        yield {"field": field_path, "messages": messages}
-    else:
-        str_messages = [msg for msg in messages if isinstance(msg, str)]
-        non_str_messages = [msg for msg in messages if not isinstance(msg, str)]
-
-        if str_messages:
-            yield {"field": field_path, "messages": str_messages}
+    def postprocess_error_messages(self, field_path: str, messages: Any) -> Any:
+        """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
+        if not isinstance(messages, list):
+            yield {"field": field_path, "messages": messages}
         else:
-            for non_str_msg in non_str_messages:
-                yield from _iter_errors_dict(non_str_msg, field_path)
+            str_messages = [msg for msg in messages if isinstance(msg, str)]
+            non_str_messages = [msg for msg in messages if not isinstance(msg, str)]
 
+            if str_messages:
+                yield {"field": field_path, "messages": str_messages}
+            else:
+                for non_str_msg in non_str_messages:
+                    yield from _iter_errors_dict(non_str_msg, field_path)
 
-def postprocess_errors(errors: list[dict]) -> list[dict]:
-    """Postprocess errors."""
-    converted_errors = []
-    for error in errors:
-        if error.get("messages"):
-            converted_errors.extend(postprocess_error_messages(error["field"], error["messages"]))
-        else:
-            converted_errors.append(error)
-    return converted_errors
+    def postprocess_errors(self, errors: list[dict]) -> list[dict]:
+        """Postprocess errors."""
+        converted_errors = []
+        for error in errors:
+            if error.get("messages"):
+                converted_errors.extend(
+                    self.postprocess_error_messages(error["field"], error["messages"])
+                )
+            else:
+                converted_errors.append(error)
+        return converted_errors
 
 
 class RecordList(BaseRecordList):
     """List of records result."""
 
-    components: ClassVar[list] = []
+    components: ClassVar[list[ResultComponent]] = []
 
     @property
     def aggregations(self) -> Any:
@@ -132,10 +141,14 @@ class RecordList(BaseRecordList):
                     },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
+                    links_tpl = self._service.config.search_item_links_template(
+                        self._service.config.links_search_item
+                    )
                     projection["links"] = links_tpl.expand(self._identity, record)
                 elif self._links_item_tpl:
-                    projection["links"] = self._links_item_tpl.expand(self._identity, record)
+                    projection["links"] = self._links_item_tpl.expand(
+                        self._identity, record
+                    )
                 # TODO: optimization viz FieldsResolver
                 for c in self.components:
                     c.update_data(

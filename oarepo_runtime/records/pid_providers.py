@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 
+if TYPE_CHECKING:
+    from invenio_records_resources.records.providers import ModelPIDProvider
+else:
+    ModelPIDProvider = object
 
-class UniversalPIDMixin:
+
+class UniversalPIDMixin(ModelPIDProvider):
     """Mixin class to handle creation and management of universal PIDs for records."""
 
     unpid_pid_type = "unpid"
@@ -30,7 +35,9 @@ class UniversalPIDMixin:
         **kwargs: Any,
     ) -> PersistentIdentifier:
         """Create PID for a given object and store it."""
-        pid = super().create(object_type=object_type, object_uuid=object_uuid, options=options, **kwargs)  # type: ignore[misc]
+        pid = super().create(
+            object_type=object_type, object_uuid=object_uuid, options=options, **kwargs
+        )
         if pid.pid.pid_value is None:
             raise ValueError("PID value cannot be None.")
         PersistentIdentifier.create(

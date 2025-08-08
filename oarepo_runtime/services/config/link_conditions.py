@@ -18,10 +18,8 @@ from typing import Any
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
 from invenio_records_resources.records.api import FileRecord, RecordBase
 
-from ...records.drafts import get_draft
-from ..utils import (
-    get_record_service_for_record,
-)
+from oarepo_runtime.proxies import current_runtime
+from oarepo_runtime.records.drafts import get_draft
 
 log = getLogger(__name__)
 
@@ -37,7 +35,7 @@ class Condition:
     def __and__(self, other: Any):
         """Combine two conditions using a logical AND."""
         return type(
-            "CompositeCondition",
+            "And",
             (Condition,),
             {"__call__": lambda _, obj, ctx: self(obj, ctx) and other(obj, ctx)},
         )()
@@ -45,7 +43,7 @@ class Condition:
     def __or__(self, other: Any):
         """Combine two conditions using a logical OR."""
         return type(
-            "CompositeCondition",
+            "Or",
             (Condition,),
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
@@ -62,9 +60,11 @@ class has_permission(Condition):  # noqa: N801
         """Evaluate the condition by checking the permission for a given record."""
         if isinstance(obj, FileRecord):
             obj = obj.record
-        service = get_record_service_for_record(obj)
+        service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(action_name=self.action_name, record=obj, **ctx)
+            return service.check_permission(
+                action_name=self.action_name, record=obj, **ctx
+            )
         except Exception:
             log.exception("Unexpected exception.")
 
@@ -82,9 +82,11 @@ class has_draft_permission(Condition):  # noqa: N801
         draft_record = get_draft(obj)
         if not draft_record:
             return False
-        service = get_record_service_for_record(obj)
+        service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(action_name=self.action_name, record=draft_record, **ctx)
+            return service.check_permission(
+                action_name=self.action_name, record=draft_record, **ctx
+            )
         except Exception:
             log.exception("Unexpected exception.")
             return False
@@ -96,7 +98,9 @@ class has_draft(Condition):  # noqa: N801
     def __call__(self, obj: RecordBase, ctx: dict):
         """Check if the given record has draft."""
         _ = ctx
-        return bool(getattr(obj, "is_draft", False)) or bool(getattr(obj, "has_draft", False))
+        return bool(getattr(obj, "is_draft", False)) or bool(
+            getattr(obj, "has_draft", False)
+        )
 
 
 class has_published_record(Condition):  # noqa: N801
@@ -105,7 +109,7 @@ class has_published_record(Condition):  # noqa: N801
     def __call__(self, obj: RecordBase, ctx: dict):
         """Check if the given record has a published PID."""
         _ = ctx
-        service = get_record_service_for_record(obj)
+        service = current_runtime.get_record_service_for_record(obj)
         try:
             service.record_cls.pid.resolve(obj["id"])
         except (PIDUnregistered, PIDDoesNotExistError):

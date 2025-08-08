@@ -18,6 +18,7 @@ from .mapping import MappingSystemFieldMixin
 
 if TYPE_CHECKING:
     from invenio_records.api import RecordBase
+    from invenio_records.dumpers import Dumper
 
 
 class RecordStatusResult:
@@ -48,13 +49,13 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
         }
 
     @override
-    def search_load(self, data: dict, record_cls: type[RecordBase]) -> None:
-        """Prepare the search data by removing the field from the data."""
+    def post_load(self, record: RecordBase, data: dict, loader: Any = None) -> None:
         data.pop(self.attr_name, None)
 
     @override
-    def search_dump(self, data: dict, record: RecordBase) -> None:
-        """Add the record's status ('draft' or 'published') to the search data."""
+    def post_dump(
+        self, record: RecordBase, data: dict, dumper: Dumper | None = None
+    ) -> None:
         is_draft = getattr(record, "is_draft", False)
 
         if is_draft:  # pylint: ignore[attr-defined]

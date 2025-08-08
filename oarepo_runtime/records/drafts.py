@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from invenio_records_resources.records.api import RecordBase
 
-from oarepo_runtime.services.utils import get_record_service_for_record
+from oarepo_runtime.proxies import current_runtime
 
 
 def has_draft(record: RecordBase) -> bool:
@@ -38,7 +38,7 @@ def get_draft(record: RecordBase) -> RecordBase | None:
     if not hasattr(record, "parent") or not hasattr(record, "has_draft"):
         return None
 
-    record_service = get_record_service_for_record(record)
+    record_service = current_runtime.get_record_service_for_record(record)
     if not record_service:
         return None
 
@@ -47,7 +47,11 @@ def get_draft(record: RecordBase) -> RecordBase | None:
         if not record_service:
             return None
         parent = getattr(record, "parent", None)
-        return next(record_service.config.draft_cls.get_records_by_parent(parent, with_deleted=False))
+        return next(
+            record_service.config.draft_cls.get_records_by_parent(
+                parent, with_deleted=False
+            )
+        )
     except StopIteration:
         # no draft found
         return None
