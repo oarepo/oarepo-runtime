@@ -53,9 +53,7 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
         data.pop(self.attr_name, None)
 
     @override
-    def post_dump(
-        self, record: RecordBase, data: dict, dumper: Dumper | None = None
-    ) -> None:
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
         is_draft = getattr(record, "is_draft", False)
 
         if is_draft:  # pylint: ignore[attr-defined]

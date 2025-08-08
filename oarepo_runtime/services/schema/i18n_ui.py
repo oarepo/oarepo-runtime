@@ -25,7 +25,9 @@ from marshmallow import Schema, fields
 
 @lru_cache
 def get_i18n_ui_schema(
-    lang_name: str, value_name: str, value_field: str = "marshmallow_utils.fields.SanitizedHTML"
+    lang_name: str,
+    value_name: str,
+    value_field: str = "marshmallow_utils.fields.SanitizedHTML",
 ) -> type[Schema]:
     """Dynamically creates and returns I18n Schema class.
 

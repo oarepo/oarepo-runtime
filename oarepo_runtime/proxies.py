@@ -8,6 +8,9 @@
 #
 
 """Proxies."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from flask import current_app

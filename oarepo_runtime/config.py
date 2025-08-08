@@ -11,19 +11,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flask import Flask
 
 
-def build_config[T: type](config_class: T, app: Flask, *args: Any, **kwargs: Any) -> Any:
+def build_config[T](config_class: type[T], app: Flask, *args: Any, **kwargs: Any) -> T:
     """Build the configuration for the service.
 
     This function is used to build the configuration for the service.
     """
-    if hasattr(config_class, "build") and callable(config_class.build):
+    build_config: Callable[[Flask], T] | None = getattr(config_class, "build", None)
+    if build_config is not None and callable(build_config):
         if args or kwargs:
             raise ValueError("Can not pass extra arguments when invenio ConfigMixin is used")
-        return cast("T", config_class.build(app))
+        return build_config(app)
     return config_class(*args, **kwargs)

@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 from invenio_access.permissions import Identity
 from invenio_records.api import RecordBase
@@ -24,20 +24,32 @@ from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
+if TYPE_CHECKING:
+    from invenio_access.permissions import Identity
+    from invenio_records.api import RecordBase
+
 log = logging.getLogger(__name__)
 
 
 class ResultComponent:
-    def update_data(
-        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
-    ):
+    """Base class for result components that can modify the serialized record data."""
+
+    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
+        """Update the projection data with additional information.
+
+        :param identity: The identity of the user making the request.
+        :param record: The record being processed.
+        :param projection: The current projection of the record.
+        :param expand: Whether to expand the record data.
+        """
         raise NotImplementedError
 
 
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components: ClassVar[list[ResultComponent]] = []
+    components: tuple[ResultComponent, ...] = ()
+    """A list of components that can modify the serialized record data."""
 
     @property
     def data(self) -> Any:
@@ -85,9 +97,7 @@ class RecordItem(BaseRecordItem):
         converted_errors = []
         for error in errors:
             if error.get("messages"):
-                converted_errors.extend(
-                    self.postprocess_error_messages(error["field"], error["messages"])
-                )
+                converted_errors.extend(self.postprocess_error_messages(error["field"], error["messages"]))
             else:
                 converted_errors.append(error)
         return converted_errors
@@ -96,7 +106,7 @@ class RecordItem(BaseRecordItem):
 class RecordList(BaseRecordList):
     """List of records result."""
 
-    components: ClassVar[list[ResultComponent]] = []
+    components: tuple[ResultComponent, ...] = ()
 
     @property
     def aggregations(self) -> Any:
@@ -141,14 +151,10 @@ class RecordList(BaseRecordList):
                     },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(
-                        self._service.config.links_search_item
-                    )
+                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
                     projection["links"] = links_tpl.expand(self._identity, record)
                 elif self._links_item_tpl:
-                    projection["links"] = self._links_item_tpl.expand(
-                        self._identity, record
-                    )
+                    projection["links"] = self._links_item_tpl.expand(self._identity, record)
                 # TODO: optimization viz FieldsResolver
                 for c in self.components:
                     c.update_data(

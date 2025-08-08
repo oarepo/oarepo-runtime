@@ -44,7 +44,8 @@ class OARepoRuntime:
         """Retrieve the service associated with a given record class."""
         warnings.warn(
             "The implementation for `get_record_service_for_record` "
-            "needs to be changed to use different configuration."
+            "needs to be changed to use different configuration.",
+            stacklevel=2,
         )
 
         service_id = current_app.config["OAREPO_PRIMARY_RECORD_SERVICE"][record_cls]
