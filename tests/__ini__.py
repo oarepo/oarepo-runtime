@@ -7,10 +7,6 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 #
 
-"""Service records module."""
+"""Needed for pytest-cov to generate coverage reports correctly."""
 
 from __future__ import annotations
-
-from .links import pagination_links_html
-
-__all__ = ("pagination_links_html",)

@@ -1,3 +1,55 @@
-[build_system]
-requires = ["setuptools", "wheel", "babel>2.8"]
-build-backend = "setuptools.build_meta"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "oarepo-runtime"
+dynamic = ["version"]
+description = "A set of runtime extensions of Invenio repository"
+readme = "README.md"
+license = "MIT"
+dependencies = [
+    "deepmerge",
+    "deprecated",
+    "flask-babelex",
+    "idutils",
+    "langcodes",
+    "marshmallow",
+    "openpyxl",
+    "pyyaml",
+    "tqdm",
+    "oarepo[rdm,tests]>=13,<14"
+]
+
+[project.optional-dependencies]
+dev = [
+    "autoflake",
+    "black",
+    "isort",
+    "oarepo-tools",
+    "pytest>=7.1.2",
+]
+tests = [
+    "psutil",
+    "pytest-oarepo",
+    "pytest>=7.1.2",
+]
+
+[project.entry-points."invenio_base.api_apps"]
+oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
+
+[project.entry-points."invenio_base.apps"]
+oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
+
+[tool.hatch.version]
+path = "oarepo_runtime/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/oarepo_runtime",
+]
+
+[tool.pytest.ini_options]
+    testpaths = [
+        "tests"
+    ]

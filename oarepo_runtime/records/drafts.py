@@ -1,12 +1,29 @@
-from invenio_records_resources.records.api import Record
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""Record drafts."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from invenio_records_resources.records.api import RecordBase
 
 from oarepo_runtime.services.utils import get_record_service_for_record
 
-def has_draft(record: Record) -> bool:
+
+def has_draft(record: RecordBase) -> bool:
+    """Check if record has draft."""
     return get_draft(record) is not None
 
 
-def get_draft(record: Record) -> Record | None:
+def get_draft(record: RecordBase) -> RecordBase | None:
     """Get the draft of a published record, if it exists.
 
     A record can have a draft if:
@@ -18,9 +35,7 @@ def get_draft(record: Record) -> Record | None:
     """
     if getattr(record, "is_draft", False):
         return record
-    if not hasattr(record, "parent"):
-        return None
-    if not hasattr(record, "has_draft"):
+    if not hasattr(record, "parent") or not hasattr(record, "has_draft"):
         return None
 
     record_service = get_record_service_for_record(record)
@@ -31,11 +46,8 @@ def get_draft(record: Record) -> Record | None:
         # if there is no record service, we cannot check for draft
         if not record_service:
             return None
-        return next(
-            record_service.config.draft_cls.get_records_by_parent(
-                record.parent, with_deleted=False
-            )
-        )
+        parent = getattr(record, "parent", None)
+        return next(record_service.config.draft_cls.get_records_by_parent(parent, with_deleted=False))
     except StopIteration:
         # no draft found
         return None

@@ -1,22 +1,38 @@
-import logging
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
 
+"""Service results."""
+
+from __future__ import annotations
+
+import logging
+from typing import Any, ClassVar
+
+from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
 )
-from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
 log = logging.getLogger(__name__)
 
+
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components = []
+    components: ClassVar[list] = []
 
     @property
-    def data(self):
+    def data(self) -> Any:
+        """Property to get the record."""
         if self._data:
             return self._data
         _data = super().data
@@ -30,17 +46,19 @@ class RecordItem(BaseRecordItem):
         return _data
 
     @property
-    def errors(self):
-        return postprocess_errors(self._errors)
+    def errors(self) -> list[dict]:
+        """Get the processed errors."""
+        return postprocess_errors(self._errors or [])
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         """Get a dictionary for the record."""
         res = self.data
         if self._errors:
             res["errors"] = self.errors
         return res
 
-def postprocess_error_messages(field_path: str, messages: any):
+
+def postprocess_error_messages(field_path: str, messages: Any) -> Any:
     """Postprocess error messages, looking for those that were not correctly processed by marshmallow/invenio."""
     if not isinstance(messages, list):
         yield {"field": field_path, "messages": messages}
@@ -54,31 +72,31 @@ def postprocess_error_messages(field_path: str, messages: any):
             for non_str_msg in non_str_messages:
                 yield from _iter_errors_dict(non_str_msg, field_path)
 
-def postprocess_errors(errors: list[dict]):
+
+def postprocess_errors(errors: list[dict]) -> list[dict]:
     """Postprocess errors."""
     converted_errors = []
     for error in errors:
         if error.get("messages"):
-            converted_errors.extend(
-                postprocess_error_messages(error["field"], error["messages"])
-            )
+            converted_errors.extend(postprocess_error_messages(error["field"], error["messages"]))
         else:
             converted_errors.append(error)
     return converted_errors
 
 
 class RecordList(BaseRecordList):
-    components = []
+    """List of records result."""
+
+    components: ClassVar[list] = []
 
     @property
-    def aggregations(self):
+    def aggregations(self) -> Any:
         """Get the search result aggregations."""
         try:
             result = super().aggregations
             if result is None:
                 return result
-
-            for key in result.keys():
+            for key in result:
                 if "buckets" in result[key]:
                     for bucket in result[key]["buckets"]:
                         val = bucket["key"]
@@ -88,12 +106,12 @@ class RecordList(BaseRecordList):
                             bucket["key"] = str(val)
                         if not isinstance(label, str):
                             bucket["label"] = str(label)
-            return result
         except AttributeError:
             return None
+        return result
 
     @property
-    def hits(self):
+    def hits(self) -> Any:
         """Iterator over the hits."""
         for hit in self._results:
             # Load dump
@@ -108,21 +126,17 @@ class RecordList(BaseRecordList):
 
                 projection = self._schema.dump(
                     record,
-                    context=dict(
-                        identity=self._identity,
-                        record=record,
-                    ),
+                    context={
+                        "identity": self._identity,
+                        "record": record,
+                    },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(
-                        self._service.config.links_search_item
-                    )
+                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
                     projection["links"] = links_tpl.expand(self._identity, record)
                 elif self._links_item_tpl:
-                    projection["links"] = self._links_item_tpl.expand(
-                        self._identity, record
-                    )
-                # todo optimization viz FieldsResolver
+                    projection["links"] = self._links_item_tpl.expand(self._identity, record)
+                # TODO: optimization viz FieldsResolver
                 for c in self.components:
                     c.update_data(
                         identity=self._identity,
