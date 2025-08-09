@@ -37,7 +37,7 @@ def prefixed_index(index: dsl.Index) -> dsl.Index:
     )
 
 
-def update_record_system_fields_mapping(record_class: Record) -> None:
+def update_record_system_fields_mapping(record_class: type[RecordBase]) -> None:
     """Update mapping for system fields in the record class.
 
     :param record_class: The record class which index mapping should be updated.
