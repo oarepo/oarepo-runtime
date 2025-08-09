@@ -34,7 +34,18 @@ log = logging.getLogger(__name__)
 class ResultComponent:
     """Base class for result components that can modify the serialized record data."""
 
-    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
+    def __init__(
+        self,
+        record_item: BaseRecordItem | None = None,
+        record_list: BaseRecordList | None = None,
+    ):
+        """Initialize the result component."""
+        self._record_item = record_item
+        self._record_list = record_list
+
+    def update_data(
+        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
+    ) -> None:
         """Update the projection data with additional information.
 
         :param identity: The identity of the user making the request.
@@ -42,13 +53,13 @@ class ResultComponent:
         :param projection: The current projection of the record.
         :param expand: Whether to expand the record data.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components: tuple[ResultComponent, ...] = ()
+    components: tuple[type[ResultComponent], ...] = ()
     """A list of components that can modify the serialized record data."""
 
     @property
@@ -58,7 +69,7 @@ class RecordItem(BaseRecordItem):
             return self._data
         _data = super().data
         for c in self.components:
-            c.update_data(
+            c(record_item=self).update_data(
                 identity=self._identity,
                 record=self._record,
                 projection=_data,
@@ -97,7 +108,9 @@ class RecordItem(BaseRecordItem):
         converted_errors = []
         for error in errors:
             if error.get("messages"):
-                converted_errors.extend(self.postprocess_error_messages(error["field"], error["messages"]))
+                converted_errors.extend(
+                    self.postprocess_error_messages(error["field"], error["messages"])
+                )
             else:
                 converted_errors.append(error)
         return converted_errors
@@ -106,7 +119,7 @@ class RecordItem(BaseRecordItem):
 class RecordList(BaseRecordList):
     """List of records result."""
 
-    components: tuple[ResultComponent, ...] = ()
+    components: tuple[type[ResultComponent], ...] = ()
 
     @property
     def aggregations(self) -> Any:
@@ -114,7 +127,7 @@ class RecordList(BaseRecordList):
         try:
             result = super().aggregations
             if result is None:
-                return result
+                return result  # pragma: no cover
             for key in result:
                 if "buckets" in result[key]:
                     for bucket in result[key]["buckets"]:
@@ -125,8 +138,8 @@ class RecordList(BaseRecordList):
                             bucket["key"] = str(val)
                         if not isinstance(label, str):
                             bucket["label"] = str(label)
-        except AttributeError:
-            return None
+        except AttributeError:  # pragma: no cover
+            return None  # pragma: no cover
         return result
 
     @property
@@ -138,7 +151,9 @@ class RecordList(BaseRecordList):
 
             try:
                 # Project the record
-                if hit_dict.get("record_status") == "draft":
+                # TODO: check if this logic is correct
+                versions = hit_dict.get("versions", {})
+                if versions.get("is_latest_draft") and not versions.get("is_latest"):
                     record = self._service.draft_cls.loads(hit_dict)
                 else:
                     record = self._service.record_cls.loads(hit_dict)
@@ -151,20 +166,25 @@ class RecordList(BaseRecordList):
                     },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
+                    links_tpl = self._service.config.search_item_links_template(
+                        self._service.config.links_search_item
+                    )
+                else:
+                    links_tpl = self._links_item_tpl
+
+                if links_tpl:
                     projection["links"] = links_tpl.expand(self._identity, record)
-                elif self._links_item_tpl:
-                    projection["links"] = self._links_item_tpl.expand(self._identity, record)
+
                 # TODO: optimization viz FieldsResolver
                 for c in self.components:
-                    c.update_data(
+                    c(record_list=self).update_data(
                         identity=self._identity,
                         record=record,
                         projection=projection,
                         expand=self._expand,
                     )
                 yield projection
-            except Exception:
+            except Exception:  # pragma: no cover
                 # ignore record with error, put it to log so that it gets to glitchtip
                 # but don't break the whole search
                 log.exception("Error while dumping record %s", hit_dict)

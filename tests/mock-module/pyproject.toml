@@ -1,0 +1,26 @@
+[project]
+name = "mock-module"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.13.*"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.entry-points."invenio_db.model"]
+    draftsresources = "mock_module.models"
+
+[project.entry-points."invenio_jsonschemas.schemas"]
+    draftsresources = "mock_module.jsonschemas"
+
+[project.entry-points."invenio_search.mappings"]
+    draftsresources = "mock_module.mappings"
+
+[project.entry-points."invenio_base.api_apps"]
+    draftsresources = "mock_module.ext:MockModuleExt"
+
+[project.entry-points."invenio_base.api_finalize_app"]
+    draftsresources = "mock_module.ext:finalize_mock_module"

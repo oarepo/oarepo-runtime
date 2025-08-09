@@ -39,15 +39,14 @@ def get_draft(record: RecordBase) -> RecordBase | None:
         return None
 
     record_service = current_runtime.get_record_service_for_record(record)
-    if not record_service:
-        return None
 
     try:
-        # if there is no record service, we cannot check for draft
-        if not record_service:
-            return None
         parent = getattr(record, "parent", None)
-        return next(record_service.config.draft_cls.get_records_by_parent(parent, with_deleted=False))
+        return next(
+            record_service.config.draft_cls.get_records_by_parent(
+                parent, with_deleted=False
+            )
+        )
     except StopIteration:
         # no draft found
         return None

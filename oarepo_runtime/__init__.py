@@ -15,8 +15,10 @@ initialization tool for customfields.
 
 from __future__ import annotations
 
+from .api import Model
 from .ext import OARepoRuntime
+from .proxies import current_runtime
 
 __version__ = "2.0.0"
 
-__all__ = ("OARepoRuntime", "__version__")
+__all__ = ("Model", "OARepoRuntime", "__version__", "current_runtime")

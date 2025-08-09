@@ -9,30 +9,18 @@ description = "A set of runtime extensions of Invenio repository"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "deepmerge",
-    "deprecated",
-    "flask-babelex",
-    "idutils",
-    "langcodes",
-    "marshmallow",
-    "openpyxl",
-    "pyyaml",
-    "tqdm",
-    "oarepo[rdm,tests]>=13,<14"
+    "langcodes>=3.5.0",
+    "oarepo[rdm,tests]>=13,<14",
 ]
+requires-python = ">=3.13,<3.14"
 
 [project.optional-dependencies]
 dev = [
-    "autoflake",
-    "black",
-    "isort",
-    "oarepo-tools",
     "pytest>=7.1.2",
 ]
 tests = [
-    "psutil",
-    "pytest-oarepo",
     "pytest>=7.1.2",
+    "mock-module @ {root:uri}/tests/mock-module",
 ]
 
 [project.entry-points."invenio_base.api_apps"]
@@ -53,3 +41,6 @@ include = [
     testpaths = [
         "tests"
     ]
+
+[tool.hatch.metadata]
+allow-direct-references = true

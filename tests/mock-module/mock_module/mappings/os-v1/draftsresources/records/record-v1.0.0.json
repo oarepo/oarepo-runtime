@@ -1,0 +1,72 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "parent": {
+        "properties": {
+          "id": {
+            "type": "keyword"
+          }
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "text"
+          },
+          "type": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "keyword"
+              },
+              "subtype": {
+                "type": "keyword"
+              }
+            }
+          }
+        }
+      },
+      "created": {
+        "type": "date"
+      },
+      "updated": {
+        "type": "date"
+      },
+      "expires_at": {
+        "type": "date"
+      },
+      "uuid": {
+        "type": "keyword"
+      },
+      "versions": {
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "is_latest": {
+            "type": "boolean"
+          },
+          "is_latest_draft": {
+            "type": "boolean"
+          },
+          "latest_id": {
+            "type": "keyword"
+          },
+          "latest_index": {
+            "type": "integer"
+          },
+          "next_draft_id": {
+            "type": "keyword"
+          }
+        }
+      },
+      "version_id": {
+        "type": "integer"
+      }
+    }
+  }
+}

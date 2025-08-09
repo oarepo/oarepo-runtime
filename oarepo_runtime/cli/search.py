@@ -4,15 +4,11 @@ from __future__ import annotations
 
 import click
 from flask.cli import with_appcontext
-from invenio_search.cli import (
-    index,
-    search_version_check,
-)
-from invenio_search.cli import (
-    init as original_init,
-)
+from invenio_search.cli import index
+from invenio_search.cli import init as original_init
+from invenio_search.cli import search_version_check
 
-from oarepo_runtime.services.records.mapping import update_all_record_mappings
+from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
 
 @index.command()
@@ -28,4 +24,4 @@ def init(ctx: click.Context, force: bool) -> None:
     defined inside the models.
     """
     ctx.invoke(original_init, force=force)
-    update_all_record_mappings()
+    update_all_records_mappings()

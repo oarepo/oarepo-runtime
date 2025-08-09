@@ -17,9 +17,7 @@ from .link_conditions import (
     has_published_record,
     is_published_record,
 )
-from .permissions import (
-    EveryonePermissionPolicy,
-)
+from .permissions import EveryonePermissionPolicy
 
 __all__ = (
     "EveryonePermissionPolicy",

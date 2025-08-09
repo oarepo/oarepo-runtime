@@ -45,7 +45,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
             ),
         )
         if pid.pid.pid_value is None:
-            raise ValueError("PID value cannot be None.")
+            raise ValueError("PID value cannot be None.")  # pragma: no cover
 
         PersistentIdentifier.create(
             cls.unpid_pid_type,
