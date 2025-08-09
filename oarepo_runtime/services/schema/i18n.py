@@ -38,7 +38,7 @@ def get_i18n_schema(
                 raise ValidationError("Invalid language code")
 
         @pre_load
-        def pre_load_func(self, data: dict[str, Any]) -> dict[str, Any]:
+        def pre_load_func(self, data: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
             errors = {}
             if not data.get(lang_name) or not data.get(value_name):
                 errors[lang_name] = [_("Both language and text must be provided.")]
