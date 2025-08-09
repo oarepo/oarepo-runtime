@@ -6,11 +6,16 @@
 # oarepo-runtime is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
-"""Records system fields."""
-
 from __future__ import annotations
 
-from .mapping import MappingSystemFieldMixin
-from .record_status import RecordStatusSystemField
+from invenio_search.cli import destroy
 
-__all__ = ("MappingSystemFieldMixin", "RecordStatusSystemField")
+from oarepo_runtime.cli.search import init
+
+
+def test_cli(app, search):
+    """Test CLI commands."""
+    runner = app.test_cli_runner()
+    result = runner.invoke(destroy, "--yes-i-know")
+    result = runner.invoke(init)
+    assert result.exit_code == 0

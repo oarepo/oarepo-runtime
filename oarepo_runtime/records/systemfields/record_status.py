@@ -18,21 +18,7 @@ from .mapping import MappingSystemFieldMixin
 
 if TYPE_CHECKING:
     from invenio_records.api import RecordBase
-
-
-class RecordStatusResult:
-    """Status result of a record."""
-
-    def __init__(self, record: RecordBase, attr_name: str):
-        """Initialize a new instance of the RecordStatusResult class.
-
-        Args:
-            record (Record): The record whose status is being tracked.
-            attr_name (str): The name of the attribute representing the record's status.
-
-        """
-        self.record = record
-        self.attr_name = attr_name
+    from invenio_records.dumpers import Dumper
 
 
 class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
@@ -48,26 +34,21 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
         }
 
     @override
-    def search_load(self, data: dict, record_cls: type[RecordBase]) -> None:
-        """Prepare the search data by removing the field from the data."""
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
         data.pop(self.attr_name, None)
 
     @override
-    def search_dump(self, data: dict, record: RecordBase) -> None:
-        """Add the record's status ('draft' or 'published') to the search data."""
-        is_draft = getattr(record, "is_draft", False)
-
-        if is_draft:  # pylint: ignore[attr-defined]
-            data[self.attr_name] = "draft"
-        else:
-            data[self.attr_name] = "published"
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+        if self.key is None:
+            return
+        data[self.attr_name] = getattr(record, self.key)
 
     def __get__(self, record: RecordBase | None, owner: Any = None) -> Any:
         """Access the attribute."""
         # Class access
         _ = owner
         if not isinstance(self.attr_name, str):
-            raise TypeError
+            raise TypeError  # pragma: no cover
         if record is None:
             return self
-        return RecordStatusResult(record, self.attr_name)
+        return "draft" if getattr(record, "is_draft", False) else "published"

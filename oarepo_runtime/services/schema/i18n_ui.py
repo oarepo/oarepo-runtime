@@ -25,7 +25,9 @@ from marshmallow import Schema, fields
 
 @lru_cache
 def get_i18n_ui_schema(
-    lang_name: str, value_name: str, value_field: str = "marshmallow_utils.fields.SanitizedHTML"
+    lang_name: str,
+    value_name: str,
+    value_field: str = "marshmallow_utils.fields.SanitizedHTML",
 ) -> type[Schema]:
     """Dynamically creates and returns I18n Schema class.
 
@@ -33,7 +35,10 @@ def get_i18n_ui_schema(
     """
     value_field_class = obj_or_import_string(value_field)
     if value_field_class is None:
-        raise ValueError
+        raise ValueError(
+            f"Invalid value field class provided: '{value_field}'. "
+            "Expected a valid import string for a Marshmallow field class."
+        )
     return type(
         f"I18nUISchema_{lang_name}_{value_name}",
         (Schema,),

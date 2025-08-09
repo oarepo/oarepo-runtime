@@ -15,6 +15,7 @@ from functools import lru_cache
 from typing import Any
 
 import langcodes
+import langcodes.tag_parser
 from invenio_base.utils import obj_or_import_string
 from invenio_i18n import gettext as _
 from marshmallow import Schema, ValidationError, fields, pre_load, validates
@@ -22,7 +23,9 @@ from marshmallow import Schema, ValidationError, fields, pre_load, validates
 
 @lru_cache
 def get_i18n_schema(
-    lang_name: str, value_name: str, value_field: str = "marshmallow_utils.fields.SanitizedHTML"
+    lang_name: str,
+    value_name: str,
+    value_field: str = "marshmallow_utils.fields.SanitizedHTML",
 ) -> type[Schema]:
     """Dynamically creates and returns I18n Schema class.
 
@@ -32,11 +35,14 @@ def get_i18n_schema(
     class I18nMixin:
         @validates(lang_name)
         def validate_lang(self, value: str) -> None:
-            if value != "_" and not langcodes.Language.get(value).is_valid():
-                raise ValidationError("Invalid language code")
+            try:
+                if value != "_" and not langcodes.Language.get(value).is_valid():
+                    raise ValidationError("Invalid language code")
+            except langcodes.tag_parser.LanguageTagError as e:
+                raise ValidationError("Invalid language code") from e
 
         @pre_load
-        def pre_load_func(self, data: dict[str, Any]) -> dict[str, Any]:
+        def pre_load_func(self, data: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
             errors = {}
             if not data.get(lang_name) or not data.get(value_name):
                 errors[lang_name] = [_("Both language and text must be provided.")]
@@ -48,7 +54,10 @@ def get_i18n_schema(
 
     value_field_class = obj_or_import_string(value_field)
     if value_field_class is None:
-        raise ValueError
+        raise ValueError(
+            f"Invalid value field class provided: '{value_field}'. "
+            "Expected a valid import string for a Marshmallow field class."
+        )
     return type(
         f"I18nSchema_{lang_name}_{value_name}",
         (
