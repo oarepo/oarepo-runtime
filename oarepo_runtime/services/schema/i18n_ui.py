@@ -35,7 +35,9 @@ def get_i18n_ui_schema(
     """
     value_field_class = obj_or_import_string(value_field)
     if value_field_class is None:
-        raise ValueError("Invalid value field class provided")
+        raise ValueError(
+            f"Invalid value field class provided: '{value_field}'. Expected a valid import string for a Marshmallow field class."
+        )
     return type(
         f"I18nUISchema_{lang_name}_{value_name}",
         (Schema,),
