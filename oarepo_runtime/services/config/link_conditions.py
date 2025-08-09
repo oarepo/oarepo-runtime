@@ -62,9 +62,7 @@ class has_permission(Condition):  # noqa: N801
             obj = obj.record
         service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(
-                action_name=self.action_name, record=obj, **ctx
-            )
+            return service.check_permission(action_name=self.action_name, record=obj, **ctx)
         except Exception:  # pragma: no cover
             log.exception("Unexpected exception.")
 
@@ -84,9 +82,7 @@ class has_draft_permission(Condition):  # noqa: N801
             return False
         service = current_runtime.get_record_service_for_record(obj)
         try:
-            return service.check_permission(
-                action_name=self.action_name, record=draft_record, **ctx
-            )
+            return service.check_permission(action_name=self.action_name, record=draft_record, **ctx)
         except Exception:  # pragma: no cover
             log.exception("Unexpected exception.")
             return False
@@ -98,9 +94,7 @@ class has_draft(Condition):  # noqa: N801
     def __call__(self, obj: RecordBase, ctx: dict):
         """Check if the given record has draft."""
         _ = ctx
-        return bool(getattr(obj, "is_draft", False)) or bool(
-            getattr(obj, "has_draft", False)
-        )
+        return bool(getattr(obj, "is_draft", False)) or bool(getattr(obj, "has_draft", False))
 
 
 class has_published_record(Condition):  # noqa: N801

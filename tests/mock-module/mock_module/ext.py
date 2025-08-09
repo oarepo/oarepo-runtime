@@ -1,4 +1,14 @@
 # type: ignore  # noqa
+#
+# This file is part of Invenio.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
+#
+# Invenio-Drafts-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+from __future__ import annotations
+
 from functools import cached_property
 
 from invenio_drafts_resources.services.records import RecordService
@@ -20,6 +30,7 @@ class MockModuleExt:
     """Mock module extension for testing purposes."""
 
     def __init__(self, app):
+        """Initialize the mock module extension."""
         if app:
             self.init_app(app)
 
@@ -30,6 +41,7 @@ class MockModuleExt:
         app.extensions["mock-module"] = self
 
     def init_config(self, app):
+        """Initialize the configuration for the mock module."""
         app.config.setdefault("OAREPO_MODELS", {})["mock"] = Model(
             name="mock",
             version="1.0.0",
@@ -59,6 +71,7 @@ class MockModuleExt:
 
     @cached_property
     def service(self):
+        """Record service fixture."""
         return RecordService(
             ServiceConfig,
             files_service=self.file_service,

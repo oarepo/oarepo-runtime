@@ -11,6 +11,8 @@
 
 """Example resource."""
 
+from __future__ import annotations
+
 from invenio_drafts_resources.resources import RecordResourceConfig
 from invenio_records_resources.resources import (
     FileResourceConfig as FileResourceConfigBase,

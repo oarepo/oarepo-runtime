@@ -8,6 +8,8 @@
 
 """Test i18n marshmallow fields."""
 
+from __future__ import annotations
+
 import pytest
 from marshmallow import Schema, ValidationError, fields
 from werkzeug.utils import ImportStringError
@@ -117,9 +119,7 @@ def test_i18n_schema_validation_missing_fields():
         with pytest.raises(ValidationError) as exc_info:
             schema.load(data)
         errors = exc_info.value.messages
-        assert "Both language and text must be provided." in (
-            errors.get("lang", []) + errors.get("value", [])
-        )
+        assert "Both language and text must be provided." in (errors.get("lang", []) + errors.get("value", []))
 
 
 def test_i18n_schema_different_field_names():

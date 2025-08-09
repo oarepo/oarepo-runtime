@@ -1,3 +1,12 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+
 from __future__ import annotations
 
 import pytest
@@ -74,17 +83,14 @@ def test_ext_loaded(app, search_with_field_mapping, search_clear):
     assert vocabulary_model.record_cls is Vocabulary
     assert vocabulary_model.draft_cls is None
     assert vocabulary_model.service is current_service_registry.get("vocabularies")
-    assert (
-        vocabulary_model.service_config
-        is current_service_registry.get("vocabularies").config
-    )
+    assert vocabulary_model.service_config is current_service_registry.get("vocabularies").config
 
     assert current_runtime.models_by_record_class is not None
     assert Vocabulary in current_runtime.models_by_record_class
 
-    assert current_runtime.get_record_service_for_record_class(
-        Vocabulary
-    ) is current_service_registry.get("vocabularies")
+    assert current_runtime.get_record_service_for_record_class(Vocabulary) is current_service_registry.get(
+        "vocabularies"
+    )
 
     with pytest.raises(KeyError, match="No service found for record class 'Record'."):
         current_runtime.get_record_service_for_record_class(RecordBase)
@@ -95,6 +101,4 @@ def test_ext_loaded(app, search_with_field_mapping, search_clear):
     with pytest.raises(ValueError, match="Need to pass a record instance, got None"):
         current_runtime.get_record_service_for_record(None)
 
-    assert current_runtime.get_record_service_for_record(
-        Vocabulary({})
-    ) is current_service_registry.get("vocabularies")
+    assert current_runtime.get_record_service_for_record(Vocabulary({})) is current_service_registry.get("vocabularies")

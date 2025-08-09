@@ -31,9 +31,7 @@ def build_config[T](config_class: type[T], app: Flask, *args: Any, **kwargs: Any
     build_config: Callable[[Flask], T] | None = getattr(config_class, "build", None)
     if build_config is not None and callable(build_config):
         if args or kwargs:
-            raise ValueError(
-                "Can not pass extra arguments when invenio ConfigMixin is used"
-            )
+            raise ValueError("Can not pass extra arguments when invenio ConfigMixin is used")
         return build_config(app)
     return config_class(*args, **kwargs)
 

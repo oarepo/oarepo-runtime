@@ -1,7 +1,18 @@
+#
+# Copyright (C) 2021 CERN.
+# Copyright (C) 2021 Northwestern University.
+#
+# Invenio-Drafts-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
 # type: ignore  # noqa
 """Example service."""
 
-from invenio_access.permissions import Identity
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, override
+
 from invenio_drafts_resources.services import RecordServiceConfig
 from invenio_drafts_resources.services.records.components import (
     DraftFilesComponent,
@@ -12,12 +23,10 @@ from invenio_drafts_resources.services.records.config import (
     is_draft,
     is_record,
 )
-from invenio_records.api import RecordBase
-from invenio_records_resources.services import ConditionalLink
+from invenio_records_resources.services import ConditionalLink, RecordLink
 from invenio_records_resources.services import (
     FileServiceConfig as BaseFileServiceConfig,
 )
-from invenio_records_resources.services import RecordLink
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import TermsFacet
 
@@ -28,11 +37,15 @@ from oarepo_runtime.services.results import RecordItem, RecordList, ResultCompon
 from .api import Draft, DraftMediaFiles, Record, RecordMediaFiles
 from .schemas import RecordSchema
 
+if TYPE_CHECKING:
+    from invenio_access.permissions import Identity
+    from invenio_records.api import RecordBase
+
 
 class SearchOptions(SearchOptions):
     """Search options for records."""
 
-    facets = {
+    facets = {  # noqa: RUF012
         "status": TermsFacet(
             field="status",
         )
@@ -42,7 +55,7 @@ class SearchOptions(SearchOptions):
 class SearchDraftsOptions(SearchDraftsOptions):
     """Search options for drafts."""
 
-    facets = {
+    facets = {  # noqa: RUF012
         "status": TermsFacet(
             field="status",
         )
@@ -52,9 +65,8 @@ class SearchDraftsOptions(SearchDraftsOptions):
 class TestResultComponent(ResultComponent):
     """Example result component for testing purposes."""
 
-    def update_data(
-        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
-    ) -> None:
+    @override
+    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
         """Update the projection data with additional information."""
         projection["result_component"] = True
 
@@ -66,28 +78,25 @@ class ServiceConfig(RecordServiceConfig):
     record_cls = Record
     draft_cls = Draft
 
-    result_item_cls = type(
-        "TestRecordItem", (RecordItem,), {"components": (TestResultComponent,)}
-    )
-    result_list_cls = type(
-        "TestRecordList", (RecordList,), {"components": (TestResultComponent,)}
-    )
+    result_item_cls = type("TestRecordItem", (RecordItem,), {"components": (TestResultComponent,)})
+    result_list_cls = type("TestRecordList", (RecordList,), {"components": (TestResultComponent,)})
 
     schema = RecordSchema
     search = SearchOptions
     search_drafts = SearchDraftsOptions
 
-    components = RecordServiceConfig.components + [
+    components = (
+        *RecordServiceConfig.components,
         DraftFilesComponent,
         DraftMediaFilesComponent,
-    ]
+    )
 
-    links_search = {
+    links_search = {  # noqa: RUF012
         **RecordServiceConfig.links_search,
         **pagination_links_html("{+ui}/docs/{?args*}"),
     }
 
-    links_item = {
+    links_item = {  # noqa: RUF012
         "self": ConditionalLink(
             cond=is_record,
             if_=RecordLink("{+api}/mocks/{id}"),
@@ -114,9 +123,7 @@ class MediaFilesRecordServiceConfig(RecordServiceConfig):
     record_cls = RecordMediaFiles
     draft_cls = DraftMediaFiles
 
-    components = [
-        DraftMediaFilesComponent,
-    ]
+    components = (DraftMediaFilesComponent,)
 
 
 class FileServiceConfig(BaseFileServiceConfig):

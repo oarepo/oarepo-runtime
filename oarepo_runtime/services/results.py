@@ -43,9 +43,7 @@ class ResultComponent:
         self._record_item = record_item
         self._record_list = record_list
 
-    def update_data(
-        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
-    ) -> None:
+    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
         """Update the projection data with additional information.
 
         :param identity: The identity of the user making the request.
@@ -108,9 +106,7 @@ class RecordItem(BaseRecordItem):
         converted_errors = []
         for error in errors:
             if error.get("messages"):
-                converted_errors.extend(
-                    self.postprocess_error_messages(error["field"], error["messages"])
-                )
+                converted_errors.extend(self.postprocess_error_messages(error["field"], error["messages"]))
             else:
                 converted_errors.append(error)
         return converted_errors
@@ -166,9 +162,7 @@ class RecordList(BaseRecordList):
                     },
                 )
                 if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(
-                        self._service.config.links_search_item
-                    )
+                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
                 else:
                     links_tpl = self._links_item_tpl
 

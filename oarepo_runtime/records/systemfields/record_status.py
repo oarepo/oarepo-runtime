@@ -38,9 +38,9 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
         data.pop(self.attr_name, None)
 
     @override
-    def post_dump(
-        self, record: RecordBase, data: dict, dumper: Dumper | None = None
-    ) -> None:
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+        if self.key is None:
+            return
         data[self.attr_name] = getattr(record, self.key)
 
     def __get__(self, record: RecordBase | None, owner: Any = None) -> Any:

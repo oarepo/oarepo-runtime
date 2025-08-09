@@ -1,3 +1,13 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""Module to update the mapping of system fields in a record class."""
+
 from __future__ import annotations
 
 import inspect
@@ -23,7 +33,7 @@ def prefixed_index(index: dsl.Index) -> dsl.Index:
         build_alias_name(
             index._name,  # type: ignore[attr-defined]  # noqa: SLF001
         ),
-        using=current_search_client,
+        using=current_search_client,  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -70,9 +80,4 @@ def update_record_index(
 
 def get_mapping_fields(record_class: Record) -> Iterable[MappingSystemFieldMixin]:
     """Get all mapping fields from the record class."""
-    return (
-        attr
-        for _, attr in inspect.getmembers(
-            record_class, lambda x: isinstance(x, MappingSystemFieldMixin)
-        )
-    )
+    return (attr for _, attr in inspect.getmembers(record_class, lambda x: isinstance(x, MappingSystemFieldMixin)))

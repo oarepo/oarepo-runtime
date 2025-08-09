@@ -1,6 +1,15 @@
 # type: ignore  # noqa
-
+#
+# This file is part of Invenio.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
+#
+# Invenio-Drafts-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
 """Example of a record draft API."""
+
+from __future__ import annotations
 
 from invenio_drafts_resources.records import Draft as DraftBase
 from invenio_drafts_resources.records import ParentRecord as ParentRecordBase
@@ -74,13 +83,7 @@ class TestMappingSystemField(MappingSystemFieldMixin, SystemField):
     @property
     def mapping_settings(self) -> dict:
         """Return the default mapping settings for the system field."""
-        return {
-            "analysis": {
-                "analyzers": {
-                    "test_analyzer": {"type": "custom", "tokenizer": "standard"}
-                }
-            }
-        }
+        return {"analysis": {"analyzers": {"test_analyzer": {"type": "custom", "tokenizer": "standard"}}}}
 
 
 class FileDraft(FileRecordBase):
@@ -105,9 +108,7 @@ class Draft(DraftBase):
     versions_model_cls = ParentState
     parent_record_cls = ParentRecord
 
-    pid = PIDField(
-        provider=PIDProvider, context_cls=PIDFieldContext, create=True, delete=False
-    )
+    pid = PIDField(provider=PIDProvider, context_cls=PIDFieldContext, create=True, delete=False)
 
     # System fields
     schema = ConstantField("$schema", "local://records/record-v1.0.0.json")

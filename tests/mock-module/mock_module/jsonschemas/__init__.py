@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
 # Copyright (C) 2020 CERN.
@@ -8,3 +7,5 @@
 # details.
 
 """JSONSchema directory."""
+
+from __future__ import annotations

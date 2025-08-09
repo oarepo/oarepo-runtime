@@ -20,16 +20,12 @@ def pagination_links_html(tpl: str) -> dict[str, Link]:
         "prev_html": Link(
             tpl,
             when=lambda pagination, _context: pagination.has_prev,
-            vars=lambda pagination, variables: variables["args"].update(
-                {"page": pagination.prev_page.page}
-            ),
+            vars=lambda pagination, variables: variables["args"].update({"page": pagination.prev_page.page}),
         ),
         "self_html": Link(tpl),
         "next_html": Link(
             tpl,
             when=lambda pagination, _context: pagination.has_next,
-            vars=lambda pagination, variables: variables["args"].update(
-                {"page": pagination.next_page.page}
-            ),
+            vars=lambda pagination, variables: variables["args"].update({"page": pagination.next_page.page}),
         ),
     }

@@ -1,12 +1,19 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
 """OARepo extensions to the index command."""
 
 from __future__ import annotations
 
 import click
 from flask.cli import with_appcontext
-from invenio_search.cli import index
+from invenio_search.cli import index, search_version_check
 from invenio_search.cli import init as original_init
-from invenio_search.cli import search_version_check
 
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 

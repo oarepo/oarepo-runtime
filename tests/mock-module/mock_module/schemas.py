@@ -9,8 +9,10 @@
 
 """Record schema."""
 
+from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any
 
 from invenio_drafts_resources.services.records.schema import (
     RecordSchema as BaseRecordSchema,
@@ -58,7 +60,7 @@ class RecordSchema(BaseRecordSchema):
     media_files = fields.Nested(FilesSchema)
 
     @pre_load
-    def clean_data(self, input_data, **kwargs):
+    def clean_data(self, input_data, **_kwargs: Any) -> dict[str, Any]:
         """Remove dump_only fields."""
         data = deepcopy(input_data)
         data.pop("result_component", None)

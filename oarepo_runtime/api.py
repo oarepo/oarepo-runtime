@@ -26,7 +26,7 @@ class Model[
     S: RecordService = RecordService,
     C: RecordServiceConfig = RecordServiceConfig,
     R: RecordBase = RecordBase,
-    D: Draft = Draft
+    D: Draft = Draft,
 ]:
     """Model configuration.
 
@@ -82,7 +82,8 @@ class Model[
         """Get the service."""
         if isinstance(self._service, str):
             return cast(
-                "S", current_service_registry.get(self._service)  # type: ignore[attr-defined]
+                "S",
+                current_service_registry.get(self._service),  # type: ignore[attr-defined]
             )
         return self._service
 
