@@ -14,7 +14,6 @@ import inspect
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from invenio_records_resources.records.api import Record
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from invenio_search.utils import build_alias_name
@@ -24,7 +23,7 @@ from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from invenio_records_resources.records.api import Record
+    from invenio_records.api import RecordBase
 
 
 def prefixed_index(index: dsl.Index) -> dsl.Index:
@@ -78,6 +77,8 @@ def update_record_index(
         record_index.put_mapping(body=body)
 
 
-def get_mapping_fields(record_class: type[RecordBase]) -> Iterable[MappingSystemFieldMixin]:
+def get_mapping_fields(
+    record_class: type[RecordBase],
+) -> Iterable[MappingSystemFieldMixin]:
     """Get all mapping fields from the record class."""
     return (attr for _, attr in inspect.getmembers(record_class, lambda x: isinstance(x, MappingSystemFieldMixin)))
