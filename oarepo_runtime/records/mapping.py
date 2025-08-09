@@ -78,6 +78,6 @@ def update_record_index(
         record_index.put_mapping(body=body)
 
 
-def get_mapping_fields(record_class: Record) -> Iterable[MappingSystemFieldMixin]:
+def get_mapping_fields(record_class: type[RecordBase]) -> Iterable[MappingSystemFieldMixin]:
     """Get all mapping fields from the record class."""
     return (attr for _, attr in inspect.getmembers(record_class, lambda x: isinstance(x, MappingSystemFieldMixin)))
