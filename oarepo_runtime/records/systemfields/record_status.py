@@ -34,7 +34,7 @@ class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
         }
 
     @override
-    def post_load(self, record: RecordBase, data: dict, loader: Any = None) -> None:
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
         data.pop(self.attr_name, None)
 
     @override
