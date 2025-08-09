@@ -63,9 +63,7 @@ def test_get_i18n_ui_schema_custom_params():
 
 def test_get_i18n_ui_schema_with_sanitized_html():
     """Test get_i18n_ui_schema with SanitizedHTML field."""
-    schema_class = get_i18n_ui_schema(
-        "lang", "value", "marshmallow_utils.fields.SanitizedHTML"
-    )
+    schema_class = get_i18n_ui_schema("lang", "value", "marshmallow_utils.fields.SanitizedHTML")
 
     assert schema_class is not None
     schema = schema_class()
@@ -113,9 +111,7 @@ def test_i18n_ui_schema_dumping():
 
 def test_i18n_ui_schema_dumping_with_html():
     """Test dumping data with SanitizedHTML field."""
-    schema_class = get_i18n_ui_schema(
-        "lang", "value", "marshmallow_utils.fields.SanitizedHTML"
-    )
+    schema_class = get_i18n_ui_schema("lang", "value", "marshmallow_utils.fields.SanitizedHTML")
     schema = schema_class()
 
     data = {"lang": "en", "value": "<p>Hello <strong>World</strong></p>"}
@@ -280,9 +276,7 @@ def test_i18n_str_ui_field_with_html():
 
     schema = TestSchema()
 
-    data = {
-        "description": {"lang": "en", "content": "<p>Test <strong>content</strong></p>"}
-    }
+    data = {"description": {"lang": "en", "content": "<p>Test <strong>content</strong></p>"}}
     result = schema.dump(data)
     assert result == data
 
