@@ -11,7 +11,9 @@ from __future__ import annotations
 from oarepo_runtime.records.drafts import get_draft, has_draft
 
 
-def test_service_flow(app, db, search_with_field_mapping, service, search_clear, identity_simple, location):
+def test_service_flow(
+    app, db, search_with_field_mapping, service, search_clear, identity_simple, location
+):
     rec = service.create(
         identity=identity_simple,
         data={
@@ -38,7 +40,9 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
 
     service.config.draft_cls.index.refresh()
 
-    hits = service.search_drafts(identity_simple, params={"facets": {"status": ["draft"]}})
+    hits = service.search_drafts(
+        identity_simple, params={"facets": {"publication_status": ["draft"]}}
+    )
     assert hits.total == 1
     items = list(hits.hits)
     assert len(items) == 1
@@ -46,13 +50,17 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     # TODO: check links & html links
 
     assert hits.aggregations == {
-        "status": {
-            "buckets": [{"doc_count": 1, "is_selected": True, "key": "draft", "label": "draft"}],
+        "publication_status": {
+            "buckets": [
+                {"doc_count": 1, "is_selected": True, "key": "draft", "label": "draft"}
+            ],
             "label": "",
         }
     }
 
-    hits = service.search_drafts(identity_simple, params={"facets": {"status": ["published"]}})
+    hits = service.search_drafts(
+        identity_simple, params={"facets": {"publication_status": ["published"]}}
+    )
     assert hits.total == 0
 
     # publish the record
@@ -69,7 +77,9 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     service.config.draft_cls.index.refresh()
     service.config.record_cls.index.refresh()
 
-    hits = service.search_drafts(identity_simple, params={"facets": {"status": ["draft"]}})
+    hits = service.search_drafts(
+        identity_simple, params={"facets": {"publication_status": ["draft"]}}
+    )
     assert hits.total == 0
 
     hits = service.search(identity_simple)
@@ -81,7 +91,7 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     # TODO: check links & html links
 
     assert hits.aggregations == {
-        "status": {
+        "publication_status": {
             "buckets": [
                 {
                     "doc_count": 1,

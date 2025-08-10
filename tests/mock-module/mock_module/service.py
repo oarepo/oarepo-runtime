@@ -46,8 +46,8 @@ class SearchOptions(SearchOptions):
     """Search options for records."""
 
     facets = {  # noqa: RUF012
-        "status": TermsFacet(
-            field="status",
+        "publication_status": TermsFacet(
+            field="publication_status",
         )
     }
 
@@ -56,8 +56,8 @@ class SearchDraftsOptions(SearchDraftsOptions):
     """Search options for drafts."""
 
     facets = {  # noqa: RUF012
-        "status": TermsFacet(
-            field="status",
+        "publication_status": TermsFacet(
+            field="publication_status",
         )
     }
 
@@ -66,7 +66,9 @@ class TestResultComponent(ResultComponent):
     """Example result component for testing purposes."""
 
     @override
-    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
+    def update_data(
+        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
+    ) -> None:
         """Update the projection data with additional information."""
         projection["result_component"] = True
 
@@ -78,8 +80,12 @@ class ServiceConfig(RecordServiceConfig):
     record_cls = Record
     draft_cls = Draft
 
-    result_item_cls = type("TestRecordItem", (RecordItem,), {"components": (TestResultComponent,)})
-    result_list_cls = type("TestRecordList", (RecordList,), {"components": (TestResultComponent,)})
+    result_item_cls = type(
+        "TestRecordItem", (RecordItem,), {"components": (TestResultComponent,)}
+    )
+    result_list_cls = type(
+        "TestRecordList", (RecordList,), {"components": (TestResultComponent,)}
+    )
 
     schema = RecordSchema
     search = SearchOptions
