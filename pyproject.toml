@@ -20,7 +20,6 @@ dev = [
 ]
 tests = [
     "pytest>=7.1.2",
-    "mock-module @ {root:uri}/tests/mock-module",
 ]
 
 [project.entry-points."invenio_base.api_apps"]
