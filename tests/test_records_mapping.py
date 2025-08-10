@@ -116,9 +116,7 @@ def test_prefixed_index(app):
 @patch("oarepo_runtime.records.mapping.update_record_index")
 @patch("oarepo_runtime.records.mapping.prefixed_index")
 @patch("oarepo_runtime.records.mapping.get_mapping_fields")
-def test_update_record_system_fields_mapping(
-    mock_get_fields, mock_prefixed, mock_update_index
-):
+def test_update_record_system_fields_mapping(mock_get_fields, mock_prefixed, mock_update_index):
     """Test updating record system fields mapping."""
     # Setup mocks
     mock_index = Mock()

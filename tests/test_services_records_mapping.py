@@ -44,12 +44,10 @@ def test_update_all_records_mappings_with_record_services():
         "service3": mock_non_record_service,
     }
 
-    with patch(
-        "oarepo_runtime.services.records.mapping.current_runtime", mock_runtime
-    ), patch(
-        "oarepo_runtime.services.records.mapping.update_record_system_fields_mapping"
-    ) as mock_update:
-
+    with (
+        patch("oarepo_runtime.services.records.mapping.current_runtime", mock_runtime),
+        patch("oarepo_runtime.services.records.mapping.update_record_system_fields_mapping") as mock_update,
+    ):
         update_all_records_mappings()
 
         # Should be called for record_cls and draft_cls of service1
@@ -78,12 +76,10 @@ def test_update_all_records_mappings_no_record_cls():
     mock_runtime = Mock()
     mock_runtime.services = {"service1": mock_record_service}
 
-    with patch(
-        "oarepo_runtime.services.records.mapping.current_runtime", mock_runtime
-    ), patch(
-        "oarepo_runtime.services.records.mapping.update_record_system_fields_mapping"
-    ) as mock_update:
-
+    with (
+        patch("oarepo_runtime.services.records.mapping.current_runtime", mock_runtime),
+        patch("oarepo_runtime.services.records.mapping.update_record_system_fields_mapping") as mock_update,
+    ):
         update_all_records_mappings()
 
         # Should not be called at all
@@ -95,12 +91,10 @@ def test_update_all_records_mappings_no_services():
     mock_runtime = Mock()
     mock_runtime.services = {}
 
-    with patch(
-        "oarepo_runtime.services.records.mapping.current_runtime", mock_runtime
-    ), patch(
-        "oarepo_runtime.services.records.mapping.update_record_system_fields_mapping"
-    ) as mock_update:
-
+    with (
+        patch("oarepo_runtime.services.records.mapping.current_runtime", mock_runtime),
+        patch("oarepo_runtime.services.records.mapping.update_record_system_fields_mapping") as mock_update,
+    ):
         update_all_records_mappings()
 
         # Should not be called at all
@@ -131,12 +125,10 @@ def test_update_all_records_mappings_mixed_services():
         "incomplete_service": mock_incomplete_service,
     }
 
-    with patch(
-        "oarepo_runtime.services.records.mapping.current_runtime", mock_runtime
-    ), patch(
-        "oarepo_runtime.services.records.mapping.update_record_system_fields_mapping"
-    ) as mock_update:
-
+    with (
+        patch("oarepo_runtime.services.records.mapping.current_runtime", mock_runtime),
+        patch("oarepo_runtime.services.records.mapping.update_record_system_fields_mapping") as mock_update,
+    ):
         update_all_records_mappings()
 
         # Should only be called for the valid record service
@@ -172,12 +164,10 @@ def test_update_all_records_mappings_service_config_variations():
         "both": mock_service_both,
     }
 
-    with patch(
-        "oarepo_runtime.services.records.mapping.current_runtime", mock_runtime
-    ), patch(
-        "oarepo_runtime.services.records.mapping.update_record_system_fields_mapping"
-    ) as mock_update:
-
+    with (
+        patch("oarepo_runtime.services.records.mapping.current_runtime", mock_runtime),
+        patch("oarepo_runtime.services.records.mapping.update_record_system_fields_mapping") as mock_update,
+    ):
         update_all_records_mappings()
 
         # Should be called for:

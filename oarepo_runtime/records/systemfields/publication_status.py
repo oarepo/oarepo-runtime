@@ -41,15 +41,11 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
         }
 
     @override
-    def post_load(
-        self, record: RecordBase, data: dict, loader: Dumper | None = None
-    ) -> None:
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
         data.pop(self.key, None)
 
     @override
-    def post_dump(
-        self, record: RecordBase, data: dict, dumper: Dumper | None = None
-    ) -> None:
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
         if self.key is None:
             return
         data[self.key] = getattr(record, self.attr_name)

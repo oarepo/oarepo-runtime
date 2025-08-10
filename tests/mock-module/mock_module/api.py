@@ -83,13 +83,7 @@ class TestMappingSystemField(MappingSystemFieldMixin, SystemField):
     @property
     def mapping_settings(self) -> dict:
         """Return the default mapping settings for the system field."""
-        return {
-            "analysis": {
-                "analyzers": {
-                    "test_analyzer": {"type": "custom", "tokenizer": "standard"}
-                }
-            }
-        }
+        return {"analysis": {"analyzers": {"test_analyzer": {"type": "custom", "tokenizer": "standard"}}}}
 
 
 class FileDraft(FileRecordBase):
@@ -114,9 +108,7 @@ class Draft(DraftBase):
     versions_model_cls = ParentState
     parent_record_cls = ParentRecord
 
-    pid = PIDField(
-        provider=PIDProvider, context_cls=PIDFieldContext, create=True, delete=False
-    )
+    pid = PIDField(provider=PIDProvider, context_cls=PIDFieldContext, create=True, delete=False)
 
     # System fields
     schema = ConstantField("$schema", "local://records/record-v1.0.0.json")

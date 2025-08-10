@@ -26,9 +26,7 @@ from oarepo_runtime.services.results import RecordItem, RecordList, ResultCompon
 class MockResultComponent(ResultComponent):
     """Mock result component for testing."""
 
-    def update_data(
-        self, identity: Identity, record: Record, projection: dict, expand: bool
-    ) -> None:
+    def update_data(self, identity: Identity, record: Record, projection: dict, expand: bool) -> None:
         """Update projection with test data."""
         _ = record  # Unused but required by interface
         projection["result_component"] = True
@@ -255,9 +253,7 @@ def test_record_list_aggregations_processing():
         }
     }
 
-    with patch.object(
-        BaseRecordList, "aggregations", new_callable=PropertyMock
-    ) as mock_agg:
+    with patch.object(BaseRecordList, "aggregations", new_callable=PropertyMock) as mock_agg:
         mock_agg.return_value = mock_aggregations
 
         result = record_list.aggregations
@@ -292,9 +288,7 @@ def test_record_list_aggregations_none():
         schema=Mock(),
     )
 
-    with patch.object(
-        RecordList, "aggregations", new_callable=PropertyMock
-    ) as mock_agg:
+    with patch.object(RecordList, "aggregations", new_callable=PropertyMock) as mock_agg:
         mock_agg.return_value = None
 
         result = record_list.aggregations
@@ -317,9 +311,7 @@ def test_record_list_aggregations_attribute_error():
         schema=Mock(),
     )
 
-    with patch.object(
-        BaseRecordList, "aggregations", new_callable=PropertyMock
-    ) as mock_agg:
+    with patch.object(BaseRecordList, "aggregations", new_callable=PropertyMock) as mock_agg:
         mock_agg.side_effect = AttributeError()
 
         result = record_list.aggregations

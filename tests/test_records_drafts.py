@@ -119,9 +119,7 @@ def test_get_draft_with_published_record_has_draft(app):
 
         assert result is mock_draft
         mock_runtime.get_record_service_for_record.assert_called_once_with(record)
-        mock_draft_cls.get_records_by_parent.assert_called_once_with(
-            record.parent, with_deleted=False
-        )
+        mock_draft_cls.get_records_by_parent.assert_called_once_with(record.parent, with_deleted=False)
 
 
 @patch("oarepo_runtime.records.drafts.current_runtime")
@@ -144,9 +142,7 @@ def test_get_draft_with_published_record_no_draft_found(app):
 
         assert result is None
         mock_runtime.get_record_service_for_record.assert_called_once_with(record)
-        mock_draft_cls.get_records_by_parent.assert_called_once_with(
-            record.parent, with_deleted=False
-        )
+        mock_draft_cls.get_records_by_parent.assert_called_once_with(record.parent, with_deleted=False)
 
 
 @patch("oarepo_runtime.records.drafts.current_runtime")
@@ -171,6 +167,4 @@ def test_get_draft_multiple_drafts_returns_first(mock_runtime, app):
         # Should return the first draft
         assert result is mock_draft1
         mock_runtime.get_record_service_for_record.assert_called_once_with(record)
-        mock_draft_cls.get_records_by_parent.assert_called_once_with(
-            record.parent, with_deleted=False
-        )
+        mock_draft_cls.get_records_by_parent.assert_called_once_with(record.parent, with_deleted=False)
