@@ -57,8 +57,18 @@ class OARepoRuntime:
     @cached_property
     def models_by_record_class(self) -> dict[type[RecordBase], Model]:
         """Return a mapping of record classes to their models."""
-        ret = {model.record_cls: model for model in self.models.values() if model.record_cls is not None}
-        ret.update({model.draft_cls: model for model in self.models.values() if model.draft_cls is not None})
+        ret = {
+            model.record_cls: model
+            for model in self.models.values()
+            if model.record_cls is not None
+        }
+        ret.update(
+            {
+                model.draft_cls: model
+                for model in self.models.values()
+                if model.draft_cls is not None
+            }
+        )
         return ret
 
     @property
@@ -69,11 +79,13 @@ class OARepoRuntime:
 
     def get_record_service_for_record(self, record: Any) -> RecordService:
         """Retrieve the associated service for a given record."""
-        if not record:
+        if record is None:
             raise ValueError("Need to pass a record instance, got None")
         return self.get_record_service_for_record_class(type(record))
 
-    def get_record_service_for_record_class(self, record_cls: type[RecordBase]) -> RecordService:
+    def get_record_service_for_record_class(
+        self, record_cls: type[RecordBase]
+    ) -> RecordService:
         """Retrieve the service associated with a given record class."""
         for t in record_cls.mro():
             if t is RecordBase:
