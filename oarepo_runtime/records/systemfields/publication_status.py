@@ -21,34 +21,41 @@ if TYPE_CHECKING:
     from invenio_records.dumpers import Dumper
 
 
-class RecordStatusSystemField(MappingSystemFieldMixin, SystemField):
-    """A system field to track the status of a record (either 'draft' or 'published')."""
+class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
+    """A system field to track the status of a record (either 'draft' or 'published').
+
+    The default key for this field is 'publication_status', but it can be customized.
+    """
+
+    def __init__(self, key: str | None = "publication_status"):
+        """Initialize the system field with an optional key."""
+        super().__init__(key)
 
     @property
     def mapping(self) -> dict:
         """Return the mapping for the field in the search index."""
         return {
-            self.attr_name: {
+            self.key: {
                 "type": "keyword",
             },
         }
 
     @override
-    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
-        data.pop(self.attr_name, None)
+    def post_load(
+        self, record: RecordBase, data: dict, loader: Dumper | None = None
+    ) -> None:
+        data.pop(self.key, None)
 
     @override
-    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+    def post_dump(
+        self, record: RecordBase, data: dict, dumper: Dumper | None = None
+    ) -> None:
         if self.key is None:
             return
-        data[self.attr_name] = getattr(record, self.key)
+        data[self.key] = getattr(record, self.attr_name)
 
     def __get__(self, record: RecordBase | None, owner: Any = None) -> Any:
         """Access the attribute."""
-        # Class access
-        _ = owner
-        if not isinstance(self.attr_name, str):
-            raise TypeError  # pragma: no cover
         if record is None:
             return self
         return "draft" if getattr(record, "is_draft", False) else "published"

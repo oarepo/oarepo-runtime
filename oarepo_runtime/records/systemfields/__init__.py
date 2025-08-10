@@ -11,6 +11,6 @@
 from __future__ import annotations
 
 from .mapping import MappingSystemFieldMixin
-from .record_status import RecordStatusSystemField
+from .publication_status import PublicationStatusSystemField
 
-__all__ = ("MappingSystemFieldMixin", "RecordStatusSystemField")
+__all__ = ("MappingSystemFieldMixin", "PublicationStatusSystemField")
