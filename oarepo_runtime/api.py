@@ -11,15 +11,52 @@
 
 from __future__ import annotations
 
+import dataclasses
+from functools import cached_property
 from typing import TYPE_CHECKING, cast
 
+from flask import current_app
+from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.proxies import current_service_registry
 
 if TYPE_CHECKING:
     from flask_babel.speaklater import LazyString
+    from flask_resources.responses import ResponseHandler
+    from flask_resources.serializers import BaseSerializer
     from invenio_drafts_resources.records.api import Draft
     from invenio_records_resources.records.api import RecordBase
+    from invenio_records_resources.resources.records.config import RecordResourceConfig
+    from invenio_records_resources.resources.records.resource import RecordResource
     from invenio_records_resources.services import RecordService, RecordServiceConfig
+
+
+@dataclasses.dataclass
+class Export:
+    """Configuration of an export format.
+
+    Exports are shown on the record landing page and user can download them.
+    """
+
+    name: LazyString
+    """Name of the export format, human readable."""
+
+    mimetype: str
+    """MIME type of the export format."""
+
+    serializer: BaseSerializer
+    """Serializer used to serialize the record into the export format."""
+
+    display: bool = True
+    """Whether the export format is displayed in the UI."""
+
+    oai_metadata_prefix: str | None = None
+    """OAI metadata prefix, if applicable. If not set, the export can not be used in OAI-PMH responses."""
+
+    oai_schema: str | None = None
+    """OAI schema, if applicable. If not set, the export can not be used in OAI-PMH responses."""
+
+    oai_namespace: str | None = None
+    """OAI namespace, if applicable. If not set, the export can not be used in OAI-PMH responses."""
 
 
 class Model[
@@ -27,6 +64,9 @@ class Model[
     C: RecordServiceConfig = RecordServiceConfig,
     R: RecordBase = RecordBase,
     D: Draft = Draft,
+    # not sure why this is flagged by pyright as an error
+    RR: RecordResource = RecordResource,  # pyright: ignore[reportGeneralTypeIssues]
+    RC: RecordResourceConfig = RecordResourceConfig,
 ]:
     """Model configuration.
 
@@ -36,21 +76,32 @@ class Model[
     """
 
     name: str | LazyString
+    """Name of the model, human readable."""
+
     version: str
+    """Version of the model, should be a valid semantic version."""
+
     description: str | LazyString | None = None
-    global_search_enabled: bool = False
+    """Description of the model, human readable."""
+
+    records_alias_enabled: bool = False
+    """Whether the records alias is enabled for this model. Such models will be searchable
+    via the `/api/records` endpoint."""
 
     def __init__(  # noqa: PLR0913 more attributes as we are creating a config
         self,
         name: str | LazyString,
         version: str,
         service: str | S,
+        resource_config: RC | str,
         # params with default values
         service_config: C | None = None,
         description: str | LazyString | None = None,
         record: type[R] | None = None,
         draft: type[D] | None = None,
-        global_search_enabled: bool = True,
+        resource: str | RR = "invenio_records_resources.resources.records.resource.RecordResource",
+        exports: list[Export] | None = None,
+        records_alias_enabled: bool = True,
     ):
         """Initialize the model configuration.
 
@@ -65,17 +116,28 @@ class Model[
             configuration.
         :param draft: Draft class, if not provided, it will be taken from the service
             configuration.
+        :param resource: Resource class or string import path to the resource class.
+            If not provided, it will be taken from the service configuration.
+        :param resource_config: Resource configuration, if not provided, it will be
+            taken from the resource class.
+        :param exports: List of export formats that can be used to export the record.
+            If not provided, no exports are available.
+        :param records_alias_enabled: Whether the records alias is enabled for this model.
+            Such models will be searchable via the `/api/records` endpoint.
         """
         self.name = name
         self.version = version
         self.description = description
-        self.global_search_enabled = global_search_enabled
+        self.records_alias_enabled = records_alias_enabled
 
         # lazy getters ...
         self._record = record
         self._draft = draft
         self._service = service
         self._service_config = service_config
+        self._resource = resource
+        self._resource_config = resource_config
+        self._exports = exports or []
 
     @property
     def service(self) -> S:
@@ -109,3 +171,40 @@ class Model[
                 return cast("type[D]", self.service.config.draft_cls)
             return None
         return self._draft
+
+    @cached_property
+    def resource_config(self) -> RC:
+        """Get the resource configuration."""
+        if isinstance(self._resource_config, str):
+            resource_config_class: type[RC] = cast("type[RC]", obj_or_import_string(self._resource_config))
+            # need to import it here to avoid circular import issues
+            from .config import build_config
+
+            return build_config(resource_config_class, current_app)
+        return self._resource_config
+
+    @cached_property
+    def resource(self) -> RR:
+        """Get the resource."""
+        if isinstance(self._resource, str):
+            resource_class = obj_or_import_string(self._resource)
+            if resource_class is None:
+                raise ValueError(f"Resource class {self._resource} can not be None.")
+            return cast(
+                "RR",
+                resource_class(
+                    service=self.service,
+                    config=self.resource_config,
+                ),
+            )
+        return self._resource
+
+    @property
+    def exports(self) -> list[Export]:
+        """Get all exportable response handlers."""
+        return self._exports
+
+    @property
+    def response_handlers(self) -> dict[str, ResponseHandler]:
+        """Get all response handlers from the resource configuration."""
+        return cast("dict[str, ResponseHandler]", self.resource_config.response_handlers)
