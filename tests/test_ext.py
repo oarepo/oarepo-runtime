@@ -14,6 +14,8 @@ from invenio_drafts_resources.records.api import Draft, Record
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.records.api import RecordBase
 from invenio_vocabularies.records.api import Vocabulary
+from invenio_vocabularies.resources.config import VocabulariesResourceConfig
+from invenio_vocabularies.resources.resource import VocabulariesResource
 
 from oarepo_runtime import current_runtime
 from oarepo_runtime.api import Model
@@ -37,7 +39,8 @@ def test_model():
         name="test",
         version="1.0.0",
         service=TestService(),
-        global_search_enabled=True,
+        resource_config="invenio_records_resources.resources.records.config.RecordResourceConfig",
+        records_alias_enabled=True,
     )
     assert m.name == "test"
     assert m.version == "1.0.0"
@@ -60,6 +63,7 @@ def test_model_direct_instances():
         service_config=config_instance,
         record=record,
         draft=draft,
+        resource_config="invenio_records_resources.resources.records.config.RecordResourceConfig",
     )
 
     assert m.service is service_instance
@@ -102,3 +106,11 @@ def test_ext_loaded(app, search_with_field_mapping, search_clear):
         current_runtime.get_record_service_for_record(None)
 
     assert current_runtime.get_record_service_for_record(Vocabulary({})) is current_service_registry.get("vocabularies")
+
+    vocabularies_model = current_runtime.models["vocabularies"]
+    assert vocabularies_model.exports == []
+    assert vocabularies_model.resource_config is not None
+    assert isinstance(vocabularies_model.resource_config, VocabulariesResourceConfig)
+    assert isinstance(vocabularies_model.resource, VocabulariesResource)
+
+    assert "application/json" in vocabularies_model.response_handlers

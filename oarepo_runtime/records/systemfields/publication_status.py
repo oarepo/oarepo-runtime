@@ -47,9 +47,11 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
     @override
     def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
         if self.key is None:
-            return
+            return  # pragma: no cover
         if not self.attr_name:
-            raise ValueError("attr_name must be set for PublicationStatusSystemField")
+            raise ValueError(  # pragma: no cover
+                "attr_name must be set for PublicationStatusSystemField"
+            )
         data[self.key] = getattr(record, self.attr_name)
 
     def __get__(self, record: RecordBase | None, owner: Any = None) -> Any:

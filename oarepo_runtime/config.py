@@ -47,7 +47,9 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="vocabularies",
         description="Base (non-specialized) invenio vocabularies",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.resources.config.VocabulariesResourceConfig",
+        resource="invenio_vocabularies.resources.resource.VocabulariesResource",
     ),
     # affiliations
     "affiliations": Model(
@@ -55,7 +57,9 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="affiliations",
         description="Affiliations vocabulary",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.contrib.affiliations.resources.AffiliationsResourceConfig",
+        resource="invenio_vocabularies.contrib.affiliations.resources.AffiliationsResource",
     ),
     # funders
     "funders": Model(
@@ -63,7 +67,9 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="funders",
         description="Funders vocabulary",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.contrib.funders.resources.FundersResourceConfig",
+        resource="invenio_vocabularies.contrib.funders.resources.FundersResource",
     ),
     # awards
     "awards": Model(
@@ -71,7 +77,9 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="awards",
         description="Awards vocabulary",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.contrib.awards.resources.AwardsResourceConfig",
+        resource="invenio_vocabularies.contrib.awards.resources.AwardsResource",
     ),
     # names
     "names": Model(
@@ -79,7 +87,9 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="names",
         description="Names vocabulary",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.contrib.names.resources.NamesResourceConfig",
+        resource="invenio_vocabularies.contrib.names.resources.NamesResource",
     ),
     # subjects
     "subjects": Model(
@@ -87,6 +97,8 @@ OAREPO_MODELS: dict[str, Model] = {
         version=vocabularies_version,
         service="subjects",
         description="Subjects vocabulary",
-        global_search_enabled=False,
+        records_alias_enabled=False,
+        resource_config="invenio_vocabularies.contrib.subjects.resources.SubjectsResourceConfig",
+        resource="invenio_vocabularies.contrib.subjects.resources.SubjectsResource",
     ),
 }

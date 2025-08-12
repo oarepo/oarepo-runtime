@@ -46,7 +46,8 @@ class MockModuleExt:
             name="mock",
             version="1.0.0",
             service="mock-record-service",
-            global_search_enabled=True,
+            records_alias_enabled=True,
+            resource_config="invenio_records_resources.resources.records.config.RecordResourceConfig",
         )
 
     @cached_property
