@@ -34,8 +34,15 @@ class TestService:
     config = TestConfig()
 
 
+def test_ext_init_without_app():
+    from oarepo_runtime.ext import OARepoRuntime
+
+    OARepoRuntime()
+
+
 def test_model():
     m = Model(
+        code="test",
         name="test",
         version="1.0.0",
         service=TestService(),
@@ -57,6 +64,7 @@ def test_model_direct_instances():
     draft = Draft
 
     m = Model(
+        code="test",
         name="test",
         version="1.0.0",
         service=service_instance,
@@ -82,7 +90,7 @@ def test_ext_loaded(app, search_with_field_mapping, search_clear):
     assert "vocabularies" in models
 
     vocabulary_model = models["vocabularies"]
-    assert vocabulary_model.name == "vocabularies"
+    assert vocabulary_model.code == "vocabularies"
 
     assert vocabulary_model.record_cls is Vocabulary
     assert vocabulary_model.draft_cls is None

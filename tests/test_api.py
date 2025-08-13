@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from oarepo_runtime.api import Model
+from oarepo_runtime.proxies import current_runtime
 
 
 class MockService:
@@ -29,6 +30,7 @@ def test_resource_with_string_import():
     """Test resource property with valid string import path."""
     service = MockService()
     model = Model(
+        code="test",
         name="test",
         version="1.0.0",
         service=service,
@@ -53,6 +55,7 @@ def test_resource_with_none_import():
     """Test resource property raises ValueError when obj_or_import_string returns None."""
     service = MockService()
     model = Model(
+        code="test",
         name="test",
         version="1.0.0",
         service=service,
@@ -77,6 +80,7 @@ def test_resource_with_direct_instance():
     resource_instance = MagicMock()
 
     model = Model(
+        code="test",
         name="test",
         version="1.0.0",
         service=service,
@@ -85,3 +89,24 @@ def test_resource_with_direct_instance():
     )
 
     assert model.resource is resource_instance
+
+
+def test_api_blueprint_name():
+    """Test api_blueprint_name property."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,
+        resource_config=MagicMock(blueprint_name="test_blueprint"),
+    )
+
+    assert model.api_blueprint_name == "test_blueprint"
+
+
+def test_api_url(app):
+    """Test api_url method."""
+    model = current_runtime.models["vocabularies"]
+    search_url = model.api_url("search", type="languages")
+    assert search_url.endswith("/api/vocabularies/languages")

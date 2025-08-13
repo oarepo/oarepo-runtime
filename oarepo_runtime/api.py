@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import dataclasses
 from functools import cached_property
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from flask import current_app
+from invenio_base import invenio_url_for
 from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.proxies import current_service_registry
 
@@ -36,6 +37,9 @@ class Export:
 
     Exports are shown on the record landing page and user can download them.
     """
+
+    code: str
+    """Code of the export format, used to identify the export format in the URL."""
 
     name: LazyString
     """Name of the export format, human readable."""
@@ -75,6 +79,9 @@ class Model[
     variable.
     """
 
+    code: str
+    """Code of the model, used to identify the model"""
+
     name: str | LazyString
     """Name of the model, human readable."""
 
@@ -90,6 +97,8 @@ class Model[
 
     def __init__(  # noqa: PLR0913 more attributes as we are creating a config
         self,
+        *,
+        code: str,
         name: str | LazyString,
         version: str,
         service: str | S,
@@ -125,6 +134,7 @@ class Model[
         :param records_alias_enabled: Whether the records alias is enabled for this model.
             Such models will be searchable via the `/api/records` endpoint.
         """
+        self.code = code
         self.name = name
         self.version = version
         self.description = description
@@ -171,6 +181,15 @@ class Model[
                 return cast("type[D]", self.service.config.draft_cls)
             return None
         return self._draft
+
+    @property
+    def api_blueprint_name(self) -> str:
+        """Get the API blueprint name for the model."""
+        return cast("str", self.resource_config.blueprint_name)
+
+    def api_url(self, view_name: str, **kwargs: Any) -> str:
+        """Get the API URL for the model."""
+        return cast("str", invenio_url_for(f"{self.api_blueprint_name}.{view_name}", **kwargs))
 
     @cached_property
     def resource_config(self) -> RC:
