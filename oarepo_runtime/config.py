@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from invenio_i18n import lazy_gettext as _
 from invenio_vocabularies import __version__ as vocabularies_version
 
 from .api import Model
@@ -43,7 +44,8 @@ def build_config[T](config_class: type[T], app: Flask, *args: Any, **kwargs: Any
 OAREPO_MODELS: dict[str, Model] = {
     # default invenio vocabularies
     "vocabularies": Model(
-        name="vocabularies",
+        code="vocabularies",
+        name=_("Base vocabularies"),
         version=vocabularies_version,
         service="vocabularies",
         description="Base (non-specialized) invenio vocabularies",
@@ -53,7 +55,8 @@ OAREPO_MODELS: dict[str, Model] = {
     ),
     # affiliations
     "affiliations": Model(
-        name="affiliations",
+        code="affiliations",
+        name=_("Affiliations"),
         version=vocabularies_version,
         service="affiliations",
         description="Affiliations vocabulary",
@@ -63,7 +66,8 @@ OAREPO_MODELS: dict[str, Model] = {
     ),
     # funders
     "funders": Model(
-        name="funders",
+        code="funders",
+        name=_("Funders"),
         version=vocabularies_version,
         service="funders",
         description="Funders vocabulary",
@@ -73,7 +77,8 @@ OAREPO_MODELS: dict[str, Model] = {
     ),
     # awards
     "awards": Model(
-        name="awards",
+        code="awards",
+        name=_("Awards"),
         version=vocabularies_version,
         service="awards",
         description="Awards vocabulary",
@@ -83,7 +88,8 @@ OAREPO_MODELS: dict[str, Model] = {
     ),
     # names
     "names": Model(
-        name="names",
+        code="names",
+        name=_("Names"),
         version=vocabularies_version,
         service="names",
         description="Names vocabulary",
@@ -93,7 +99,8 @@ OAREPO_MODELS: dict[str, Model] = {
     ),
     # subjects
     "subjects": Model(
-        name="subjects",
+        code="subjects",
+        name=_("Subjects"),
         version=vocabularies_version,
         service="subjects",
         description="Subjects vocabulary",

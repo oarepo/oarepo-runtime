@@ -68,3 +68,6 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert has_published_record()(record, context)
     assert is_published_record()(record, context)
     assert has_draft()(record, context)
+
+
+# TODO: test link conditions with file record

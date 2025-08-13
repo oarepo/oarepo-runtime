@@ -43,6 +43,7 @@ class MockModuleExt:
     def init_config(self, app):
         """Initialize the configuration for the mock module."""
         app.config.setdefault("OAREPO_MODELS", {})["mock"] = Model(
+            code="mock",
             name="mock",
             version="1.0.0",
             service="mock-record-service",
