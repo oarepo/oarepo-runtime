@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 class GroupedFacetsParam(FacetsParam):
     """Facet parameter class that supports grouping of facets."""
 
-    def __init__(self, config: SearchOptions):
+    def __init__(self, config: type[SearchOptions]):
         """Initialize the facets parameter with the given config."""
         super().__init__(config)
         self._facets = {**config.facets}

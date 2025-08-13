@@ -21,6 +21,8 @@ from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.proxies import current_service_registry
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from flask_babel.speaklater import LazyString
     from flask_resources.responses import ResponseHandler
     from flask_resources.serializers import BaseSerializer
@@ -28,7 +30,11 @@ if TYPE_CHECKING:
     from invenio_records_resources.records.api import RecordBase
     from invenio_records_resources.resources.records.config import RecordResourceConfig
     from invenio_records_resources.resources.records.resource import RecordResource
-    from invenio_records_resources.services import RecordService, RecordServiceConfig
+    from invenio_records_resources.services import (
+        FileService,
+        RecordService,
+        RecordServiceConfig,
+    )
 
 
 @dataclasses.dataclass
@@ -79,22 +85,6 @@ class Model[
     variable.
     """
 
-    code: str
-    """Code of the model, used to identify the model"""
-
-    name: str | LazyString
-    """Name of the model, human readable."""
-
-    version: str
-    """Version of the model, should be a valid semantic version."""
-
-    description: str | LazyString | None = None
-    """Description of the model, human readable."""
-
-    records_alias_enabled: bool = False
-    """Whether the records alias is enabled for this model. Such models will be searchable
-    via the `/api/records` endpoint."""
-
     def __init__(  # noqa: PLR0913 more attributes as we are creating a config
         self,
         *,
@@ -103,12 +93,17 @@ class Model[
         version: str,
         service: str | S,
         resource_config: RC | str,
+        ui_model: Mapping[str, Any] | None = None,
         # params with default values
         service_config: C | None = None,
         description: str | LazyString | None = None,
         record: type[R] | None = None,
         draft: type[D] | None = None,
-        resource: str | RR = "invenio_records_resources.resources.records.resource.RecordResource",
+        resource: (str | RR) = "invenio_records_resources.resources.records.resource.RecordResource",
+        file_service: FileService | None = None,
+        draft_file_service: FileService | None = None,
+        media_file_service: FileService | None = None,
+        media_draft_file_service: FileService | None = None,
         exports: list[Export] | None = None,
         records_alias_enabled: bool = True,
     ):
@@ -134,11 +129,17 @@ class Model[
         :param records_alias_enabled: Whether the records alias is enabled for this model.
             Such models will be searchable via the `/api/records` endpoint.
         """
-        self.code = code
-        self.name = name
-        self.version = version
-        self.description = description
-        self.records_alias_enabled = records_alias_enabled
+        self._code = code
+        self._name = name
+        self._version = version
+        self._description = description
+        self._records_alias_enabled = records_alias_enabled
+        self._ui_model = ui_model or {}
+
+        self._file_service = file_service
+        self._draft_file_service = draft_file_service
+        self._media_file_service = media_file_service
+        self._media_draft_file_service = media_draft_file_service
 
         # lazy getters ...
         self._record = record
@@ -148,6 +149,40 @@ class Model[
         self._resource = resource
         self._resource_config = resource_config
         self._exports = exports or []
+
+    @property
+    def code(self) -> str:
+        """Return the machine-understandable code of the model."""
+        return self._code
+
+    @property
+    def name(self) -> str | LazyString:
+        """Get the human-readable name of the model."""
+        return self._name
+
+    @property
+    def version(self) -> str:
+        """Get the model's version."""
+        return self._version
+
+    @property
+    def description(self) -> str | LazyString | None:
+        """Get the model's description."""
+        return self._description
+
+    @property
+    def records_alias_enabled(self) -> bool:
+        """Get the records alias enabled flag.
+
+        This switch determines whether the records alias (/api/records)
+        is enabled for this model and whether the model is indexed in global search.
+        """
+        return self._records_alias_enabled
+
+    @property
+    def ui_model(self) -> Mapping[str, Any]:
+        """Get the UI model."""
+        return self._ui_model
 
     @property
     def service(self) -> S:
@@ -181,6 +216,26 @@ class Model[
                 return cast("type[D]", self.service.config.draft_cls)
             return None
         return self._draft
+
+    @property
+    def file_service(self) -> FileService | None:
+        """Get the file service."""
+        return self._file_service
+
+    @property
+    def draft_file_service(self) -> FileService | None:
+        """Get the draft file service."""
+        return self._draft_file_service
+
+    @property
+    def media_file_service(self) -> FileService | None:
+        """Get the media file service."""
+        return self._media_file_service
+
+    @property
+    def media_draft_file_service(self) -> FileService | None:
+        """Get the media draft file service."""
+        return self._media_draft_file_service
 
     @property
     def api_blueprint_name(self) -> str:

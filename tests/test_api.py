@@ -110,3 +110,287 @@ def test_api_url(app):
     model = current_runtime.models["vocabularies"]
     search_url = model.api_url("search", type="languages")
     assert search_url.endswith("/api/vocabularies/languages")
+
+
+def test_code_property():
+    """Test code property."""
+    service = MockService()
+    model = Model(
+        code="test_model_code",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.code == "test_model_code"
+
+
+def test_name_property():
+    """Test name property."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="Test Model Name",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.name == "Test Model Name"
+
+
+def test_version_property():
+    """Test version property."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="2.1.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.version == "2.1.0"
+
+
+def test_description_property():
+    """Test description property with value."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        description="This is a test model description",
+    )
+
+    assert model.description == "This is a test model description"
+
+
+def test_description_property_none():
+    """Test description property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.description is None
+
+
+def test_records_alias_enabled_property_default():
+    """Test records_alias_enabled property with default value."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.records_alias_enabled is True
+
+
+def test_records_alias_enabled_property_false():
+    """Test records_alias_enabled property when set to False."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        records_alias_enabled=False,
+    )
+
+    assert model.records_alias_enabled is False
+
+
+def test_ui_model_property_default():
+    """Test ui_model property with default value."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.ui_model == {}
+
+
+def test_ui_model_property_with_value():
+    """Test ui_model property with custom value."""
+    service = MockService()
+    ui_model_data = {"key1": "value1", "key2": {"nested": "value"}}
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        ui_model=ui_model_data,
+    )
+
+    assert model.ui_model == ui_model_data
+
+
+def test_file_service_property():
+    """Test file_service property."""
+    service = MockService()
+    file_service_mock = MagicMock()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        file_service=file_service_mock,
+    )
+
+    assert model.file_service is file_service_mock
+
+
+def test_file_service_property_none():
+    """Test file_service property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.file_service is None
+
+
+def test_draft_file_service_property():
+    """Test draft_file_service property."""
+    service = MockService()
+    draft_file_service_mock = MagicMock()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        draft_file_service=draft_file_service_mock,
+    )
+
+    assert model.draft_file_service is draft_file_service_mock
+
+
+def test_draft_file_service_property_none():
+    """Test draft_file_service property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.draft_file_service is None
+
+
+def test_media_file_service_property():
+    """Test media_file_service property."""
+    service = MockService()
+    media_file_service_mock = MagicMock()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        media_file_service=media_file_service_mock,
+    )
+
+    assert model.media_file_service is media_file_service_mock
+
+
+def test_media_file_service_property_none():
+    """Test media_file_service property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.media_file_service is None
+
+
+def test_media_draft_file_service_property():
+    """Test media_draft_file_service property."""
+    service = MockService()
+    media_draft_file_service_mock = MagicMock()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        media_draft_file_service=media_draft_file_service_mock,
+    )
+
+    assert model.media_draft_file_service is media_draft_file_service_mock
+
+
+def test_media_draft_file_service_property_none():
+    """Test media_draft_file_service property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.media_draft_file_service is None
+
+
+def test_exports_property_default():
+    """Test exports property with default value."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.exports == []
+
+
+def test_exports_property_with_value():
+    """Test exports property with custom value."""
+    from oarepo_runtime.api import Export
+
+    service = MockService()
+    export_mock = MagicMock(spec=Export)
+    exports_list = [export_mock]
+
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        exports=exports_list,
+    )
+
+    assert model.exports == exports_list
