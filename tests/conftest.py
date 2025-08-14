@@ -10,14 +10,13 @@
 # https://github.com/inveniosoftware/invenio-records-resources/blob/master/tests/conftest.py
 #
 #
-from __future__ import annotations
-
 """Pytest configuration.
 
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 
+from __future__ import annotations
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
