@@ -21,7 +21,7 @@ import inspect
 from collections import defaultdict
 from functools import cached_property, partial
 from itertools import chain
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any, Literal, override
 
 from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.services.records.components import ServiceComponent
@@ -66,16 +66,22 @@ class ComponentData:
     dependencies/affects to other components.
     """
 
+    replaces: set[type[ServiceComponent]]
+    """Classes that this component replaces."""
+
+    replaced_by: set[type[ServiceComponent]]
+    """Classes that replace this component."""
+
     affects_all: bool
     """Whether the component declares ``affects = "*"`` (i.e., affects all)."""
 
     depends_on_all: bool
     """Whether the component declares ``depends_on = "*"`` (i.e., depends on all)."""
 
-    affects: set[type]
+    affects: set[type[ServiceComponent]]
     """Classes that this component affects."""
 
-    depends_on: set[type]
+    depends_on: set[type[ServiceComponent]]
     """Classes that this component depends on."""
 
     idx: int
@@ -113,6 +119,8 @@ class ComponentData:
 
         self.affects = self._convert_to_classes(getattr(self.component_class, "affects", None) or [])
         self.depends_on = self._convert_to_classes(getattr(self.component_class, "depends_on", None) or [])
+        self.replaces = self._convert_to_classes(getattr(self.component_class, "replaces", None) or [])
+        self.replaced_by = self._convert_to_classes(getattr(self.component_class, "replaced_by", None) or [])
 
     def _extract_class_from_component(self, component: Any, service: RecordService) -> type[ServiceComponent]:
         """Resolve a comparable class from the component entry.
@@ -379,7 +387,7 @@ class ComponentsOrderingMixin(RecordService):
             already_checked_selected.update(selected)
             if moved_indices:
                 modified = True  # do another round for transitive dependencies
-                selected.extend(potential_dependencies[idx] for idx in sorted(moved_indices))
+                selected.extend(potential_dependencies[idx] for idx in moved_indices)
                 for idx in reversed(moved_indices):
                     del potential_dependencies[idx]
 
@@ -453,12 +461,14 @@ class ComponentsOrderingMixin(RecordService):
             replaced_indices = []
             skipped = False
             for idx, component in enumerate(data):
-                if cd.component_class in component.component_mro:
-                    # already inside the data, do not include it twice
-                    skipped = True
-                elif component.component_class in cd.component_mro:
-                    # the class in data is base class for this one, so mark it as needing replacement
-                    replaced_indices.append(idx)
+                deduplication_action = self._deduplication_action(cd, component)
+                match deduplication_action:
+                    case "skip":
+                        skipped = True
+                    case "replace":
+                        replaced_indices.append(idx)
+                    case "ok":
+                        pass
 
             if skipped:
                 if replaced_indices:
@@ -478,6 +488,37 @@ class ComponentsOrderingMixin(RecordService):
                 data.append(cd)
 
         return data
+
+    def _deduplication_action(
+        self, new_component: ComponentData, existing_component: ComponentData
+    ) -> Literal["skip", "replace", "ok"]:
+        """Get a deduplication action for the given components.
+
+        :param new_component the component that is being added to the list of components
+        :param existing_component the component that is already in the list of components
+
+        :return: the deduplication action to take
+                 skip: do not add the new_component to the list of components
+                 replace: replace the existing_component with the new_component
+                 ok: it is ok to add the new_component to the list of components as
+                      it does not interfere with the existing component
+        """
+        if new_component.component_class == existing_component.component_class:
+            # already inside the data, do not include it twice
+            return "skip"
+        if existing_component.component_class in new_component.replaced_by:
+            # already replaced by something in the data, do not include it
+            return "skip"
+        if existing_component.component_class in new_component.replaces:
+            # the class in data is replaced by this one
+            return "replace"
+        if new_component.component_class in existing_component.replaces:
+            # component says that it replaces me, so skip
+            return "skip"
+        if new_component.component_class in existing_component.replaced_by:
+            # component says it is replaced by myself
+            return "replace"
+        return "ok"
 
     def _remove_indices_from_data(self, data: list[ComponentData], indices: list[int]) -> None:
         """Remove items at the given (sorted) indices from ``data`` in place."""

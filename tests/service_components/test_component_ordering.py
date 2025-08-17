@@ -44,6 +44,8 @@ class Base(ServiceComponent):
 class Derived(Base):
     """Derived service component."""
 
+    replaces = (Base,)
+
 
 class DependingOnX(ServiceComponent):
     """Component that depends on A."""

@@ -30,6 +30,8 @@ class A(ServiceComponent):
 class B(A):
     """Subclass of A for tests."""
 
+    replaces = (A,)
+
 
 class C(ServiceComponent):
     """Independent component C for tests."""
@@ -54,7 +56,7 @@ def test_inheritance_deduplication_keeps_subclass_once():
 
 def test_inheritance_multi_level_only_most_specific_kept_and_order_preserved():
     class D(B):
-        pass
+        replaces = (A, B)
 
     cfg = DummyConfig()
     res = cfg._deduplicate_components([A, C, B, D])  # noqa: SLF001
@@ -81,7 +83,7 @@ def test_invalid_component_raises_typeerror():
 
 def test_skipped_and_removed():
     class D(B):
-        pass
+        replaces = (B,)
 
     cfg = DummyConfig()
     res = cfg._deduplicate_components([D, B, D, B, D])  # noqa: SLF001
