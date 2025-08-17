@@ -73,15 +73,7 @@ def names(seq):
     Keeps non-class inputs (e.g., partial) represented by their type name
     for easy assertions.
     """
-    out = []
-    for x in seq:
-        if isinstance(x, functools.partial):
-            out.append(f"partial({x.func.__name__})")
-        elif isinstance(x, type):
-            out.append(x.__name__)
-        else:
-            out.append(type(x).__name__)
-    return out
+    return [type(x).__name__ for x in seq]
 
 
 def test_preserves_order_without_dependencies():

@@ -99,9 +99,7 @@ class ComponentData:
         at the same time (mutually exclusive wildcards).
         """
         self.original_component = original_component
-        self.component_class = self._extract_class_from_component(
-            original_component, service
-        )
+        self.component_class = self._extract_class_from_component(original_component, service)
 
         self.component_mro = self._get_service_mro(self.component_class)
 
@@ -113,16 +111,10 @@ class ComponentData:
                 f"Component {self.original_component} cannot affect and depend on all components at the same time."
             )
 
-        self.affects = self._convert_to_classes(
-            getattr(self.component_class, "affects", None) or []
-        )
-        self.depends_on = self._convert_to_classes(
-            getattr(self.component_class, "depends_on", None) or []
-        )
+        self.affects = self._convert_to_classes(getattr(self.component_class, "affects", None) or [])
+        self.depends_on = self._convert_to_classes(getattr(self.component_class, "depends_on", None) or [])
 
-    def _extract_class_from_component(
-        self, component: Any, service: RecordService
-    ) -> type[ServiceComponent]:
+    def _extract_class_from_component(self, component: Any, service: RecordService) -> type[ServiceComponent]:
         """Resolve a comparable class from the component entry.
 
         Supported forms:
@@ -134,9 +126,7 @@ class ComponentData:
         # if it is a class, return it
         if inspect.isclass(component):
             if not issubclass(component, ServiceComponent):
-                raise TypeError(
-                    f"Component {component} is not a subclass of ServiceComponent"
-                )
+                raise TypeError(f"Component {component} is not a subclass of ServiceComponent")
             return component
 
         # it might be a partial, so check that out
@@ -170,8 +160,6 @@ class ComponentData:
             raise TypeError(f"Expected list or tuple, got {type(items)}")
         for item in items:
             if isinstance(item, str):
-                if item == "*":
-                    continue
                 item = obj_or_import_string(item)  # noqa PLW2901
 
             if inspect.isclass(item):
@@ -190,11 +178,7 @@ class ComponentData:
 
     @override
     def __eq__(self, other: object) -> bool:
-        return (
-            self.component_class == other.component_class
-            if isinstance(other, ComponentData)
-            else False
-        )
+        return self.component_class == other.component_class if isinstance(other, ComponentData) else False
 
     @override
     def __repr__(self):
@@ -208,9 +192,9 @@ class ComponentData:
         if self.depends_on_all:
             ret.append(",d*")
         if self.affects:
-            ret.append(f",a={{{', '.join(c.__name__ for c in self.affects)}}}")
+            ret.append(f",a={{{', '.join(sorted(c.__name__ for c in self.affects))}}}")
         if self.depends_on:
-            ret.append(f",d={{{', '.join(c.__name__ for c in self.depends_on)}}}")
+            ret.append(f",d={{{', '.join(sorted(c.__name__ for c in self.depends_on))}}}")
         ret.append(")")
         return "".join(ret)
 
@@ -265,24 +249,18 @@ class ComponentsOrderingMixin(RecordService):
         # if A is from affects_all
         #     * and A[depends_on=B], add B to the affects_all set
         #     * and B[affects=A], add B to the affects_all set
-        self._propagate_dependencies(
-            affects_all, rest, lambda x: x.depends_on, lambda x: x.affects
-        )
+        self._propagate_dependencies(affects_all, rest, lambda x: x.depends_on, lambda x: x.affects)
         # if A is from depends_on_all
         #     * and A[affects=B], add B to the depends_on_all set
         #     * and B[depends_on=A], add B to the depends_on_all set
-        self._propagate_dependencies(
-            depends_on_all, rest, lambda x: x.affects, lambda x: x.depends_on
-        )
+        self._propagate_dependencies(depends_on_all, rest, lambda x: x.affects, lambda x: x.depends_on)
 
         # now the affects_all, rest, depends_on_all are completed and can be sorted
         affects_all = self._topo_sort(affects_all)
         rest = self._topo_sort(rest)
         depends_on_all = self._topo_sort(depends_on_all)
 
-        return tuple(
-            x.original_component for x in chain(affects_all, rest, depends_on_all)
-        )
+        return tuple(x.original_component for x in chain(affects_all, rest, depends_on_all))
 
     def _topo_sort(self, components: list[ComponentData]) -> list[ComponentData]:
         """Topologically sort by dependencies while preserving relative order.
@@ -341,9 +319,7 @@ class ComponentsOrderingMixin(RecordService):
 
         return ordered
 
-    def _create_topo_graph(
-        self, components: list[ComponentData]
-    ) -> dict[ComponentData, set[ComponentData]]:
+    def _create_topo_graph(self, components: list[ComponentData]) -> dict[ComponentData, set[ComponentData]]:
         """Build a dependency graph suitable for topological sorting.
 
         The resulting mapping has nodes as keys and a set of their direct
@@ -364,9 +340,7 @@ class ComponentsOrderingMixin(RecordService):
                     graph[other].add(comp)
         return graph
 
-    def _find_components(
-        self, components: list[ComponentData], cls: type
-    ) -> list[ComponentData]:
+    def _find_components(self, components: list[ComponentData], cls: type) -> list[ComponentData]:
         """Return components whose ``component_mro`` includes the given class."""
         return [comp for comp in components if cls in comp.component_mro]
 
@@ -374,12 +348,8 @@ class ComponentsOrderingMixin(RecordService):
         self,
         selected: list[ComponentData],
         potential_dependencies: list[ComponentData],
-        selected_dependency_getter: Callable[
-            [ComponentData], set[type[ServiceComponent]]
-        ],
-        potential_dependency_getter: Callable[
-            [ComponentData], set[type[ServiceComponent]]
-        ],
+        selected_dependency_getter: Callable[[ComponentData], set[type[ServiceComponent]]],
+        potential_dependency_getter: Callable[[ComponentData], set[type[ServiceComponent]]],
     ) -> None:
         """Enrich the edge groups with items they require or that require them.
 
@@ -404,16 +374,12 @@ class ComponentsOrderingMixin(RecordService):
                     potential_dependencies,
                     selected_dependency_getter,
                 )
-                | self._get_dependencies_from_potentials(
-                    selected, potential_dependencies, potential_dependency_getter
-                )
+                | self._get_dependencies_from_potentials(selected, potential_dependencies, potential_dependency_getter)
             )
             already_checked_selected.update(selected)
             if moved_indices:
                 modified = True  # do another round for transitive dependencies
-                selected.extend(
-                    potential_dependencies[idx] for idx in sorted(moved_indices)
-                )
+                selected.extend(potential_dependencies[idx] for idx in sorted(moved_indices))
                 for idx in reversed(moved_indices):
                     del potential_dependencies[idx]
 
@@ -421,9 +387,7 @@ class ComponentsOrderingMixin(RecordService):
         self,
         selected: list[ComponentData],
         potential_dependencies: list[ComponentData],
-        selected_dependency_getter: Callable[
-            [ComponentData], set[type[ServiceComponent]]
-        ],
+        selected_dependency_getter: Callable[[ComponentData], set[type[ServiceComponent]]],
     ) -> set[int]:
         """Get indices of potential dependencies required by items in ``selected``.
 
@@ -448,9 +412,7 @@ class ComponentsOrderingMixin(RecordService):
         self,
         selected: list[ComponentData],
         potential_dependencies: list[ComponentData],
-        potential_dependency_getter: Callable[
-            [ComponentData], set[type[ServiceComponent]]
-        ],
+        potential_dependency_getter: Callable[[ComponentData], set[type[ServiceComponent]]],
     ) -> set[int]:
         """Get indices of potentials that explicitly belong to the edge group.
 
@@ -497,12 +459,12 @@ class ComponentsOrderingMixin(RecordService):
                 elif component.component_class in cd.component_mro:
                     # the class in data is base class for this one, so mark it as needing replacement
                     replaced_indices.append(idx)
-                    break
 
             if skipped:
                 if replaced_indices:
                     # we have replaced indices and at the same time, the replacement
                     # should be skipped, so just remove the components at those indices
+                    # probably never happens, just for sure
                     self._remove_indices_from_data(data, replaced_indices)
                 continue
 
@@ -517,9 +479,7 @@ class ComponentsOrderingMixin(RecordService):
 
         return data
 
-    def _remove_indices_from_data(
-        self, data: list[ComponentData], indices: list[int]
-    ) -> None:
+    def _remove_indices_from_data(self, data: list[ComponentData], indices: list[int]) -> None:
         """Remove items at the given (sorted) indices from ``data`` in place."""
         for idx in reversed(indices):
             del data[idx]

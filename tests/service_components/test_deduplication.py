@@ -77,3 +77,14 @@ def test_invalid_component_raises_typeerror():
 
     with pytest.raises(TypeError):
         cfg._deduplicate_components([NotAComponent])  # noqa: SLF001
+
+
+def test_skipped_and_removed():
+    class D(B):
+        pass
+
+    cfg = DummyConfig()
+    res = cfg._deduplicate_components([D, B, D, B, D])  # noqa: SLF001
+    assert comp_classes(res) == [D]
+    res = cfg._deduplicate_components([B, D, B, D, B])  # noqa: SLF001
+    assert comp_classes(res) == [D]

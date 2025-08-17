@@ -70,14 +70,14 @@ def test_component_data_from_function_uses_underlying_class():
 
 def test_affects_all_and_depends_on_all_flags_and_conflict():
     class A(ServiceComponent):
-        affects = ("*",)
+        affects = "*"
 
     cd_a = ComponentData(A, service=mock_service)
     assert cd_a.affects_all is True
     assert cd_a.depends_on_all is False
 
     class B(ServiceComponent):
-        depends_on = ("*",)
+        depends_on = "*"
 
     cd_b = ComponentData(B, service=mock_service)
     assert cd_b.depends_on_all is True
@@ -113,14 +113,10 @@ def test_convert_to_classes_with_strings_and_star_ignored():
         depends_on: tuple[str, ...] = ()
 
     # Assign after class creation to use the current module path
-    UsesStr.affects = (
-        "*",
-        f"{__name__}.ImportableComp",
-    )
+    UsesStr.affects = (f"{__name__}.ImportableComp",)
     UsesStr.depends_on = (f"{__name__}.ImportableComp",)
 
     cd = ComponentData(UsesStr, service=mock_service)
-    assert cd.affects_all is True  # due to "*"
     assert ImportableComp in cd.affects
     assert cd.depends_on == {ImportableComp}
 
@@ -173,3 +169,54 @@ def test_component_data_from_factory_callable():
 
     cd = ComponentData(factory, service=mock_service)
     assert issubclass(cd.component_class, ServiceComponent)
+
+
+def test_type_error_on_invalid_dependency():
+    class Local:
+        affects = ("invalid",)
+
+    with pytest.raises(TypeError):
+        ComponentData(Local, service=mock_service)
+
+
+def test_type_error_on_invalid_dependency_2():
+    class Local:
+        affects = ((),)
+
+    with pytest.raises(TypeError):
+        ComponentData(Local, service=mock_service)
+
+
+class TA(ServiceComponent):
+    """Test component A."""
+
+
+class TB(ServiceComponent):
+    """Test component B."""
+
+
+class TC(ServiceComponent):
+    """Test component C."""
+
+
+class TD(ServiceComponent):
+    """Test component D."""
+
+
+@pytest.mark.parametrize(
+    ("test_depends_on", "test_affects", "test_expected"),
+    [
+        ((TA,), (TB,), "CD(Local,a={TB},d={TA})"),
+        ((TA, TB), (TC,), "CD(Local,a={TC},d={TA, TB})"),
+        ((TA, TB), (TC, TD), "CD(Local,a={TC, TD},d={TA, TB})"),
+        ("*", (TB,), "CD(Local,d*,a={TB})"),
+        ((TA,), "*", "CD(Local,a*,d={TA})"),
+    ],
+)
+def test_component_data_str(test_depends_on, test_affects, test_expected):
+    class Local(ServiceComponent):
+        depends_on = test_depends_on
+        affects = test_affects
+
+    cd = ComponentData(Local, service=mock_service)
+    assert str(cd) == test_expected
