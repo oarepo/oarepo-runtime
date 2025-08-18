@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import Mock, patch
 
 from invenio_records.api import Record
@@ -66,10 +65,6 @@ class MockRecord(Record):
     )
     field2 = MockMappingField(mapping={"description": {"type": "text"}})
     non_mapping_field = "not a mapping field"
-
-    def __init__(self, data: dict | None = None, **kwargs: Any):
-        """Initialize mock record."""
-        super().__init__(data or {}, **kwargs)
 
 
 class MockRecordNoIndex(Record):
