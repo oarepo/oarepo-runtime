@@ -31,6 +31,9 @@ oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
 [project.entry-points."invenio_base.apps"]
 oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
 
+[project.entry-points."flask.commands"]
+oarepo = "oarepo_runtime.cli:oarepo"
+
 [tool.hatch.version]
 path = "oarepo_runtime/__init__.py"
 
