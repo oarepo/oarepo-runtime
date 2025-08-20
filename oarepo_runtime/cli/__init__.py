@@ -9,3 +9,10 @@
 """OAREPO Runtime CLI module."""
 
 from __future__ import annotations
+
+import click
+
+
+@click.group
+def oarepo() -> None:
+    """OARepo commands. See invenio oarepo --help for details."""
