@@ -10,9 +10,18 @@
 
 from __future__ import annotations
 
+from importlib.metadata import entry_points
+
 import click
+
+from .search import init as search_init  # noqa just to register it
 
 
 @click.group
 def oarepo() -> None:
     """OARepo commands. See invenio oarepo --help for details."""
+
+
+# register additional commands to the oarepo group
+for ep in entry_points(group="oarepo.cli"):
+    oarepo.add_command(ep.load())
