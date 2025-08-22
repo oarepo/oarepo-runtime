@@ -252,6 +252,11 @@ class Model[
         return self._pid_type_from_record(self.record_cls)
 
     @property
+    def record_json_schema(self) -> str:
+        """Get the json schema of the record."""
+        return self.record_cls.schema.value  # type: ignore[attr-defined, no-any-return]
+
+    @property
     def draft_pid_type(self) -> str | None:
         """Get the PID type for the model."""
         return self._pid_type_from_record(self.draft_cls)

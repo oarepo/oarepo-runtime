@@ -28,7 +28,7 @@ class TestUniversalPIDProvider(UniversalPIDMixin, RecordIdProviderV2):
 
 def test_universal_pid_mixin_attributes():
     """Test UniversalPIDMixin has correct attributes."""
-    assert UniversalPIDMixin.unpid_pid_type == "unpid"
+    assert UniversalPIDMixin.unpid_pid_type == "recid"
     assert UniversalPIDMixin.unpid_default_status == PIDStatus.REGISTERED
 
 
@@ -56,7 +56,7 @@ def test_universal_pid_mixin_create_success(mock_pid_create, app, db):
 
         # Assert universal PID was created
         mock_pid_create.assert_called_once_with(
-            "unpid",
+            "recid",
             "test-123",
             pid_provider=None,
             object_type="rec",
@@ -105,7 +105,7 @@ def test_universal_pid_mixin_create_with_minimal_params(mock_pid_create, app, db
 
         # Assert universal PID was created with correct parameters
         mock_pid_create.assert_called_once_with(
-            "unpid",
+            "recid",
             "minimal-123",
             pid_provider=None,
             object_type=None,
@@ -142,7 +142,7 @@ def test_universal_pid_mixin_create_with_kwargs(mock_pid_create, app, db):
 
         # Assert universal PID was created
         mock_pid_create.assert_called_once_with(
-            "unpid",
+            "recid",
             "kwargs-123",
             pid_provider=None,
             object_type="rec",
