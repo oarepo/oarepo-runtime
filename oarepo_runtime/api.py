@@ -27,7 +27,11 @@ if TYPE_CHECKING:
     from flask_resources.responses import ResponseHandler
     from flask_resources.serializers import BaseSerializer
     from invenio_drafts_resources.records.api import Draft
-    from invenio_records_resources.records.api import RecordBase
+    from invenio_records_resources.records.api import Record
+    from invenio_records_resources.records.systemfields.pid import (
+        ModelPIDField,
+        ModelPIDFieldContext,
+    )
     from invenio_records_resources.resources.records.config import RecordResourceConfig
     from invenio_records_resources.resources.records.resource import RecordResource
     from invenio_records_resources.services import (
@@ -72,7 +76,7 @@ class Export:
 class Model[
     S: RecordService = RecordService,
     C: RecordServiceConfig = RecordServiceConfig,
-    R: RecordBase = RecordBase,
+    R: Record = Record,
     D: Draft = Draft,
     # not sure why this is flagged by pyright as an error
     RR: RecordResource = RecordResource,  # pyright: ignore[reportGeneralTypeIssues]
@@ -241,6 +245,34 @@ class Model[
     def api_blueprint_name(self) -> str:
         """Get the API blueprint name for the model."""
         return cast("str", self.resource_config.blueprint_name)
+
+    @property
+    def record_pid_type(self) -> str | None:
+        """Get the PID type for the model."""
+        return self._pid_type_from_record(self.record_cls)
+
+    @property
+    def draft_pid_type(self) -> str | None:
+        """Get the PID type for the model."""
+        return self._pid_type_from_record(self.draft_cls)
+
+    def _pid_type_from_record(self, record_cls: type[Record] | None) -> str | None:
+        """Get the PID type from a record class, returning None if not found."""
+        if record_cls is None:
+            return None
+        pid_context: ModelPIDFieldContext | None = getattr(record_cls, "pid", None)
+        if pid_context is None:
+            # registered record has no pid field
+            return None  # pragma: no cover
+        pid_field: ModelPIDField | None = getattr(pid_context, "field", None)
+        if pid_field is None:
+            # there is no pid field in the context
+            return None  # pragma: no cover
+        pid_provider = getattr(pid_field, "_provider", None)
+        if not pid_provider:
+            # there is no pid provider in the field
+            return None  # pragma: no cover
+        return getattr(pid_provider, "pid_type", None)
 
     def api_url(self, view_name: str, **kwargs: Any) -> str:
         """Get the API URL for the model."""
