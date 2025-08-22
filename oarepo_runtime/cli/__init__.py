@@ -24,4 +24,4 @@ def oarepo() -> None:
 
 # register additional commands to the oarepo group
 for ep in entry_points(group="oarepo.cli"):
-    oarepo.add_command(ep.load())
+    oarepo.add_command(ep.load())  # pragma: nocover
