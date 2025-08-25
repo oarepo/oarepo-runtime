@@ -34,6 +34,9 @@ oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
 [project.entry-points."flask.commands"]
 oarepo = "oarepo_runtime.cli:oarepo"
 
+[project.entry-points."oarepo.cli.search.init"]
+runtime_update_mappings = "oarepo_runtime.services.records.mapping:update_all_records_mappings"
+
 [tool.hatch.version]
 path = "oarepo_runtime/__init__.py"
 

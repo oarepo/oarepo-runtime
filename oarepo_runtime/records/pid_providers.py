@@ -23,7 +23,8 @@ else:
 class UniversalPIDMixin(RecordIdProviderV2):
     """Mixin class to handle creation and management of universal PIDs for records."""
 
-    unpid_pid_type = "unpid"
+    unpid_pid_type = "recid"
+    """Setting this to recid so that RDM can use it."""
     unpid_default_status = PIDStatus.REGISTERED
 
     @classmethod

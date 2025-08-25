@@ -10,12 +10,12 @@
 
 from __future__ import annotations
 
+from importlib import metadata as importlib_metadata
+
 import click
 from flask.cli import with_appcontext
 from invenio_search.cli import index, search_version_check
 from invenio_search.cli import init as original_init
-
-from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
 
 @index.command()
@@ -31,4 +31,5 @@ def init(ctx: click.Context, force: bool) -> None:
     defined inside the models.
     """
     ctx.invoke(original_init, force=force)
-    update_all_records_mappings()
+    for ep in importlib_metadata.entry_points(group="oarepo.cli.search.init"):
+        ep.load()()
