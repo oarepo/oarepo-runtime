@@ -68,18 +68,8 @@ class OARepoRuntime:
     @cached_property
     def models_by_record_class(self) -> dict[type[Record], Model]:
         """Return a mapping of record classes to their models."""
-        ret = {
-            model.record_cls: model
-            for model in self.models.values()
-            if model.record_cls is not None
-        }
-        ret.update(
-            {
-                model.draft_cls: model
-                for model in self.models.values()
-                if model.draft_cls is not None
-            }
-        )
+        ret = {model.record_cls: model for model in self.models.values() if model.record_cls is not None}
+        ret.update({model.draft_cls: model for model in self.models.values() if model.draft_cls is not None})
         return ret
 
     @cached_property
@@ -127,11 +117,7 @@ class OARepoRuntime:
     @cached_property
     def rdm_models_by_schema(self) -> dict[str, Model]:
         """Return a mapping of RDM schemas to their models."""
-        return {
-            schema: model
-            for schema, model in self.models_by_schema.items()
-            if model.records_alias_enabled
-        }
+        return {schema: model for schema, model in self.models_by_schema.items() if model.records_alias_enabled}
 
     def find_pid_type_from_pid(self, pid_value: str) -> str:
         """Given a PID value, get its associated PID type.
@@ -156,9 +142,7 @@ class OARepoRuntime:
         """
         pids = PersistentIdentifier.query.filter_by(**filter_kwargs).all()
 
-        filtered_pids = [
-            pid for pid in pids if pid.pid_type in self.record_class_by_pid_type
-        ]
+        filtered_pids = [pid for pid in pids if pid.pid_type in self.record_class_by_pid_type]
         if not filtered_pids:
             raise PIDDoesNotExistError(
                 None,
@@ -186,9 +170,7 @@ class OARepoRuntime:
             raise ValueError("Need to pass a record instance, got None")
         return self.get_record_service_for_record_class(type(record))
 
-    def get_record_service_for_record_class(
-        self, record_cls: type[RecordBase]
-    ) -> RecordService:
+    def get_record_service_for_record_class(self, record_cls: type[RecordBase]) -> RecordService:
         """Retrieve the service associated with a given record class."""
         for t in record_cls.mro():
             if t is RecordBase:

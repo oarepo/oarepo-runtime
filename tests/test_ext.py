@@ -221,5 +221,5 @@ def test_indices(app):
     assert mock_model.record_cls.index.search_alias in published_indices  # type: ignore[attr-defined]
     assert mock_model.draft_cls.index.search_alias in draft_indices  # type: ignore[attr-defined]
 
-    assert len(published_indices) > 1  # includes vocabularies, for example
-    assert len(draft_indices) == 1  # just the mock model
+    assert len(published_indices) == 1
+    assert len(draft_indices) == 1
