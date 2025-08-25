@@ -182,17 +182,17 @@ class OARepoRuntime:
 
     @cached_property
     def published_indices(self) -> set[str]:
-        """Return the set of published indices."""
+        """Return the set of published indices for RDM-compatible records only."""
         indices = set()
-        for model in self.models.values():
+        for model in self.rdm_models:
             indices.add(model.record_cls.index.search_alias)  # type: ignore[attr-defined]
         return indices
 
     @cached_property
     def draft_indices(self) -> set[str]:
-        """Return the set of draft indices."""
+        """Return the set of draft indices for RDM-compatible records only."""
         indices = set()
-        for model in self.models.values():
+        for model in self.rdm_models:
             if model.draft_cls is not None:
                 indices.add(model.draft_cls.index.search_alias)  # type: ignore[attr-defined]
         return indices
