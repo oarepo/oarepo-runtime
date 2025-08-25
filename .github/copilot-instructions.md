@@ -161,3 +161,12 @@ The package registers multiple Invenio entry points:
 ## Trust These Instructions
 
 This repository uses a sophisticated shared tooling system via the main OARepo repository. The `./run.sh` script downloads and uses shared build/test infrastructure, so always prefer the documented commands over manual pip/pytest usage. Only explore alternative approaches if the documented commands fail or if instructions are incomplete.
+
+## Validation Notes
+
+These instructions have been validated with the following tests:
+- ✅ Docker Compose services start successfully (OpenSearch 2.13.0, Redis 7)
+- ✅ Python 3.13 requirement verified (Python 3.12 fails as expected)
+- ✅ Test setup script correctly validates Python version constraints  
+- ✅ Repository structure and key files confirmed
+- ⚠️  Full build/test cycle requires Python 3.13 environment
