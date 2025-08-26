@@ -1,6 +1,7 @@
 import datetime
 
 import marshmallow
+import pytz
 
 from oarepo_runtime.proxies import current_timezone
 from oarepo_runtime.services.schema.ui import (
@@ -10,7 +11,7 @@ from oarepo_runtime.services.schema.ui import (
     LocalizedEDTFInterval,
     LocalizedEnum,
 )
-import pytz
+
 
 def LocalizedSchema(locale, field, **kwargs):
     return type(

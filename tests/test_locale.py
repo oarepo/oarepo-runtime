@@ -1,6 +1,8 @@
 import marshmallow as ma
+import pytz
 from flask import g
 from invenio_i18n.ext import current_i18n
+
 from oarepo_runtime.i18n import get_locale
 from oarepo_runtime.proxies import current_timezone
 from oarepo_runtime.services.schema.ui import (
@@ -9,7 +11,7 @@ from oarepo_runtime.services.schema.ui import (
     LocalizedEnum,
     LocalizedTime,
 )
-import pytz
+
 
 class TestSchema(ma.Schema):
     dt = LocalizedDate()
@@ -55,6 +57,7 @@ def test_localized_date(app):
             "dtm": "31. 1. 2020 12:21:00",
             "tm": "12:21:00",
         }
+
 
 def test_localized_date_timezone(app):
     clear_babel_context()

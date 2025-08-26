@@ -1,11 +1,14 @@
-import json, random
-from flask import Response, Blueprint
-from flask import current_app as flask_current_app
-from invenio_db import db # sql alchemy session
-from invenio_cache import current_cache # redis
+import json
+import random
+
 import redis
-from invenio_search import current_search_client # opensearch
-from celery import current_app as celery_current_app, shared_task
+from celery import current_app as celery_current_app
+from celery import shared_task
+from flask import Blueprint, Response
+from flask import current_app as flask_current_app
+from invenio_cache import current_cache  # redis
+from invenio_db import db  # sql alchemy session
+from invenio_search import current_search_client  # opensearch
 
 
 def check_db_connection():
@@ -13,6 +16,7 @@ def check_db_connection():
         return "DB connection failed"
     else:
         return "ok"
+
 
 def has_database_connection():
     try:
@@ -23,11 +27,12 @@ def has_database_connection():
     finally:
         db.session.rollback()
 
+
 def check_cache_connection():
     try:
         rand = random.randint(1, 1000)
-        if current_cache.set('mykey', str(rand)):
-            val = current_cache.get('mykey')
+        if current_cache.set("mykey", str(rand)):
+            val = current_cache.get("mykey")
             if val == str(rand):
                 return "ok"
             else:
@@ -42,14 +47,14 @@ def check_cache_connection():
         return str(other)
 
 
-
 #  https://github.com/celery/celery/issues/4283
 def check_message_queue():
     from kombu.exceptions import OperationalError
+
     try:
-        #celery_current_app.autodiscover_tasks(['oarepo_runtime.info'])
-        ping_task = celery_current_app.send_task('ping')
-        if ping_task.get(timeout=2) == 'pong':
+        # celery_current_app.autodiscover_tasks(['oarepo_runtime.info'])
+        ping_task = celery_current_app.send_task("ping")
+        if ping_task.get(timeout=2) == "pong":
             return "ok"
     except OperationalError as e:
         if isinstance(e.__cause__, ConnectionRefusedError):
@@ -72,6 +77,7 @@ def check_opensearch():
 
 blueprint = Blueprint("repository-check", __name__, url_prefix="/.well-known")
 
+
 @blueprint.route("/check")
 def check_connections() -> Response:
     """
@@ -80,16 +86,18 @@ def check_connections() -> Response:
     """
     check_list = {}
     with flask_current_app.app_context():
-        check_list['db'] = check_db_connection()
-        check_list['cache'] = check_cache_connection()
-        check_list['mq'] = check_message_queue()
-        check_list['opensearch'] = check_opensearch()
+        check_list["db"] = check_db_connection()
+        check_list["cache"] = check_cache_connection()
+        check_list["mq"] = check_message_queue()
+        check_list["opensearch"] = check_opensearch()
 
-    failed_checks = {key: value for key, value in check_list.items() if value != 'ok'}
+    failed_checks = {key: value for key, value in check_list.items() if value != "ok"}
 
     if failed_checks:
-        return Response(json.dumps(failed_checks), status=500, content_type='application/json')
+        return Response(
+            json.dumps(failed_checks), status=500, content_type="application/json"
+        )
 
-    return Response(json.dumps(check_list), status=200, content_type='application/json') # good
-
-
+    return Response(
+        json.dumps(check_list), status=200, content_type="application/json"
+    )  # good

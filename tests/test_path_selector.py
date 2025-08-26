@@ -67,7 +67,10 @@ def test_filtered_selector_long_path_array():
             "creators": [
                 {
                     "name": "hugo",
-                    "affiliations": [{"full_name": ["uni1", "uni11"]}, {"full_name": "uni2"}],
+                    "affiliations": [
+                        {"full_name": ["uni1", "uni11"]},
+                        {"full_name": "uni2"},
+                    ],
                     "nameType": "personal",
                 },
                 {"name": "uni3", "nameType": "organizational"},

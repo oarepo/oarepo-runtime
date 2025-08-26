@@ -1,8 +1,11 @@
 import inspect
+import json
+from pathlib import Path
 from typing import Iterable
 
 import click
 import deepmerge
+from deepmerge import always_merger
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.custom_fields.mappings import (
     Mapping as InvenioMapping,
@@ -10,12 +13,8 @@ from invenio_records_resources.services.custom_fields.mappings import (
 from invenio_records_resources.services.records.config import RecordServiceConfig
 from invenio_records_resources.services.records.service import RecordService
 from invenio_search.engine import search
-from deepmerge import always_merger
+
 from oarepo_runtime.records.systemfields.mapping import MappingSystemFieldMixin
-import json
-
-from pathlib import Path
-
 from oarepo_runtime.utils.index import prefixed_index
 
 
@@ -114,12 +113,12 @@ def prepare_parent_mapping(parent_class, config):
         return
 
     script_dir = str(Path(__file__).resolve().parent)
-    path_parts = script_dir.split('/')
+    path_parts = script_dir.split("/")
     path_parts = path_parts[:-2]
-    base_path = '/'.join(path_parts)
+    base_path = "/".join(path_parts)
     mapping_path = f"{base_path}/records/mappings/rdm_parent_mapping.json"
 
-    with open(mapping_path, 'r') as f:
+    with open(mapping_path, "r") as f:
         rdm_parent = json.load(f)
 
     parent_mapping = {
@@ -148,18 +147,18 @@ def prepare_parent_mapping(parent_class, config):
             },
         }
     }
-    parent_mapping_merged = always_merger.merge(parent_mapping, {
-        "parent": {
-            "properties": rdm_parent
-        }
-    })
+    parent_mapping_merged = always_merger.merge(
+        parent_mapping, {"parent": {"properties": rdm_parent}}
+    )
     # upload mapping
     try:
         record_index = prefixed_index(config.record_cls.index)
         update_index(record_index, {}, parent_mapping_merged)
 
         if hasattr(config, "draft_cls"):
-            draft_index = prefixed_index(config.draft_cls.index) # draft index isn't used; this was a bug a suppose
+            draft_index = prefixed_index(
+                config.draft_cls.index
+            )  # draft index isn't used; this was a bug a suppose
             update_index(draft_index, {}, parent_mapping_merged)
 
     except search.RequestError as e:

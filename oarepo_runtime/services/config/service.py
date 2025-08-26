@@ -101,17 +101,21 @@ class PermissionsPresetsConfigMixin:
         name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).upper()
         return f"{name}_PERMISSIONS_PRESETS"
 
+
 class SearchAllConfigMixin:
     @property
     def search_all(self):
         from invenio_rdm_records.services.search_params import MyDraftsParam
+
         if hasattr(self, "search_drafts"):
+
             class AllSearchOptions(self.search_drafts):
                 @class_property
                 def params_interpreters_cls(cls):
                     param_interpreters = [*super().params_interpreters_cls]
                     param_interpreters.remove(MyDraftsParam)
                     return param_interpreters
+
             return AllSearchOptions
         else:
             return self.search

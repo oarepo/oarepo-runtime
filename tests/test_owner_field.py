@@ -6,10 +6,10 @@ from invenio_access.permissions import system_identity
 from invenio_accounts.testutils import login_user_via_session
 from invenio_records_permissions.generators import AnyUser, AuthenticatedUser
 from invenio_records_resources.services.errors import PermissionDeniedError
+from thesis.records.api import ThesisDraft, ThesisRecord
 
 from oarepo_runtime.services.generators import RecordOwners
 from tests.test_files import add_file_to_record
-from thesis.records.api import ThesisDraft, ThesisRecord
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -55,6 +55,7 @@ def patch_owner_permissions(service, monkeypatch, service_config, owners_permiss
     monkeypatch.setattr(
         service_config, "base_permission_policy_cls", owners_permissions
     )
+
 
 def test_owners(app, service, identity, users, search_clear):
     rec = service.create(identity, data={"metadata": {"title": "blah"}})
@@ -132,17 +133,12 @@ def _test_search_mixed(users, logged_client):
         BASE_URL,
         json={"metadata": {"title": "draft1-1"}, "files": {"enabled": False}},
     )
-    draft2 = user1_client.post( BASE_URL, json={"metadata": {"title": "draft1-2"}}
-    )
-    draft3 = user2_client.post( BASE_URL, json={"metadata": {"title": "draft2-1"}}
-    )
-    publish1 = user1_client.post( f"{BASE_URL}{draft1.json['id']}/draft/actions/publish"
-    )
+    draft2 = user1_client.post(BASE_URL, json={"metadata": {"title": "draft1-2"}})
+    draft3 = user2_client.post(BASE_URL, json={"metadata": {"title": "draft2-1"}})
+    publish1 = user1_client.post(f"{BASE_URL}{draft1.json['id']}/draft/actions/publish")
     ThesisRecord.index.refresh()
     ThesisDraft.index.refresh()
-    search_2 = user1_client.get( f"/user{BASE_URL}").json["hits"][
-        "hits"
-    ]
+    search_2 = user1_client.get(f"/user{BASE_URL}").json["hits"]["hits"]
     assert set([obj["id"] for obj in search_2]) == {
         draft1.json["id"],
         draft2.json["id"],
@@ -166,8 +162,8 @@ def test_search_drafts(users, logged_client, search_clear):
         return [x["id"] for x in result["hits"]["hits"]]
 
     ThesisDraft.index.refresh()
-    search_1 = user1_client.get( f"/user{BASE_URL}")
-    search_2 = user2_client.get( f"/user{BASE_URL}")
+    search_1 = user1_client.get(f"/user{BASE_URL}")
+    search_2 = user2_client.get(f"/user{BASE_URL}")
     assert len(search_1.json["hits"]["hits"]) == 2
     search_1_ids = get_ids(search_1.json)
     assert draft1.json["id"] in search_1_ids

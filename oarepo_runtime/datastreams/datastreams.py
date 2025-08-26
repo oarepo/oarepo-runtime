@@ -25,6 +25,7 @@ class DataStreamChain(abc.ABC):
     def finish(self, callback: Union[DataStreamCallback, Any]):
         pass
 
+
 try:
     from enum import StrEnum
 

@@ -2,7 +2,6 @@ from io import BytesIO
 from pathlib import Path
 
 from invenio_access.permissions import system_identity
-
 from records2.proxies import current_service
 
 

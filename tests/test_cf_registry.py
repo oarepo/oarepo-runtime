@@ -1,7 +1,7 @@
 from invenio_records import Record
 
-from oarepo_runtime.services.components import cf_registry, CustomFieldsComponent
-from oarepo_runtime.services.custom_fields import InlinedCustomFields, CustomFields
+from oarepo_runtime.services.components import CustomFieldsComponent, cf_registry
+from oarepo_runtime.services.custom_fields import CustomFields, InlinedCustomFields
 
 
 def test_cf_registry(app, db):
@@ -13,6 +13,8 @@ def test_cf_registry(app, db):
     assert {x.key for x in fields} == {"cf1", "cf2"}
 
     rec = TestRecord({})
-    CustomFieldsComponent(None).create(None, record=rec, data={"cf1": {"a": 1}, "blah": "aa"})
-    assert rec['cf1'] == {"a": 1}
-    assert rec['blah'] == "aa"
+    CustomFieldsComponent(None).create(
+        None, record=rec, data={"cf1": {"a": 1}, "blah": "aa"}
+    )
+    assert rec["cf1"] == {"a": 1}
+    assert rec["blah"] == "aa"
