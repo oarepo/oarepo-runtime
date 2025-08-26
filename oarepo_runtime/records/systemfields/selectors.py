@@ -47,6 +47,7 @@ class FilteredSelector(Selector):
         }
     }
     """
+
     selector: Selector
     filter: Callable[[Any], bool]
     projection: Callable[[Any], Any] | str = None
@@ -58,7 +59,9 @@ class FilteredSelector(Selector):
             ret = []
             for select_element in selected:
                 if isinstance(self.projection, str):
-                    result = [x.value for x in lookup_key(select_element, self.projection)]
+                    result = [
+                        x.value for x in lookup_key(select_element, self.projection)
+                    ]
                 else:
                     result = self.projection(select_element)
                 if isinstance(result, list):

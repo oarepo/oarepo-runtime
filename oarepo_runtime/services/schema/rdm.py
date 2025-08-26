@@ -1,3 +1,4 @@
+import importlib.resources
 import re
 from functools import partial
 
@@ -90,6 +91,21 @@ class RDMNTKCreatorsSchema(CreatorSchema):
     organization is not in the system.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._load_organization_exceptions()
+
+    def _load_organization_exceptions(self):
+        """Load organization name exceptions from data file."""
+        with importlib.resources.open_text(
+            "oarepo_runtime.services.schema.data", "organization_exceptions.txt"
+        ) as f:
+            self.organization_exceptions = [line.strip() for line in f if line.strip()]
+
+    def _is_organization_exception(self, name):
+        """Check if organization name is in exceptions list."""
+        return name in self.organization_exceptions
+
     @ma.validates_schema
     def check_organization_or_affiliation(self, data, **kwargs):
         """Check if organization is in the system."""
@@ -118,7 +134,7 @@ class RDMNTKCreatorsSchema(CreatorSchema):
                     size=100,
                 ).hits
             ]
-            if name not in found:
+            if name not in found and not self._is_organization_exception(name):
                 raise ma.ValidationError(
                     _(
                         "It is necessary to choose organization from the controlled vocabulary. "

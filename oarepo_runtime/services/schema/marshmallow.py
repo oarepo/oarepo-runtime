@@ -1,11 +1,10 @@
 import typing
 
+import marshmallow as ma
 from invenio_rdm_records.services.schemas.record import RDMRecordSchema
 from invenio_records_resources.services.records.schema import (
     BaseRecordSchema as InvenioBaseRecordSchema,
 )
-
-import marshmallow as ma
 
 
 class BaseRecordSchema(InvenioBaseRecordSchema):

@@ -1,13 +1,14 @@
 from invenio_db import db
+from sqlalchemy.exc import NoResultFound
 
 from oarepo_runtime.services.relations.errors import InvalidRelationError
-from sqlalchemy.exc import NoResultFound
 
 from .base import Relation, RelationResult, UnstrictRelationResult
 from .lookup import LookupResult
 
+
 class PIDRelationResult(RelationResult):
-    def resolve(self, id_, data = None):
+    def resolve(self, id_, data=None):
         """Resolve the value using the record class."""
         # TODO: handle permissions here !!!!!!
         try:
@@ -43,7 +44,11 @@ class PIDRelationResult(RelationResult):
 
         try:
             obj = pid_field_context.resolve(id_)
-            if hasattr(obj, "relations") and obj.relations and hasattr(obj.relations, "dereference"):
+            if (
+                hasattr(obj, "relations")
+                and obj.relations
+                and hasattr(obj.relations, "dereference")
+            ):
                 obj.relations.dereference()
             # We detach the related record model from the database session when
             # we add it in the cache. Otherwise, accessing the cached record
@@ -66,6 +71,7 @@ class PIDRelationResult(RelationResult):
     def _add_version_info(self, data, relation: LookupResult, resolved_object):
         data["@v"] = f"{resolved_object.id}::{resolved_object.revision_id}"
 
+
 class UnstrictPIDRelationResult(PIDRelationResult, UnstrictRelationResult):
 
     def resolve(self, id_, data):
@@ -76,6 +82,7 @@ class UnstrictPIDRelationResult(PIDRelationResult, UnstrictRelationResult):
                 return data
             raise
 
+
 class PIDRelation(Relation):
     result_cls = PIDRelationResult
 
@@ -83,12 +90,14 @@ class PIDRelation(Relation):
         super().__init__(key=key, **kwargs)
         self.pid_field = pid_field
 
+
 class UnstrictPIDRelation(Relation):
     result_cls = UnstrictPIDRelationResult
 
     def __init__(self, key=None, pid_field=None, **kwargs):
         super().__init__(key=key, **kwargs)
         self.pid_field = pid_field
+
 
 class MetadataRelationResult(PIDRelationResult):
     def _dereference_one(self, relation: LookupResult):

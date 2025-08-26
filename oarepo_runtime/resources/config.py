@@ -2,6 +2,7 @@ from invenio_rdm_records.resources.config import (
     RDMRecordResourceConfig,
 )
 
+
 class BaseRecordResourceConfig(RDMRecordResourceConfig):
     """Record resource configuration."""
 

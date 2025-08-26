@@ -262,9 +262,10 @@ def client_with_credentials_curator(db, client, user, curator_role):
 
 @pytest.fixture()
 def sample_data(db, app, identity, search_clear, location):
-    from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
+
+    from oarepo_runtime.datastreams.fixtures import load_fixtures
 
     load_fixtures(Path(__file__).parent / "data", callback=FixturesCallback())
     Records2Record.index.refresh()
@@ -276,9 +277,10 @@ def sample_data(db, app, identity, search_clear, location):
 
 @pytest.fixture()
 def sample_data_system_field(db, app, identity, search_clear, location):
-    from oarepo_runtime.datastreams.fixtures import load_fixtures
     from records2.proxies import current_service
     from records2.records.api import Records2Record
+
+    from oarepo_runtime.datastreams.fixtures import load_fixtures
 
     load_fixtures(
         Path(__file__).parent / "data_system_field", callback=FixturesCallback()

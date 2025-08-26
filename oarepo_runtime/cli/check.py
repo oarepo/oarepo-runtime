@@ -86,7 +86,6 @@ def check_opensearch():
             except opensearchpy.exceptions.ConnectionError:
                 return "connection_error"
 
-
         try:
             index = indexer._prepare_index(indexer.record_to_index(record_class))
         except AttributeError:

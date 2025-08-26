@@ -16,7 +16,7 @@ class PublishWriter(BaseWriter):
         request_name="publish_draft",
         identity=None,
         direct_call=True,
-        **kwargs
+        **kwargs,
     ):
         if isinstance(service, str):
             service = current_service_registry.get(service)

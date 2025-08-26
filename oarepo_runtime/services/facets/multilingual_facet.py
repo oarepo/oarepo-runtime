@@ -1,6 +1,7 @@
 from flask_babel import get_locale
 from invenio_records_resources.services.records.facets import TermsFacet
 
+
 class MultilingualFacet(TermsFacet):
 
     def __init__(self, lang_facets, **kwargs):
@@ -26,7 +27,9 @@ class MultilingualFacet(TermsFacet):
 
     def get_labelled_values(self, data, filter_values):
         """Get a labelled version of a bucket."""
-        return self.lang_facets[get_locale().language].get_labelled_values(data, filter_values)
+        return self.lang_facets[get_locale().language].get_labelled_values(
+            data, filter_values
+        )
 
     def add_filter(self, filter_values):
         """Create a terms filter instead of bool containing term filters."""

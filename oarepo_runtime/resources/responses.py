@@ -1,5 +1,6 @@
 from flask_resources.responses import ResponseHandler
 
+
 class ExportableResponseHandler(ResponseHandler):
 
     def __init__(self, serializer, export_code, name, headers=None):
@@ -11,8 +12,16 @@ class ExportableResponseHandler(ResponseHandler):
 
 class OAIExportableResponseHandler(ExportableResponseHandler):
 
-    def __init__(self, serializer, export_code, name, oai_metadata_prefix, oai_schema, oai_namespace,
-                 headers=None):
+    def __init__(
+        self,
+        serializer,
+        export_code,
+        name,
+        oai_metadata_prefix,
+        oai_schema,
+        oai_namespace,
+        headers=None,
+    ):
         """Constructor."""
         self.oai_metadata_prefix = oai_metadata_prefix
         self.oai_schema = oai_schema

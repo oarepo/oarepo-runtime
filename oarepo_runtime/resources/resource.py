@@ -12,6 +12,7 @@ from invenio_records_resources.resources.records.resource import (
 )
 from invenio_records_resources.resources.records.utils import search_preference
 
+
 class BaseRecordResource(RDMRecordResource):
 
     def create_url_rules(self):

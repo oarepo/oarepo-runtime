@@ -6,16 +6,15 @@ from typing import List
 
 from flask import current_app
 from flask_principal import Identity
-from invenio_access.permissions import system_user_id
+from invenio_access.permissions import authenticated_user, system_user_id
 from invenio_app.helpers import obj_or_import_string
-from invenio_records_resources.services.records.facets import FacetsResponse
-from invenio_records_resources.services.records.params import FacetsParam
-from invenio_access.permissions import authenticated_user
-from invenio_records_resources.services.records.params.base import ParamInterpreter
-from invenio_search.engine import dsl
 from invenio_rdm_records.records.systemfields.deletion_status import (
     RecordDeletionStatusEnum,
 )
+from invenio_records_resources.services.records.facets import FacetsResponse
+from invenio_records_resources.services.records.params import FacetsParam
+from invenio_records_resources.services.records.params.base import ParamInterpreter
+from invenio_search.engine import dsl
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +71,8 @@ class GroupedFacetsParam(FacetsParam):
         if not self.facet_groups:
             if global_search_model:
                 log.warning(
-                    "No facet groups defined on the service config %s", type(self.config)
+                    "No facet groups defined on the service config %s",
+                    type(self.config),
                 )
             return self.facets
 
@@ -141,6 +141,7 @@ class GroupedFacetsParam(FacetsParam):
 
 class OARepoAllVersionsParam(ParamInterpreter):
     """Evaluates the 'allversions' parameter."""
+
     def __init__(self, field_names, config):
         """Construct."""
         self.field_names = field_names
@@ -154,10 +155,14 @@ class OARepoAllVersionsParam(ParamInterpreter):
     def apply(self, identity, search, params):
         """Evaluate the allversions parameter on the search."""
         if not params.get("allversions"):
-            queries = [dsl.query.Q("term", **{field_name: True}) for field_name in self.field_names]
+            queries = [
+                dsl.query.Q("term", **{field_name: True})
+                for field_name in self.field_names
+            ]
             query = reduce(operator.or_, queries)
             search = search.filter(query)
         return search
+
 
 class OARepoPublishedRecordsParam(ParamInterpreter):
     """Evaluates the include_deleted parameter."""
@@ -184,7 +189,8 @@ class OARepoPublishedRecordsParam(ParamInterpreter):
                     # Drafts does not have deletion_status so this clause is needed to
                     # prevent the above clause from filtering out the drafts
                     dsl.query.Q(
-                        "bool", must_not=[dsl.query.Q("exists", field="deletion_status")]
+                        "bool",
+                        must_not=[dsl.query.Q("exists", field="deletion_status")],
                     ),
                 ],
             )

@@ -1,9 +1,14 @@
 from marshmallow import Schema, fields
-from oarepo_runtime.services.schema.marshmallow_to_json_schema import marshmallow_to_json_schema
+
+from oarepo_runtime.services.schema.marshmallow_to_json_schema import (
+    marshmallow_to_json_schema,
+)
+
 
 class SimpleSchema(Schema):
     a = fields.Integer()
     b = fields.String()
+
 
 def test_simple_schema():
     schema = SimpleSchema()
@@ -11,15 +16,14 @@ def test_simple_schema():
 
     assert converted == {
         "type": "object",
-        "properties": {
-            "a": {"type": "integer"},
-            "b": {"type": "string"}
-        }
+        "properties": {"a": {"type": "integer"}, "b": {"type": "string"}},
     }
+
 
 class AddressSchema(Schema):
     city = fields.String()
     postal_code = fields.String()
+
 
 class MoreComplexSchema(Schema):
     name = fields.String(required=True)
@@ -29,6 +33,7 @@ class MoreComplexSchema(Schema):
     tags = fields.List(fields.String())
     address = fields.Nested(lambda: AddressSchema)
 
+
 def test_more_complex_schema():
     schema = MoreComplexSchema()
     converted = marshmallow_to_json_schema(schema)
@@ -36,17 +41,17 @@ def test_more_complex_schema():
     assert converted == {
         "type": "object",
         "properties": {
-            'name': {'type': 'string'},
-            'age': {'type': 'integer'},
-            'score': {'type': 'number'},
-            'is_active': {'type': 'boolean'},
-            'tags': {'type': 'array', 'items': {'type': 'string'}},
-            'address': {
-                'type': 'object',
+            "name": {"type": "string"},
+            "age": {"type": "integer"},
+            "score": {"type": "number"},
+            "is_active": {"type": "boolean"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "address": {
+                "type": "object",
                 "properties": {
-                    'city': {'type': 'string'},
-                    'postal_code': {'type': 'string'}
-                }
-            }
-        }
+                    "city": {"type": "string"},
+                    "postal_code": {"type": "string"},
+                },
+            },
+        },
     }

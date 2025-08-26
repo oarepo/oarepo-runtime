@@ -1,16 +1,21 @@
 import dataclasses
 import inspect
+from functools import partial
 from typing import List
 
+from invenio_drafts_resources.services.records.config import (
+    SearchDraftsOptions as InvenioSearchDraftsOptions,
+)
+from invenio_drafts_resources.services.records.search_params import AllVersionsParam
 from invenio_rdm_records.services.config import (
     RDMSearchDraftsOptions as BaseRDMSearchDraftsOptions,
 )
 from invenio_rdm_records.services.config import RDMSearchOptions as BaseRDMSearchOptions
+from invenio_rdm_records.services.search_params import PublishedRecordsParam
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.services.records import (
     SearchOptions as InvenioSearchOptions,
 )
-from invenio_drafts_resources.services.records.config import SearchDraftsOptions as InvenioSearchDraftsOptions
 from invenio_records_resources.services.records.params import (
     FacetsParam,
     PaginationParam,
@@ -19,16 +24,18 @@ from invenio_records_resources.services.records.params import (
 )
 from invenio_records_resources.services.records.queryparser import SuggestQueryParser
 from invenio_search.engine import dsl
-from invenio_drafts_resources.services.records.search_params import AllVersionsParam
+
 # TODO: integrate this to invenio_records_resources.services.records and remove SearchOptions class
 from oarepo_runtime.i18n import lazy_gettext as _
 from oarepo_runtime.records.systemfields.icu import ICUSuggestField
 from oarepo_runtime.utils.functools import class_property
 
-from .facets.params import GroupedFacetsParam, OARepoAllVersionsParam, OARepoPublishedRecordsParam
-from invenio_drafts_resources.services.records.search_params import AllVersionsParam
-from invenio_rdm_records.services.search_params import PublishedRecordsParam
-from functools import partial
+from .facets.params import (
+    GroupedFacetsParam,
+    OARepoAllVersionsParam,
+    OARepoPublishedRecordsParam,
+)
+
 try:
     from invenio_i18n import get_locale
 except ImportError:
@@ -60,9 +67,13 @@ class SearchOptionsMixin:
     @class_property
     def params_interpreters_cls(cls):
         """Replaces FacetsParam with GroupedFacetsParam."""
-        params_replace_map = {FacetsParam: GroupedFacetsParam, AllVersionsParam:
-            OARepoAllVersionsParam.factory(["versions.is_latest", "versions.is_latest_draft"]),
-                              PublishedRecordsParam: OARepoPublishedRecordsParam}
+        params_replace_map = {
+            FacetsParam: GroupedFacetsParam,
+            AllVersionsParam: OARepoAllVersionsParam.factory(
+                ["versions.is_latest", "versions.is_latest_draft"]
+            ),
+            PublishedRecordsParam: OARepoPublishedRecordsParam,
+        }
 
         param_interpreters = [*super(SearchOptionsMixin, cls).params_interpreters_cls]
         # replace FacetsParam with GroupedFacetsParam
@@ -124,7 +135,6 @@ class SearchOptionsDraftMixin(SearchOptionsMixin):
     }
 
 
-
 class SearchOptions(SearchOptionsMixin, InvenioSearchOptions):
     # TODO: should be changed
     params_interpreters_cls = [
@@ -134,6 +144,7 @@ class SearchOptions(SearchOptionsMixin, InvenioSearchOptions):
         GroupedFacetsParam,
     ]
 
+
 class SearchDraftsOptions(SearchOptionsMixin, InvenioSearchDraftsOptions):
     # TODO: should be changed
     params_interpreters_cls = [
@@ -141,7 +152,7 @@ class SearchDraftsOptions(SearchOptionsMixin, InvenioSearchDraftsOptions):
         PaginationParam,
         SortParam,
         GroupedFacetsParam,
-        AllVersionsParam.factory("versions.is_latest_draft")
+        AllVersionsParam.factory("versions.is_latest_draft"),
     ]
 
 

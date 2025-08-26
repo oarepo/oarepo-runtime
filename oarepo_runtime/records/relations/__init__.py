@@ -4,7 +4,7 @@ from .base import (
     Relation,
     RelationResult,
     RelationsField,
-    UnstrictRelationResult
+    UnstrictRelationResult,
 )
 from .internal import InternalRelation
 from .pid_relation import PIDRelation, UnstrictPIDRelation
@@ -18,5 +18,5 @@ __all__ = (
     "InternalRelation",
     "PIDRelation",
     "UnstrictPIDRelation",
-    "UnstrictRelationResult"
+    "UnstrictRelationResult",
 )

@@ -75,7 +75,7 @@ def enumerate_assets():
     aliases = {}
     themes = current_app.config["APP_THEME"] or ["semantic-ui"]
     project = current_webpack.project
-    if hasattr(project, 'generated_paths'):
+    if hasattr(project, "generated_paths"):
         generated_paths += project.generated_paths
 
     for ep in entry_points(group="invenio_assets.webpack"):
@@ -84,7 +84,9 @@ def enumerate_assets():
             if wp_theme_name in themes:
                 asset_dirs.append(wp_theme.path)
                 if hasattr(wp_theme, "generated_paths"):
-                    generated_paths += list(set(wp_theme.generated_paths) - set(generated_paths))
+                    generated_paths += list(
+                        set(wp_theme.generated_paths) - set(generated_paths)
+                    )
                 aliases.update(wp_theme.aliases)
     return aliases, asset_dirs, generated_paths
 
@@ -117,7 +119,6 @@ COMPONENT_RE = re.compile(
 """,
     re.MULTILINE | re.DOTALL | re.VERBOSE,
 )
-
 
 
 @assets.command(name="less-components")

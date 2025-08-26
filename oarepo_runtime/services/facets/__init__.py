@@ -10,10 +10,11 @@ from .date import (
 from .enum import EnumTermsFacet
 from .facet_groups_names import facet_groups_names
 from .max_facet import MaxFacet
+from .multilingual_facet import MultilingualFacet
 from .nested_facet import NestedLabeledFacet
 from .params import FilteredFacetsParam, GroupedFacetsParam
 from .year_histogram import YearAutoHistogramFacet
-from .multilingual_facet import MultilingualFacet
+
 __all__ = [
     "LabelledValuesTermsFacet",
     "DateFacet",
@@ -29,5 +30,5 @@ __all__ = [
     "GroupedFacetsParam",
     "FilteredFacetsParam",
     "YearAutoHistogramFacet",
-    "MultilingualFacet"
+    "MultilingualFacet",
 ]
