@@ -49,6 +49,8 @@ class MockModuleExt:
             service="mock-record-service",
             records_alias_enabled=True,
             resource_config="invenio_records_resources.resources.records.config.RecordResourceConfig",
+            file_service=FileService(FileServiceConfig),
+            draft_file_service=FileService(DraftFileServiceConfig),
         )
 
     @cached_property

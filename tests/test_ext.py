@@ -16,6 +16,7 @@ from invenio_drafts_resources.records.api import Draft, Record
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.proxies import current_service_registry
 from invenio_records_resources.records.api import RecordBase
+from invenio_records_resources.services.files import FileService
 from invenio_vocabularies.records.api import Vocabulary
 from invenio_vocabularies.resources.config import VocabulariesResourceConfig
 from invenio_vocabularies.resources.resource import VocabulariesResource
@@ -223,3 +224,39 @@ def test_indices(app):
 
     assert len(published_indices) == 1
     assert len(draft_indices) == 1
+
+
+def test_get_file_service_from_api_record(app, service, identity_simple):
+    created = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "PID test"},
+            "files": {"enabled": False},
+        },
+    )
+
+    file_service = current_runtime.get_file_service_for_record(created._record)  # noqa: SLF001
+    assert isinstance(file_service, FileService)
+
+
+def test_get_file_service_for_record_keyerror(app):
+    class UnknownRecord:
+        pass
+
+    unknown_record = UnknownRecord()
+    with pytest.raises(KeyError, match="No model found for record class 'UnknownRecord'."):
+        current_runtime.get_file_service_for_record(unknown_record)
+
+
+def test_get_file_service_for_published_record(app, service, identity_simple):
+    created = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "PID test"},
+            "files": {"enabled": False},
+        },
+    )
+    # Simulate published record
+    created._record.is_draft = False  # noqa: SLF001
+    file_service = current_runtime.get_file_service_for_record(created._record)  # noqa: SLF001
+    assert isinstance(file_service, FileService)
