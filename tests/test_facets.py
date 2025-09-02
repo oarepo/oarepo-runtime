@@ -14,10 +14,10 @@ import types
 from typing import TYPE_CHECKING, Any
 
 from flask_principal import Identity, Need, UserNeed
+from invenio_access.permissions import system_user_id
 from invenio_records_resources.services.records.facets import TermsFacet
 from invenio_search.engine import dsl
 
-from invenio_access.permissions import system_user_id
 from oarepo_runtime.services.facets.params import GroupedFacetsParam
 
 if TYPE_CHECKING:
