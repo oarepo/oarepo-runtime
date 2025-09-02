@@ -38,8 +38,9 @@ from .api import Draft, DraftMediaFiles, Record, RecordMediaFiles
 from .schemas import RecordSchema
 
 if TYPE_CHECKING:
-    from invenio_access.permissions import Identity
     from invenio_records.api import RecordBase
+
+    from invenio_access.permissions import Identity
 
 
 class SearchOptions(SearchOptions):

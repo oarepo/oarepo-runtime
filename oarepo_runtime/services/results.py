@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from invenio_access.permissions import Identity
 from invenio_records.api import RecordBase
 from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
@@ -24,9 +23,12 @@ from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
+from invenio_access.permissions import Identity
+
 if TYPE_CHECKING:
-    from invenio_access.permissions import Identity
     from invenio_records.api import RecordBase
+
+    from invenio_access.permissions import Identity
 
 log = logging.getLogger(__name__)
 

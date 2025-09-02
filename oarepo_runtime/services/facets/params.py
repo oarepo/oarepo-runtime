@@ -16,10 +16,11 @@ import logging
 from typing import TYPE_CHECKING
 
 from flask import current_app
-from invenio_access.permissions import system_user_id
 from invenio_app.helpers import obj_or_import_string
 from invenio_records_resources.services.records.facets import FacetsResponse
 from invenio_records_resources.services.records.params import FacetsParam
+
+from invenio_access.permissions import system_user_id
 
 if TYPE_CHECKING:
     from flask_principal import Identity

@@ -14,12 +14,12 @@ from __future__ import annotations
 from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
-from invenio_access.permissions import Identity
 from invenio_records.api import Record
 from invenio_records_resources.services.records.results import (
     RecordList as BaseRecordList,
 )
 
+from invenio_access.permissions import Identity
 from oarepo_runtime.services.results import RecordItem, RecordList, ResultComponent
 
 
