@@ -11,21 +11,25 @@
 
 from __future__ import annotations
 
-from invenio_records_resources.services.base.links import Link
+from typing import Any
+
+from invenio_records_resources.services.base.links import EndpointLink
 
 
-def pagination_links_html(tpl: str) -> dict[str, Link]:
-    """Create pagination links (prev/self/next) from the same template."""
+def pagination_endpoint_links_html(endpoint: str, params: dict[str, Any] | None = None) -> dict[str, EndpointLink]:
+    """Create pagination links (prev/self/next) from the same endpoint."""
     return {
-        "prev_html": Link(
-            tpl,
-            when=lambda pagination, _context: pagination.has_prev,
-            vars=lambda pagination, variables: variables["args"].update({"page": pagination.prev_page.page}),
+        "prev_html": EndpointLink(
+            endpoint,
+            when=lambda pagination, _ctx: pagination.has_prev,
+            vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.prev_page.page}),
+            params=params,
         ),
-        "self_html": Link(tpl),
-        "next_html": Link(
-            tpl,
-            when=lambda pagination, _context: pagination.has_next,
-            vars=lambda pagination, variables: variables["args"].update({"page": pagination.next_page.page}),
+        "self_html": EndpointLink(endpoint, params=params),
+        "next_html": EndpointLink(
+            endpoint,
+            when=lambda pagination, _ctx: pagination.has_next,
+            vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.next_page.page}),
+            params=params,
         ),
     }

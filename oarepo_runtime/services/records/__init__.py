@@ -11,6 +11,6 @@
 
 from __future__ import annotations
 
-from .links import pagination_links_html
+from .links import pagination_endpoint_links_html
 
-__all__ = ("pagination_links_html",)
+__all__ = ("pagination_endpoint_links_html",)
