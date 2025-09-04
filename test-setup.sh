@@ -6,4 +6,5 @@
 source .venv/bin/activate
 
 echo "Installing mock-module to the current environment"
+uv pip uninstall mock-module || true
 uv pip install tests/mock-module

@@ -31,7 +31,7 @@ from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import TermsFacet
 
 from oarepo_runtime.services.config.permissions import EveryonePermissionPolicy
-from oarepo_runtime.services.records.links import pagination_links_html
+from oarepo_runtime.services.records.links import pagination_endpoint_links_html
 from oarepo_runtime.services.results import RecordItem, RecordList, ResultComponent
 
 from .api import Draft, DraftMediaFiles, Record, RecordMediaFiles
@@ -93,7 +93,7 @@ class ServiceConfig(RecordServiceConfig):
 
     links_search = {  # noqa: RUF012
         **RecordServiceConfig.links_search,
-        **pagination_links_html("{+ui}/docs/{?args*}"),
+        **pagination_endpoint_links_html("docs"),
     }
 
     links_item = {  # noqa: RUF012
