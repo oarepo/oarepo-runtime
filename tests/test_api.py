@@ -394,3 +394,35 @@ def test_exports_property_with_value():
     )
 
     assert model.exports == exports_list
+
+
+def test_model_metadata_property_none():
+    """Test model_metadata property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.model_metadata is None
+
+
+def test_model_metadata_property_with_value():
+    """Test model_metadata property with custom value."""
+    from oarepo_runtime.api import ModelMetadata
+
+    service = MockService()
+    model_metadata_mock = MagicMock(spec=ModelMetadata)
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        model_metadata=model_metadata_mock,
+    )
+
+    assert model.model_metadata == model_metadata_mock

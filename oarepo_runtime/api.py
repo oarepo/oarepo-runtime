@@ -42,6 +42,21 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass
+class ModelMetadata:
+    """Model metadata configuration.
+
+    ModeMetadata is used in oarepo-model to add metadata to the model's oarepo_model_arguments dict.
+    """
+
+    types: dict[str, Any]
+    """Dictionary of types passed from InvenioModelBuilder.type_registry"""
+    metadata_type: str | None = None
+    """Metadata type"""
+    record_type: str | None = None
+    """Record type"""
+
+
+@dataclasses.dataclass
 class Export:
     """Configuration of an export format.
 
@@ -110,6 +125,7 @@ class Model[
         media_draft_file_service: FileService | None = None,
         exports: list[Export] | None = None,
         records_alias_enabled: bool = True,
+        model_metadata: ModelMetadata | None = None,
     ):
         """Initialize the model configuration.
 
@@ -132,6 +148,7 @@ class Model[
             If not provided, no exports are available.
         :param records_alias_enabled: Whether the records alias is enabled for this model.
             Such models will be searchable via the `/api/records` endpoint.
+        :param model_metadata: Metadata of the model.
         """
         self._code = code
         self._name = name
@@ -153,6 +170,7 @@ class Model[
         self._resource = resource
         self._resource_config = resource_config
         self._exports = exports or []
+        self._model_metadata = model_metadata
 
     @property
     def code(self) -> str:
@@ -182,6 +200,11 @@ class Model[
         is enabled for this model and whether the model is indexed in global search.
         """
         return self._records_alias_enabled
+
+    @property
+    def model_metadata(self) -> ModelMetadata | None:
+        """Get the model metadata."""
+        return self._model_metadata
 
     @property
     def ui_model(self) -> Mapping[str, Any]:
