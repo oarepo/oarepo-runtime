@@ -29,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from flask import Flask
     from invenio_drafts_resources.records.api import Draft
     from invenio_records_resources.services.base.service import Service
+    from invenio_records_resources.services.files.service import FileService
     from invenio_records_resources.services.records import RecordService
 
     from .api import Model
@@ -169,6 +170,16 @@ class OARepoRuntime:
         if record is None:
             raise ValueError("Need to pass a record instance, got None")
         return self.get_record_service_for_record_class(type(record))
+
+    def get_file_service_for_record(self, record: Any) -> FileService | None:
+        """Return the file service for the given record (draft or published)."""
+        model = self.models_by_record_class.get(type(record))
+        if not model:
+            raise KeyError(f"No model found for record class '{type(record).__name__}'.")
+        is_draft = getattr(record, "is_draft", False)
+        if is_draft:
+            return model.draft_file_service
+        return model.file_service
 
     def get_record_service_for_record_class(self, record_cls: type[RecordBase]) -> RecordService:
         """Retrieve the service associated with a given record class."""
