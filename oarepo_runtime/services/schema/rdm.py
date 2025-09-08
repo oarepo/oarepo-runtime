@@ -1,7 +1,6 @@
 from functools import partial
 
 import marshmallow as ma
-from invenio_i18n import gettext as _
 from invenio_i18n.selectors import get_locale
 from invenio_rdm_records.services.schemas.metadata import record_identifiers_schemes
 from invenio_rdm_records.services.schemas.tombstone import DeletionStatusSchema
