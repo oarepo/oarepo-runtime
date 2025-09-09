@@ -13,16 +13,20 @@ We verify that our wrappers delegate to Invenio base classes and keep behavior.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, override
 
+import pytest
 from flask_principal import Need
 from invenio_records_permissions.generators import (
     ConditionalGenerator as InvenioConditionalGenerator,
 )
+from invenio_records_permissions.generators import (
+    Disable,
+)
 from invenio_records_permissions.generators import Generator as InvenioGenerator
 from invenio_search.engine import dsl
 
-from oarepo_runtime.services.generators import ConditionalGenerator, Generator
+from oarepo_runtime.services.generators import AggregateGenerator, ConditionalGenerator, Generator
 
 
 def test_generator_delegates_methods(monkeypatch):
@@ -111,13 +115,8 @@ def test_conditional_delegates_public_methods(monkeypatch):
         calls["excludes"] = kwargs
         return [Need("system_role", "excluded")]
 
-    def fake_query_filter(self, **kwargs: Any) -> Any:
-        calls["query_filter"] = kwargs
-        return dsl.Q("match_all")
-
     monkeypatch.setattr(InvenioConditionalGenerator, "needs", fake_needs, raising=True)
     monkeypatch.setattr(InvenioConditionalGenerator, "excludes", fake_excludes, raising=True)
-    monkeypatch.setattr(InvenioConditionalGenerator, "query_filter", fake_query_filter, raising=True)
 
     class AlwaysTrue(ConditionalGenerator):
         def __init__(self):
@@ -130,12 +129,226 @@ def test_conditional_delegates_public_methods(monkeypatch):
 
     n = list(gen.needs(identity="id"))
     e = list(gen.excludes(identity="id"))
-    q = gen.query_filter(identity="id")
 
-    assert calls.keys() == {"needs", "excludes", "query_filter"}
+    assert calls.keys() == {"needs", "excludes"}
     assert n
     assert isinstance(n[0], Need)
     assert e
     assert isinstance(e[0], Need)
-    assert hasattr(q, "to_dict")
-    assert isinstance(q.to_dict(), dict)
+
+
+def test_conditional_generator_query_filter():
+    """Test ConditionalGenerator query_filter method logic branches."""
+
+    class QueryFilterGenerator(InvenioGenerator):
+        def __init__(self, query=None) -> None:
+            self._query = query
+
+        @override
+        def query_filter(self, **kwargs: Any) -> dsl.query.Query:
+            return self._query
+
+    class ConditionalGeneratorWithoutQueryInstate(ConditionalGenerator):
+        """Generator with unimplemented methods."""
+
+    class TestConditionalGenerator(ConditionalGenerator):
+        def __init__(self, then_generators, else_generators, instate_query) -> None:
+            super().__init__(then_=then_generators, else_=else_generators)
+            self._instate_query = instate_query
+
+        @override
+        def _condition(self, **kwargs: Any) -> bool:
+            # Not used in query_filter, but required for abstract method
+            return True
+
+        @override
+        def _query_instate(self, **context: Any) -> dsl.query.Query:
+            return self._instate_query
+
+    # Test case 1: Both then_query and else_query exist
+    is_active_query = dsl.Q("term", status="active")
+
+    cond_gen = TestConditionalGenerator(
+        then_generators=[QueryFilterGenerator(dsl.Q("term", field="then_value"))],
+        else_generators=[QueryFilterGenerator(dsl.Q("term", field="else_value"))],
+        instate_query=is_active_query,
+    )
+    result = cond_gen.query_filter()
+
+    # Should return: (q_instate & then_query) | (~q_instate & else_query)
+    expected = {
+        "bool": {
+            "should": [
+                {
+                    "bool": {
+                        "must": [
+                            {"term": {"status": "active"}},
+                            {"term": {"field": "then_value"}},
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "must_not": [{"term": {"status": "active"}}],
+                        "must": [{"term": {"field": "else_value"}}],
+                    }
+                },
+            ]
+        }
+    }
+    assert result.to_dict() == expected
+
+    # Test case 2: Only then_query exists (else_query is None/empty)
+    cond_gen = TestConditionalGenerator(
+        then_generators=[QueryFilterGenerator(dsl.Q("term", field="then_value"))],
+        else_generators=[],
+        instate_query=is_active_query,
+    )
+    result = cond_gen.query_filter()
+
+    # Should return: q_instate & then_query
+    expected = {"bool": {"must": [{"term": {"status": "active"}}, {"term": {"field": "then_value"}}]}}
+    assert result.to_dict() == expected
+
+    # Test case 3: Only else_query exists (then_query is None/empty)
+    cond_gen = TestConditionalGenerator(
+        then_generators=[],
+        else_generators=[QueryFilterGenerator(dsl.Q("term", field="else_value"))],
+        instate_query=is_active_query,
+    )
+    result = cond_gen.query_filter()
+
+    # Should return: ~q_instate & else_query
+    expected = {
+        "bool": {
+            "must_not": [{"term": {"status": "active"}}],
+            "must": [{"term": {"field": "else_value"}}],
+        }
+    }
+    assert result.to_dict() == expected
+
+    # Test case 4: Neither then_query nor else_query exist
+    cond_gen = TestConditionalGenerator(then_generators=[], else_generators=[], instate_query=is_active_query)
+    result = cond_gen.query_filter()
+
+    # Should return: match_none query
+    expected = dsl.Q("match_none")
+    assert result.to_dict() == expected.to_dict()
+
+    # Test case 5: Empty generators lists
+    cond_gen = TestConditionalGenerator([QueryFilterGenerator(None)], [QueryFilterGenerator(None)], is_active_query)
+    result = cond_gen.query_filter()
+
+    # Should return: match_none query (no generators means no queries)
+    expected = dsl.Q("match_none")
+    assert result.to_dict() == expected.to_dict()
+
+    # Test case 6: Multiple generators in then_ and else_
+    then_gen1 = QueryFilterGenerator(dsl.Q("term", field="then1"))
+    then_gen2 = QueryFilterGenerator(dsl.Q("term", field="then2"))
+    else_gen1 = QueryFilterGenerator(dsl.Q("term", field="else1"))
+    else_gen2 = QueryFilterGenerator(dsl.Q("match_all"))
+
+    cond_gen = TestConditionalGenerator([then_gen1, then_gen2], [else_gen1, else_gen2], is_active_query)
+    result = cond_gen.query_filter()
+
+    expected = {
+        "bool": {
+            "should": [
+                {
+                    "bool": {
+                        "should": [
+                            {"term": {"field": "then1"}},
+                            {"term": {"field": "then2"}},
+                        ],
+                        "must": [{"term": {"status": "active"}}],
+                        "minimum_should_match": 1,
+                    }
+                },
+                {
+                    "bool": {
+                        "must_not": [{"term": {"status": "active"}}],
+                        "must": [{"match_all": {}}],
+                    }
+                },
+            ]
+        }
+    }
+
+    assert result.to_dict() == expected
+
+    # edge cases
+    cond_gen = TestConditionalGenerator(
+        then_generators=[Disable()],
+        else_generators=[],
+        instate_query=is_active_query,
+    )
+
+    assert cond_gen.query_filter() == dsl.Q("match_none")
+
+    failing_generator = ConditionalGeneratorWithoutQueryInstate([], [])
+    with pytest.raises(NotImplementedError):
+        failing_generator.query_filter()
+
+
+def test_aggregate_generator():
+    """Test AggregateGenerator aggregates needs, excludes, and query_filter from multiple generators."""
+
+    class MockGenerator(InvenioGenerator):
+        def __init__(self, needs_list, excludes_list, query) -> None:
+            self._needs = needs_list
+            self._excludes = excludes_list
+            self._query = query
+
+        @override
+        def needs(self, **kwargs: Any) -> list[Need]:
+            return self._needs
+
+        @override
+        def excludes(self, **kwargs: Any) -> list[Need]:
+            return self._excludes
+
+        @override
+        def query_filter(self, **kwargs: Any) -> dsl.query.Query:
+            return self._query
+
+    class AggregateGeneratorWithoutGenerators(AggregateGenerator):
+        """Generator with unimplemented methods."""
+
+    class TestAggregateGenerator(AggregateGenerator):
+        def __init__(self, generators):
+            self._gen_list = generators
+
+        @override
+        def _generators(self, **context: Any) -> list[InvenioGenerator]:
+            return self._gen_list
+
+    # Create mock generators with different needs/excludes/queries
+    gen1 = MockGenerator([Need("system_role", "admin")], [Need("system_role", "banned")], dsl.Q("term", field="value1"))
+    gen2 = MockGenerator(
+        [Need("system_role", "editor"), Need("system_role", "reviewer")],
+        [Need("system_role", "guest")],
+        dsl.Q("term", field="value2"),
+    )
+
+    aggregate = TestAggregateGenerator([gen1, gen2])
+
+    # Test needs aggregation
+    needs = list(aggregate.needs())
+    assert set(needs) == {Need("system_role", "admin"), Need("system_role", "editor"), Need("system_role", "reviewer")}
+
+    # Test excludes aggregation
+    excludes = list(aggregate.excludes())
+    assert set(excludes) == {Need("system_role", "banned"), Need("system_role", "guest")}
+
+    # Test query_filter uses _make_query to combine queries
+    query = aggregate.query_filter()
+    assert query == dsl.Q("term", field="value1") | dsl.Q("term", field="value2")
+
+    failing_generator = AggregateGeneratorWithoutGenerators()
+    with pytest.raises(NotImplementedError):
+        failing_generator.needs()
+    with pytest.raises(NotImplementedError):
+        failing_generator.excludes()
+    with pytest.raises(NotImplementedError):
+        failing_generator.query_filter()
