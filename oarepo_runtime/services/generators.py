@@ -75,7 +75,7 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
 
     @abstractmethod
     def _query_instate(self, **context: Any) -> dsl.query.Query:
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError  # pragma: no cover
 
     @override
     def query_filter(self, **context: Any) -> dsl.query.Query:  # type: ignore[reportIncompatibleMethodOverride]
