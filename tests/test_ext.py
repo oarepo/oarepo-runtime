@@ -108,13 +108,13 @@ def test_ext_loaded(app, search_with_field_mapping, search_clear):
         "vocabularies"
     )
 
-    with pytest.raises(KeyError, match="No service found for record class 'Record'."):
+    with pytest.raises(KeyError, match=r"No service found for record class 'Record'."):
         current_runtime.get_record_service_for_record_class(RecordBase)
 
-    with pytest.raises(KeyError, match="No service found for record class 'object'."):
+    with pytest.raises(KeyError, match=r"No service found for record class 'object'."):
         current_runtime.get_record_service_for_record_class(object)
 
-    with pytest.raises(ValueError, match="Need to pass a record instance, got None"):
+    with pytest.raises(ValueError, match=r"Need to pass a record instance, got None"):
         current_runtime.get_record_service_for_record(None)
 
     assert current_runtime.get_record_service_for_record(Vocabulary({})) is current_service_registry.get("vocabularies")
@@ -202,13 +202,13 @@ def test_find_pid_helpers(app, db, search_with_field_mapping, service, search_cl
     # non-existing pid
     with pytest.raises(
         PIDDoesNotExistError,
-        match="The pid value/record uuid is not associated with any record.",
+        match=r"The pid value/record uuid is not associated with any record.",
     ):
         current_runtime.find_pid_from_uuid(uuid4())
 
     with pytest.raises(
         PIDDoesNotExistError,
-        match="The pid value/record uuid is not associated with any record.",
+        match=r"The pid value/record uuid is not associated with any record.",
     ):
         current_runtime.find_pid_type_from_pid("abcde-fghij-012")
 
@@ -244,7 +244,7 @@ def test_get_file_service_for_record_keyerror(app):
         pass
 
     unknown_record = UnknownRecord()
-    with pytest.raises(KeyError, match="No model found for record class 'UnknownRecord'."):
+    with pytest.raises(KeyError, match=r"No model found for record class 'UnknownRecord'."):
         current_runtime.get_file_service_for_record(unknown_record)
 
 
