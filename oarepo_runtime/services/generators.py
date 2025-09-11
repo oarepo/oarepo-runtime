@@ -59,7 +59,7 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
     @abstractmethod
     def _condition(self, **kwargs: Any) -> bool:
         """Condition to choose generators set."""
-        raise NotImplementedError  # pragma: nocover
+        raise NotImplementedError  # pragma: no cover
 
     def _generators(self, record: Record, **kwargs: Any) -> Sequence[InvenioGenerator]:
         """Get the "then" or "else" generators."""
@@ -75,7 +75,7 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
 
     @abstractmethod
     def _query_instate(self, **context: Any) -> dsl.query.Query:
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @override
     def query_filter(self, **context: Any) -> dsl.query.Query:  # type: ignore[reportIncompatibleMethodOverride]

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import Any, override
 
-import pytest
 from flask_principal import Need
 from invenio_records_permissions.generators import (
     ConditionalGenerator as InvenioConditionalGenerator,
@@ -81,8 +80,13 @@ def test_conditional_generators_selection():
             super().__init__(then_, else_)
             self.flag: bool = flag
 
+        @override
         def _condition(self, **_: Any) -> bool:
             return bool(self.flag)
+
+        @override
+        def _query_instate(self, **context: Any) -> dsl.query.Query:
+            return dsl.Q()
 
     then_g = Dummy("then")
     else_g = Dummy("else")
@@ -122,8 +126,13 @@ def test_conditional_delegates_public_methods(monkeypatch):
         def __init__(self):
             super().__init__(then_=[InvenioGenerator()], else_=[InvenioGenerator()])
 
-        def _condition(self, **kwargs: Any) -> bool:  # noqa: ARG002
+        @override
+        def _condition(self, **kwargs: Any) -> bool:
             return True
+
+        @override
+        def _query_instate(self, **context: Any) -> dsl.query.Query:
+            return dsl.Q()
 
     gen = AlwaysTrue()
 
@@ -147,9 +156,6 @@ def test_conditional_generator_query_filter():
         @override
         def query_filter(self, **kwargs: Any) -> dsl.query.Query:
             return self._query
-
-    class ConditionalGeneratorWithoutQueryInstate(ConditionalGenerator):
-        """Generator with unimplemented methods."""
 
     class TestConditionalGenerator(ConditionalGenerator):
         def __init__(self, then_generators, else_generators, instate_query) -> None:
@@ -286,10 +292,6 @@ def test_conditional_generator_query_filter():
 
     assert cond_gen.query_filter() == dsl.Q("match_none")
 
-    failing_generator = ConditionalGeneratorWithoutQueryInstate([], [])
-    with pytest.raises(NotImplementedError):
-        failing_generator.query_filter()
-
 
 def test_aggregate_generator():
     """Test AggregateGenerator aggregates needs, excludes, and query_filter from multiple generators."""
@@ -311,9 +313,6 @@ def test_aggregate_generator():
         @override
         def query_filter(self, **kwargs: Any) -> dsl.query.Query:
             return self._query
-
-    class AggregateGeneratorWithoutGenerators(AggregateGenerator):
-        """Generator with unimplemented methods."""
 
     class TestAggregateGenerator(AggregateGenerator):
         def __init__(self, generators):
@@ -344,11 +343,3 @@ def test_aggregate_generator():
     # Test query_filter uses _make_query to combine queries
     query = aggregate.query_filter()
     assert query == dsl.Q("term", field="value1") | dsl.Q("term", field="value2")
-
-    failing_generator = AggregateGeneratorWithoutGenerators()
-    with pytest.raises(NotImplementedError):
-        failing_generator.needs()
-    with pytest.raises(NotImplementedError):
-        failing_generator.excludes()
-    with pytest.raises(NotImplementedError):
-        failing_generator.query_filter()

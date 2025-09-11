@@ -76,7 +76,7 @@ def test_universal_pid_mixin_create_no_pid_value(mock_pid_create, app, db):
     mock_provider.pid.pid_value = None
 
     with patch.object(RecordIdProviderV2, "create", return_value=mock_provider):
-        with pytest.raises(ValueError, match="PID value cannot be None."):
+        with pytest.raises(ValueError, match=r"PID value cannot be None."):
             TestUniversalPIDProvider.create(
                 object_type="rec",
                 object_uuid="uuid-123",
