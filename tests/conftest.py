@@ -20,9 +20,15 @@ from __future__ import annotations
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from flask_security import login_user
+from flask_security.utils import hash_password
+from invenio_access import ActionUsers, current_access
+from invenio_accounts.proxies import current_datastore
+from invenio_accounts.testutils import login_user_via_session
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.proxies import current_service_registry
 
+from oarepo_runtime.info.views import InfoResource, InfoConfig
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
 pytest_plugins = ("celery.contrib.pytest",)
@@ -44,6 +50,11 @@ def app_config(app_config):
     app_config["RECORDS_REFRESOLVER_STORE"] = "invenio_jsonschemas.proxies.current_refresolver_store"
 
     app_config["THEME_FRONTPAGE"] = False
+
+    # only API app is running
+    app_config["SITE_API_URL"] = "https://127.0.0.1:5000/"
+    app_config["SERVER_NAME"] = "127.0.0.1:5000"
+    app_config["PREFERRED_URL_SCHEME"] = "https"
 
     return app_config
 
@@ -81,3 +92,45 @@ def search_with_field_mapping(app, search):
 @pytest.fixture(scope="module")
 def service(app):
     return current_service_registry.get("mock-record-service")
+
+@pytest.fixture()
+def admin_role(app, db):
+    """Create some roles."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        role = datastore.create_role(name="admin", description="admin role")
+
+    db.session.commit()
+    return role
+
+@pytest.fixture()
+def user(app, db):
+    """Create example user."""
+    with db.session.begin_nested():
+        datastore = app.extensions["security"].datastore
+        _user = datastore.create_user(
+            email="info@inveniosoftware.org",
+            password=hash_password("password"),
+            active=True,
+        )
+    db.session.commit()
+    return _user
+
+@pytest.fixture()
+def client_with_credentials_admin(db, client, user, admin_role):
+    """Log in a user to the client with admin role. This role does not have defined facets."""
+
+    current_datastore.add_role_to_user(user, admin_role)
+    action = current_access.actions["superuser-access"]
+    db.session.add(ActionUsers.allow(action, user_id=user.id))
+
+    login_user(user, remember=True)
+    login_user_via_session(client, email=user.email)
+
+    return client
+
+
+@pytest.fixture()
+def info_blueprint(app):
+    app.register_blueprint(InfoResource(InfoConfig(app)).as_blueprint())
+
