@@ -104,7 +104,7 @@ class AggregateGenerator(Generator, ABC):
     @abstractmethod
     def _generators(self, **context: Any) -> Sequence[InvenioGenerator]:
         """Return the generators."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @override
     def needs(self, **context: Any) -> Sequence[Need]:
