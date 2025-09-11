@@ -19,6 +19,6 @@ from .api import Model
 from .ext import OARepoRuntime
 from .proxies import current_runtime
 
-__version__ = "2.0.0dev17"
+__version__ = "2.0.0dev18"
 
 __all__ = ("Model", "OARepoRuntime", "__version__", "current_runtime")
