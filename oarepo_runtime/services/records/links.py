@@ -11,12 +11,10 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from invenio_records_resources.services.base.links import EndpointLink
 
 
-def pagination_endpoint_links_html(endpoint: str, params: dict[str, Any] | None = None) -> dict[str, EndpointLink]:
+def pagination_endpoint_links_html(endpoint: str, params: list[str] | None = None) -> dict[str, EndpointLink]:
     """Create pagination links (prev/self/next) from the same endpoint."""
     return {
         "prev_html": EndpointLink(
