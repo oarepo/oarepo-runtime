@@ -426,3 +426,33 @@ def test_model_metadata_property_with_value():
     )
 
     assert model.model_metadata == model_metadata_mock
+
+
+def test_features_property_none():
+    """Test model_metadata property when None."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.features is None
+
+
+def test_features_property_with_value():
+    """Test model_metadata property with custom value."""
+    service = MockService()
+    features_mock = MagicMock({"files": {"version": "1.0.0"}})
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        features=features_mock,
+    )
+
+    assert model.features == features_mock

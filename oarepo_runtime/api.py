@@ -126,16 +126,17 @@ class Model[
         exports: list[Export] | None = None,
         records_alias_enabled: bool = True,
         model_metadata: ModelMetadata | None = None,
+        features: Mapping[str, Any] | None = None,
     ):
         """Initialize the model configuration.
 
-        :param name: Name of the model, human readable.
-        :param version: Version of the model, should be a valid semantic version.
-        :param description: Description of the model, human readable.
+        :param name: Name of the model, human-readable.
+        :param version: Version of the model should be a valid semantic version.
+        :param description: Description of the model, human-readable.
         :param service: Name of the service inside the `current_service_registry` or
             a configured service instance.
         :param service_config: Service configuration, if not provided,
-            if will be taken from the service.
+            it will be taken from the service.
         :param record: Record class, if not provided, it will be taken from the service
             configuration.
         :param draft: Draft class, if not provided, it will be taken from the service
@@ -146,9 +147,10 @@ class Model[
             taken from the resource class.
         :param exports: List of export formats that can be used to export the record.
             If not provided, no exports are available.
-        :param records_alias_enabled: Whether the records alias is enabled for this model.
+        :param records_alias_enabled: Whether the record alias is enabled for this model.
             Such models will be searchable via the `/api/records` endpoint.
         :param model_metadata: Metadata of the model.
+        :param features: Features of the model. Filled by the feature presets themselves during registration.
         """
         self._code = code
         self._name = name
@@ -171,6 +173,7 @@ class Model[
         self._resource_config = resource_config
         self._exports = exports or []
         self._model_metadata = model_metadata
+        self._features = features
 
     @property
     def code(self) -> str:
@@ -342,3 +345,8 @@ class Model[
     def response_handlers(self) -> dict[str, ResponseHandler]:
         """Get all response handlers from the resource configuration."""
         return cast("dict[str, ResponseHandler]", self.resource_config.response_handlers)
+
+    @property
+    def features(self) -> Mapping[str, Any] | None:
+        """Get a mapping of features."""
+        return self._features
