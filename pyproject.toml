@@ -10,7 +10,6 @@ readme = "README.md"
 license = "MIT"
 dependencies = [
     "langcodes>=3.5.0",
-    "oarepo[rdm,tests]>=13,<14",
 ]
 requires-python = ">=3.13,<3.14"
 
@@ -20,9 +19,11 @@ Homepage = "https://github.com/oarepo/oarepo-runtime"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.1.2",
+    "oarepo[rdm,tests]>=13,<14",
 ]
 tests = [
     "pytest>=7.1.2",
+    "oarepo[rdm,tests]>=13,<14",
 ]
 
 [project.entry-points."invenio_base.api_apps"]
