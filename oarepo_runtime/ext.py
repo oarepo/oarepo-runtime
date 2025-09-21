@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Any, cast
 from flask import current_app
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
-from invenio_records_resources.records.api import Record, RecordBase
 
 from . import config
 
@@ -28,6 +28,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from flask import Flask
     from invenio_drafts_resources.records.api import Draft
+    from invenio_records_resources.records.api import Record
     from invenio_records_resources.services.base.service import Service
     from invenio_records_resources.services.files.service import FileService
     from invenio_records_resources.services.records import RecordService

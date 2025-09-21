@@ -13,13 +13,16 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from logging import getLogger
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
-from invenio_records_resources.records.api import FileRecord, RecordBase
+from invenio_records_resources.records.api import FileRecord
 
 from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.records.drafts import get_draft
+
+if TYPE_CHECKING:
+    from invenio_records.api import Record as RecordBase
 
 log = getLogger(__name__)
 

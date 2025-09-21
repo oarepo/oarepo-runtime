@@ -12,10 +12,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from invenio_records_permissions import RecordPermissionPolicy
 from invenio_records_permissions.generators import AnyUser, Generator, SystemProcess
 
-type GeneratorList = tuple[Generator, ...]
+type GeneratorList = Sequence[Generator]
 
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):

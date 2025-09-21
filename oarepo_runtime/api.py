@@ -242,8 +242,9 @@ class Model[
     def draft_cls(self) -> type[D] | None:
         """Get the draft class."""
         if self._draft is None:
-            if hasattr(self.service.config, "draft_cls"):
-                return cast("type[D]", self.service.config.draft_cls)
+            draft_cls = getattr(self.service.config, "draft_cls", None)
+            if draft_cls:
+                return cast("type[D]", draft_cls)
             return None
         return self._draft
 

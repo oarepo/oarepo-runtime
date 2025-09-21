@@ -24,7 +24,10 @@ from invenio_records_resources.services.records.params import FacetsParam
 if TYPE_CHECKING:
     from flask_principal import Identity
     from invenio_records_resources.services.records.config import SearchOptions
+    from invenio_records_resources.services.records.facets.facets import TermsFacet
+    from invenio_search.api import RecordsSearchV2  # type: ignore[import-untyped]
     from invenio_search.engine import dsl
+
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +41,7 @@ class GroupedFacetsParam(FacetsParam):
         self._facets = {**config.facets}
 
     @property
-    def facets(self) -> dict[str, dsl.Facet]:
+    def facets(self) -> dict[str, TermsFacet]:
         """Return the facets dictionary."""
         return self._facets
 
@@ -63,7 +66,7 @@ class GroupedFacetsParam(FacetsParam):
         facets = getattr(self.config, "facets", {})
         return {group: {name: facets[name] for name in names} for group, names in groups.items()}
 
-    def identity_facets(self, identity: Identity) -> dict[str, dsl.Facet]:
+    def identity_facets(self, identity: Identity) -> dict[str, TermsFacet]:
         """Return the facets for the given identity."""
         if not self.facet_groups:
             return self.facets
@@ -83,7 +86,7 @@ class GroupedFacetsParam(FacetsParam):
 
         return search
 
-    def filter(self, search: dsl.Search) -> dsl.Search:
+    def filter(self, search: RecordsSearchV2) -> RecordsSearchV2:
         """Apply a post filter on the search."""
         if not self._filters:
             return search
@@ -94,9 +97,9 @@ class GroupedFacetsParam(FacetsParam):
         for f in filters[1:]:
             _filter &= f
 
-        return search.filter(_filter).post_filter(_filter)
+        return search.filter(_filter).post_filter(_filter)  # type: ignore[no-any-return]
 
-    def apply(self, identity: Identity, search: dsl.Search, params: dict) -> dsl.Search:
+    def apply(self, identity: Identity, search: RecordsSearchV2, params: dict) -> RecordsSearchV2:
         """Evaluate the facets on the search."""
         facets_values = params.pop("facets", {})
         for name, values in facets_values.items():
@@ -108,14 +111,14 @@ class GroupedFacetsParam(FacetsParam):
         self_copy._facets = user_facets  # noqa: SLF001 - TODO: this looks like a hack
         search = search.response_class(FacetsResponse.create_response_cls(self_copy))
 
-        search = self.aggregate_with_user_facets(search, user_facets)
+        search = self.aggregate_with_user_facets(search, user_facets)  # type: ignore[no-any-return]
         search = self.filter(search)
 
         params.update(self.selected_values)
 
         return search
 
-    def _filter_user_facets(self, identity: Identity) -> dict[str, dsl.Facet]:
+    def _filter_user_facets(self, identity: Identity) -> dict[str, TermsFacet]:
         """Filter user facets based on the identity."""
         user_facets = {}
         if not self.facet_groups:

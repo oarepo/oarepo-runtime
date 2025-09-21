@@ -26,6 +26,7 @@ from invenio_records_resources.services.records.results import (
 
 if TYPE_CHECKING:
     from invenio_access.permissions import Identity
+    from invenio_drafts_resources.services.records.service import RecordService
     from invenio_records.api import RecordBase
 
 log = logging.getLogger(__name__)
@@ -59,6 +60,8 @@ class RecordItem(BaseRecordItem):
 
     components: tuple[type[ResultComponent], ...] = ()
     """A list of components that can modify the serialized record data."""
+
+    _service: RecordService  # override to draft service # type: ignore[recordIncompatibleVariableOverride]
 
     @property
     def data(self) -> Any:
@@ -115,6 +118,7 @@ class RecordItem(BaseRecordItem):
 class RecordList(BaseRecordList):
     """List of records result."""
 
+    _service: RecordService  # override to draft service # type: ignore[recordIncompatibleVariableOverride]
     components: tuple[type[ResultComponent], ...] = ()
 
     @property
@@ -161,8 +165,10 @@ class RecordList(BaseRecordList):
                         "record": record,
                     },
                 )
-                if hasattr(self._service.config, "links_search_item"):
-                    links_tpl = self._service.config.search_item_links_template(self._service.config.links_search_item)
+                links_search_item = getattr(self._service.config, "links_search_item", None)
+                links_search_item_tpl = getattr(self._service.config, "search_item_links_template", None)
+                if links_search_item and links_search_item_tpl:
+                    links_tpl = links_search_item_tpl(links_search_item)
                 else:
                     links_tpl = self._links_item_tpl
 

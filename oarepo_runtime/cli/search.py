@@ -22,7 +22,7 @@ from invenio_search.cli import init as original_init
 @click.option("--force", is_flag=True, default=False)
 @with_appcontext
 @search_version_check
-@click.pass_context
+@click.pass_context  # type: ignore  # noqa: PGH003
 def init(ctx: click.Context, force: bool) -> None:
     """Initialize registered aliases and mappings.
 

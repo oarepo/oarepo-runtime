@@ -171,7 +171,7 @@ class ComponentData:
                 item = obj_or_import_string(item)  # noqa PLW2901
 
             if inspect.isclass(item):
-                if not issubclass(item, ServiceComponent):
+                if not issubclass(item, ServiceComponent):  # type: ignore[]
                     raise TypeError(f"Item {item} is not a ServiceComponent subclass")
                 ret.add(item)
             else:
