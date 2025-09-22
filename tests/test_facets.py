@@ -13,6 +13,7 @@ from __future__ import annotations
 import types
 from typing import TYPE_CHECKING, Any
 
+import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import system_user_id
 from invenio_records_resources.services.records.facets import TermsFacet
@@ -99,6 +100,25 @@ def test_facet_builder() -> None:
             "label": "metadata/jej/c.label",
         }
     ]
+    facets = get_basic_facet(
+        {},
+        {
+            "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
+            "field": "vlastni.cesta",
+            "label": "jeeej",
+        },
+        "metadata.jej.c.keyword",
+        [],
+        "invenio_records_resources.services.records.facets.TermsFacet",
+    )
+    assert "metadata.jej.c" in facets
+    assert facets["metadata.jej.c"] == [
+        {
+            "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
+            "field": "vlastni.cesta",
+            "label": "jeeej",
+        }
+    ]
 
 
 def test_build_facet():
@@ -131,6 +151,31 @@ def test_build_facet():
     assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
     assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
     assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
+    with pytest.raises(ValueError, match=r"Facet class can not be None\."):
+        build_facet(
+            [
+                {
+                    "facet": None,
+                    "label": "jej/c.label",
+                    "field": "jej.c",
+                }
+            ]
+        )
+
+    with pytest.raises(ValueError, match=r"Facet class can not be None\."):
+        build_facet(
+            [
+                {
+                    "facet": None,
+                    "path": "metadata.additionalTitles.title",
+                },
+                {
+                    "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                    "label": "jej/c.label",
+                    "field": "jej.c",
+                },
+            ]
+        )
 
 
 def test_identity_facets_without_groups_returns_all(service: RecordService, identity_simple: Identity) -> None:
