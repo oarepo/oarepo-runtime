@@ -148,6 +148,9 @@ def test_build_facet():
         ]
     )
     assert isinstance(facet, NestedLabeledFacet)
+    facet.add_filter([])
+    labelled_values = facet.get_labelled_values({}, [])
+    assert "kchchch" in labelled_values.values()
     assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
     assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
     assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
