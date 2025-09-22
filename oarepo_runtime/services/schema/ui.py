@@ -28,6 +28,11 @@ from marshmallow_utils.fields.babel import BabelFormatField
 
 if TYPE_CHECKING:
     from babel.core import Locale
+    from marshmallow_utils.fields.babel import BabelFormatField as MixinBase
+else:
+
+    class MixinBase:
+        """Localize date mixin."""
 
 
 def current_default_locale() -> Any:
@@ -38,7 +43,7 @@ def current_default_locale() -> Any:
     return "en"
 
 
-class LocalizedMixin:
+class LocalizedMixin(MixinBase):
     """Localize date mixin."""
 
     def __init__(self, *args: Any, locale: Locale | None = None, **kwargs: Any):
@@ -46,12 +51,12 @@ class LocalizedMixin:
         super().__init__(*args, locale=locale, **kwargs)  # type: ignore[call-arg]
 
     @property
-    def locale(self) -> Locale:
+    def locale(self) -> Locale | str:
         """Get locale."""
-        if self._locale:  # type: ignore[attr-defined]
-            return self._locale  # type: ignore[attr-defined]
-        if self.parent and "locale" in self.context:  # type: ignore[attr-defined]
-            return self.context["locale"]  # type: ignore[attr-defined]
+        if self._locale:
+            return self._locale
+        if self.context and self.parent and "locale" in self.context:
+            return self.context["locale"]
         return current_default_locale()
 
     def format_value(self, value: str) -> Any:
