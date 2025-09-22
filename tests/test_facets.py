@@ -11,7 +11,9 @@
 from __future__ import annotations
 
 import types
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
+from unittest.mock import Mock
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -158,6 +160,7 @@ def test_build_facet():
     }
     labelled_values = facet.get_labelled_values({}, [])
     assert "kchchch" in labelled_values.values()
+
     assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
     assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
     assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
@@ -186,6 +189,19 @@ def test_build_facet():
                 },
             ]
         )
+
+
+def test_nested_labeled_facet():
+    inner = Mock()
+    inner.get_values.return_value = {"kchchch": "value"}
+
+    facet = NestedLabeledFacet(path="metadata.additionalTitles.title", nested_facet=inner, label="kchchch")
+    data = SimpleNamespace(inner={"some": "payload"})
+    filter_values = ["x", "y"]
+
+    result = facet.get_values(data, filter_values)
+    inner.get_values.assert_called_once_with({"some": "payload"}, filter_values)
+    assert result == {"kchchch": "value"}
 
 
 def test_identity_facets_without_groups_returns_all(service: RecordService, identity_simple: Identity) -> None:

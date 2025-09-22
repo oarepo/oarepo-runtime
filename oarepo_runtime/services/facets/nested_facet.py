@@ -33,7 +33,7 @@ class NestedLabeledFacet(dsl.Facet):
             },
         )
 
-    def get_values(self, data: dict, filter_values: list) -> Any:
+    def get_values(self, data: Any, filter_values: list) -> Any:
         """Extract facet values from the inner facet."""
         return self._inner.get_values(data.inner, filter_values)  # type: ignore[attr-defined]
 
