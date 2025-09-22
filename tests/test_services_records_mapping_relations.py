@@ -18,7 +18,9 @@ from invenio_records_resources.services.records import (
     RecordServiceConfig,
 )
 
-from oarepo_runtime.services.records.custom_fields import update_all_records_mappings_relation_fields
+from oarepo_runtime.services.records.custom_fields import (
+    update_all_records_mappings_relation_fields,
+)
 
 
 def test_update_all_records_mappings_relations_fields_with_record_services():
@@ -45,7 +47,10 @@ def test_update_all_records_mappings_relations_fields_with_record_services():
     }
 
     with (
-        patch("oarepo_runtime.services.records.custom_fields.current_runtime", mock_runtime),
+        patch(
+            "oarepo_runtime.services.records.custom_fields.current_runtime",
+            mock_runtime,
+        ),
         patch(
             "oarepo_runtime.services.records.custom_fields.update_record_system_fields_mapping_relation_field"
         ) as mock_update,
@@ -79,7 +84,10 @@ def test_update_all_records_mappings_no_record_cls():
     mock_runtime.services = {"service1": mock_record_service}
 
     with (
-        patch("oarepo_runtime.services.records.custom_fields.current_runtime", mock_runtime),
+        patch(
+            "oarepo_runtime.services.records.custom_fields.current_runtime",
+            mock_runtime,
+        ),
         patch(
             "oarepo_runtime.services.records.custom_fields.update_record_system_fields_mapping_relation_field"
         ) as mock_update,
@@ -96,7 +104,10 @@ def test_update_all_records_mappings_no_services():
     mock_runtime.services = {}
 
     with (
-        patch("oarepo_runtime.services.records.custom_fields.current_runtime", mock_runtime),
+        patch(
+            "oarepo_runtime.services.records.custom_fields.current_runtime",
+            mock_runtime,
+        ),
         patch(
             "oarepo_runtime.services.records.custom_fields.update_record_system_fields_mapping_relation_field"
         ) as mock_update,
@@ -132,7 +143,10 @@ def test_update_all_records_mappings_mixed_services():
     }
 
     with (
-        patch("oarepo_runtime.services.records.custom_fields.current_runtime", mock_runtime),
+        patch(
+            "oarepo_runtime.services.records.custom_fields.current_runtime",
+            mock_runtime,
+        ),
         patch(
             "oarepo_runtime.services.records.custom_fields.update_record_system_fields_mapping_relation_field"
         ) as mock_update,
@@ -173,7 +187,10 @@ def test_update_all_records_mappings_service_config_variations():
     }
 
     with (
-        patch("oarepo_runtime.services.records.custom_fields.current_runtime", mock_runtime),
+        patch(
+            "oarepo_runtime.services.records.custom_fields.current_runtime",
+            mock_runtime,
+        ),
         patch(
             "oarepo_runtime.services.records.custom_fields.update_record_system_fields_mapping_relation_field"
         ) as mock_update,

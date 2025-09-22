@@ -18,7 +18,9 @@ from invenio_access.permissions import system_user_id
 from invenio_records_resources.services.records.facets import TermsFacet
 from invenio_search.engine import dsl
 
+from oarepo_runtime.services.facets.nested_facet import NestedLabeledFacet
 from oarepo_runtime.services.facets.params import GroupedFacetsParam
+from oarepo_runtime.services.facets.utils import build_facet, get_basic_facet
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -64,16 +66,71 @@ def test_identity_facet_groups_from_role_needs() -> None:
 
 
 def test_facet_groups_property_present_and_absent() -> None:
-    f = {"publication_status": TermsFacet(field="publication_status")}
+    facet_obj = {"publication_status": TermsFacet(field="publication_status")}
     groups = {
-        "default": {"publication_status": TermsFacet(field="publication_status")},
-        "admin": {"publication_status": TermsFacet(field="publication_status")},
+        "default": ["publication_status"],
+        "admin": ["publication_status"],
     }
-    params_with = GroupedFacetsParam(_dummy_config(f, groups))  # type: ignore[arg-type]
-    assert params_with.facet_groups == groups
+    params_with = GroupedFacetsParam(_dummy_config(facet_obj, groups))
+    result = params_with.facet_groups
 
-    params_without = GroupedFacetsParam(_dummy_config(f))  # type: ignore[arg-type]
+    # type: ignore[arg-type]
+    assert set(result.keys()) == {"admin", "default"}
+    assert set(result["admin"].keys()) == {"publication_status"}
+    assert set(result["default"].keys()) == {"publication_status"}
+
+    assert result["admin"]["publication_status"] is facet_obj["publication_status"]
+    assert result["default"]["publication_status"] is facet_obj["publication_status"]
+
+    params_without = GroupedFacetsParam(_dummy_config(facet_obj))  # type: ignore[arg-type]
     assert params_without.facet_groups is None
+
+
+def test_facet_builder() -> None:
+    facets = get_basic_facet(
+        {}, None, "metadata.jej.c.keyword", [], "invenio_records_resources.services.records.facets.TermsFacet"
+    )
+
+    assert "metadata.jej.c" in facets
+    assert facets["metadata.jej.c"] == [
+        {
+            "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+            "field": "metadata.jej.c.keyword",
+            "label": "metadata/jej/c.label",
+        }
+    ]
+
+
+def test_build_facet():
+    facet = build_facet(
+        [
+            {
+                "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                "label": "jej/c.label",
+                "field": "jej.c",
+            }
+        ]
+    )
+
+    assert facet._params == {"field": "jej.c"}  # noqa: SLF001
+    assert str(facet._label) == "jej/c.label"  # noqa: SLF001
+    facet = build_facet(
+        [
+            {
+                "facet": "oarepo_runtime.services.facets.nested_facet.NestedLabeledFacet",
+                "path": "metadata.additionalTitles.title",
+            },
+            {
+                "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                "field": "metadata.additionalTitles.title.lang",
+                "label": "kchchch",
+            },
+        ]
+    )
+    assert isinstance(facet, NestedLabeledFacet)
+    assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
+    assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
+    assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
 
 
 def test_identity_facets_without_groups_returns_all(service: RecordService, identity_simple: Identity) -> None:
