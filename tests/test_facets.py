@@ -148,7 +148,14 @@ def test_build_facet():
         ]
     )
     assert isinstance(facet, NestedLabeledFacet)
-    facet.add_filter([])
+    facet_filter = facet.add_filter([])
+    assert facet_filter is None
+    facet_filter = facet.add_filter(["jej"])
+    assert facet_filter.to_dict() == {
+        "path": "metadata.additionalTitles.title",
+        "query": {"terms": {"metadata.additionalTitles.title.lang": ["jej"]}},
+        "type": "nested",
+    }
     labelled_values = facet.get_labelled_values({}, [])
     assert "kchchch" in labelled_values.values()
     assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
