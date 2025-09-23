@@ -14,14 +14,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from invenio_records_resources.services.records.facets.facets import LabelledFacetMixin
 from invenio_search.engine import dsl
 
 from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
     LocalizedEDTF,
-    LocalizedEDTFInterval,
     LocalizedTime,
 )
 
@@ -71,26 +69,6 @@ class AutoDateHistogramFacet(dsl.DateHistogramFacet):
         super(dsl.DateHistogramFacet, self).__init__(**kwargs)
 
 
-class EDTFIntervalFacet(LabelledFacetMixin, AutoDateHistogramFacet):  # type: ignore[override, reportIncompatibleMethodOverride]
-    """Extended date time interval format facet."""
-
-    # auto_date_histogram
-    def __init__(self, *args: Any, **kwargs: Any):
-        """Initialize labeled extended date time interval facet."""
-        super().__init__(*args, **kwargs)
-
-    def localized_value_labels(self, values: list, locale: Any) -> dict:
-        """Add date values as localize label."""
-        return {val: LocalizedEDTFInterval(locale=locale).format_value(convert_to_edtf(val)) for val in values}
-
-
-class DateIntervalFacet(EDTFIntervalFacet):
-    """Date interval facet."""
-
-
 def convert_to_edtf(val: str) -> str:
     """Convert date to EDTF format."""
-    if "/" in val:
-        # interval
-        return "/".join(convert_to_edtf(x) for x in val.split("/"))
     return re.sub(r"T.*", "", val)  # replace T12:00:00.000Z with nothing
