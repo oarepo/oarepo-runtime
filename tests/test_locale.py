@@ -17,6 +17,7 @@ from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
     LocalizedTime,
+    current_default_locale,
 )
 
 
@@ -63,3 +64,13 @@ def test_localized_date_timezone(app):
         "tm": "12:21:00 PM",
         "dtm": "Jun 29, 2020, 2:21:00 PM",
     }
+
+
+def test_default_locale(app):
+    with app.app_context():
+        locale = current_default_locale()
+        assert locale == "en"
+
+        app.config["BABEL_DEFAULT_LOCALE"] = "cs"
+        locale = current_default_locale()
+        assert locale == "cs"

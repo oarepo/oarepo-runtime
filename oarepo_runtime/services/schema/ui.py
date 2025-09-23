@@ -37,10 +37,7 @@ else:
 
 def current_default_locale() -> Any:
     """Get the Flask app's default locale."""
-    if current_app:
-        return current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
-    # Use english by default if not specified
-    return "en"
+    return current_app.config.get("BABEL_DEFAULT_LOCALE", "en")
 
 
 class LocalizedMixin(MixinBase):

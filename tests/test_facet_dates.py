@@ -27,6 +27,9 @@ def test_date_facet(app):
         loc_date = facet.localized_value_labels(["1996-10-12"], "cs")
         assert loc_date == {"1996-10-12": "12. 10. 1996"}
 
+        loc_date = facet.localized_value_labels(["x"], "cs")
+        assert loc_date == {"x": "«Error formatting value 'x'»"}
+
     facet = build_facet(
         [
             {
