@@ -13,7 +13,7 @@ from __future__ import annotations
 from oarepo_runtime.services.facets.utils import build_facet
 
 
-def test_build_facet(app):
+def test_date_facet(app):
     facet = build_facet(
         [
             {
@@ -75,4 +75,4 @@ def test_build_facet(app):
             }
         ]
     )
-    assert facet["agg_type"] == "auto_date_histogram"
+    assert facet.agg_type == "auto_date_histogram"
