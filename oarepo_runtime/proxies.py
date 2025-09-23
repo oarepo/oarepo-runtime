@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 from flask import current_app
@@ -19,6 +20,6 @@ from werkzeug.local import LocalProxy
 if TYPE_CHECKING:
     from oarepo_runtime.ext import OARepoRuntime
 
-    current_runtime: OARepoRuntime
+current_runtime: LocalProxy[OARepoRuntime] = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
 
-current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
+current_timezone: ContextVar = ContextVar("timezone")  # idk how or exactly why to use the LocalProxy here

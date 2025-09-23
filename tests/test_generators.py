@@ -25,7 +25,11 @@ from invenio_records_permissions.generators import (
 from invenio_records_permissions.generators import Generator as InvenioGenerator
 from invenio_search.engine import dsl
 
-from oarepo_runtime.services.generators import AggregateGenerator, ConditionalGenerator, Generator
+from oarepo_runtime.services.generators import (
+    AggregateGenerator,
+    ConditionalGenerator,
+    Generator,
+)
 
 
 def test_generator_delegates_methods(monkeypatch):
@@ -323,7 +327,11 @@ def test_aggregate_generator():
             return self._gen_list
 
     # Create mock generators with different needs/excludes/queries
-    gen1 = MockGenerator([Need("system_role", "admin")], [Need("system_role", "banned")], dsl.Q("term", field="value1"))
+    gen1 = MockGenerator(
+        [Need("system_role", "admin")],
+        [Need("system_role", "banned")],
+        dsl.Q("term", field="value1"),
+    )
     gen2 = MockGenerator(
         [Need("system_role", "editor"), Need("system_role", "reviewer")],
         [Need("system_role", "guest")],
@@ -334,11 +342,18 @@ def test_aggregate_generator():
 
     # Test needs aggregation
     needs = list(aggregate.needs())
-    assert set(needs) == {Need("system_role", "admin"), Need("system_role", "editor"), Need("system_role", "reviewer")}
+    assert set(needs) == {
+        Need("system_role", "admin"),
+        Need("system_role", "editor"),
+        Need("system_role", "reviewer"),
+    }
 
     # Test excludes aggregation
     excludes = list(aggregate.excludes())
-    assert set(excludes) == {Need("system_role", "banned"), Need("system_role", "guest")}
+    assert set(excludes) == {
+        Need("system_role", "banned"),
+        Need("system_role", "guest"),
+    }
 
     # Test query_filter uses _make_query to combine queries
     query = aggregate.query_filter()

@@ -11,14 +11,19 @@
 from __future__ import annotations
 
 import types
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
+from unittest.mock import Mock
 
+import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import system_user_id
 from invenio_records_resources.services.records.facets import TermsFacet
 from invenio_search.engine import dsl
 
+from oarepo_runtime.services.facets.nested_facet import NestedLabeledFacet
 from oarepo_runtime.services.facets.params import GroupedFacetsParam
+from oarepo_runtime.services.facets.utils import build_facet, get_basic_facet
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -64,16 +69,156 @@ def test_identity_facet_groups_from_role_needs() -> None:
 
 
 def test_facet_groups_property_present_and_absent() -> None:
-    f = {"publication_status": TermsFacet(field="publication_status")}
+    facet_obj = {"publication_status": TermsFacet(field="publication_status")}
     groups = {
-        "default": {"publication_status": TermsFacet(field="publication_status")},
-        "admin": {"publication_status": TermsFacet(field="publication_status")},
+        "default": ["publication_status"],
+        "admin": ["publication_status"],
     }
-    params_with = GroupedFacetsParam(_dummy_config(f, groups))  # type: ignore[arg-type]
-    assert params_with.facet_groups == groups
+    params_with = GroupedFacetsParam(_dummy_config(facet_obj, groups))
+    result = params_with.facet_groups
 
-    params_without = GroupedFacetsParam(_dummy_config(f))  # type: ignore[arg-type]
+    # type: ignore[arg-type]
+    assert set(result.keys()) == {"admin", "default"}
+    assert set(result["admin"].keys()) == {"publication_status"}
+    assert set(result["default"].keys()) == {"publication_status"}
+
+    assert result["admin"]["publication_status"] is facet_obj["publication_status"]
+    assert result["default"]["publication_status"] is facet_obj["publication_status"]
+
+    params_without = GroupedFacetsParam(_dummy_config(facet_obj))  # type: ignore[arg-type]
     assert params_without.facet_groups is None
+
+
+def test_facet_builder() -> None:
+    facets = get_basic_facet(
+        {}, None, "metadata.jej.c.keyword", [], "invenio_records_resources.services.records.facets.TermsFacet"
+    )
+
+    assert "metadata.jej.c" in facets
+    assert facets["metadata.jej.c"] == [
+        {
+            "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+            "field": "metadata.jej.c.keyword",
+            "label": "metadata/jej/c.label",
+        }
+    ]
+    facets = get_basic_facet(
+        {},
+        {
+            "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
+            "field": "vlastni.cesta",
+            "label": "jeeej",
+        },
+        "metadata.jej.c.keyword",
+        [],
+        "invenio_records_resources.services.records.facets.TermsFacet",
+    )
+    assert "metadata.jej.c" in facets
+    assert facets["metadata.jej.c"] == [
+        {
+            "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
+            "field": "vlastni.cesta",
+            "label": "jeeej",
+        }
+    ]
+
+
+def test_labelled_facet():
+    facet = build_facet(
+        [
+            {
+                "facet": "oarepo_runtime.services.facets.base.LabelledValuesTermsFacet",
+                "path": "metadata.additionalTitles.title",
+                "label": "kchchch",
+            },
+        ]
+    )
+    value_labels = facet.value_labels(["1970-01-01"])
+    assert value_labels == {"1970-01-01": "1970-01-01"}
+
+    value_labels = facet.localized_value_labels(["1970-01-01"], "en")
+    assert value_labels == {"1970-01-01": "1970-01-01"}
+
+
+def test_build_facet():
+    facet = build_facet(
+        [
+            {
+                "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                "label": "jej/c.label",
+                "field": "jej.c",
+            }
+        ]
+    )
+
+    assert facet._params == {"field": "jej.c"}  # noqa: SLF001
+    assert str(facet._label) == "jej/c.label"  # noqa: SLF001
+    facet = build_facet(
+        [
+            {
+                "facet": "oarepo_runtime.services.facets.nested_facet.NestedLabeledFacet",
+                "path": "metadata.additionalTitles.title",
+            },
+            {
+                "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                "field": "metadata.additionalTitles.title.lang",
+                "label": "kchchch",
+            },
+        ]
+    )
+    assert isinstance(facet, NestedLabeledFacet)
+    facet_filter = facet.add_filter([])
+    assert facet_filter is None
+    facet_filter = facet.add_filter(["jej"])
+    assert facet_filter.to_dict() == {
+        "path": "metadata.additionalTitles.title",
+        "query": {"terms": {"metadata.additionalTitles.title.lang": ["jej"]}},
+        "type": "nested",
+    }
+    labelled_values = facet.get_labelled_values({}, [])
+    assert "kchchch" in labelled_values.values()
+
+    assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
+    assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
+    assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
+    with pytest.raises(ValueError, match=r"Facet class can not be None\."):
+        build_facet(
+            [
+                {
+                    "facet": None,
+                    "label": "jej/c.label",
+                    "field": "jej.c",
+                }
+            ]
+        )
+
+    with pytest.raises(ValueError, match=r"Facet class can not be None\."):
+        build_facet(
+            [
+                {
+                    "facet": None,
+                    "path": "metadata.additionalTitles.title",
+                },
+                {
+                    "facet": "invenio_records_resources.services.records.facets.TermsFacet",
+                    "label": "jej/c.label",
+                    "field": "jej.c",
+                },
+            ]
+        )
+
+
+def test_nested_labeled_facet():
+    inner = Mock()
+    inner.get_values.return_value = {"kchchch": "value"}
+
+    facet = NestedLabeledFacet(path="metadata.additionalTitles.title", nested_facet=inner, label="kchchch")
+    data = SimpleNamespace(inner={"some": "payload"})
+    filter_values = ["x", "y"]
+
+    result = facet.get_values(data, filter_values)
+    inner.get_values.assert_called_once_with({"some": "payload"}, filter_values)
+    assert result == {"kchchch": "value"}
 
 
 def test_identity_facets_without_groups_returns_all(service: RecordService, identity_simple: Identity) -> None:

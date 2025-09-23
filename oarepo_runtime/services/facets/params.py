@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flask import current_app
 from invenio_access.permissions import system_user_id
@@ -54,11 +54,14 @@ class GroupedFacetsParam(FacetsParam):
         return []
 
     @property
-    def facet_groups(self) -> dict[str, dict[str, dsl.Facet]] | None:
-        """Return the facet groups defined in the service config."""
-        if hasattr(self.config, "facet_groups"):
-            return self.config.facet_groups  # type: ignore[no-any-return]
-        return None
+    def facet_groups(self) -> dict[str, Any] | None:
+        """Return facet groups."""
+        groups = getattr(self.config, "facet_groups", None)
+        if groups is None:
+            return None
+
+        facets = getattr(self.config, "facets", {})
+        return {group: {name: facets[name] for name in names} for group, names in groups.items()}
 
     def identity_facets(self, identity: Identity) -> dict[str, dsl.Facet]:
         """Return the facets for the given identity."""
