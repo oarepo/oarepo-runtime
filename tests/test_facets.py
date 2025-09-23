@@ -123,6 +123,23 @@ def test_facet_builder() -> None:
     ]
 
 
+def test_labelled_facet():
+    facet = build_facet(
+        [
+            {
+                "facet": "oarepo_runtime.services.facets.base.LabelledValuesTermsFacet",
+                "path": "metadata.additionalTitles.title",
+                "label": "kchchch",
+            },
+        ]
+    )
+    value_labels = facet.value_labels(["1970-01-01"])
+    assert value_labels == {"1970-01-01": "1970-01-01"}
+
+    value_labels = facet.localized_value_labels(["1970-01-01"], "en")
+    assert value_labels == {"1970-01-01": "1970-01-01"}
+
+
 def test_build_facet():
     facet = build_facet(
         [
