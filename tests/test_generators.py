@@ -358,3 +358,8 @@ def test_aggregate_generator():
     # Test query_filter uses _make_query to combine queries
     query = aggregate.query_filter()
     assert query == dsl.Q("term", field="value1") | dsl.Q("term", field="value2")
+
+    aggregate = TestAggregateGenerator([])
+    assert aggregate.needs() == []
+    assert aggregate.excludes() == []
+    assert aggregate.query_filter() == dsl.Q("match_none")

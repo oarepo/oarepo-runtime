@@ -21,10 +21,10 @@ from invenio_records_permissions.generators import Generator as InvenioGenerator
 from invenio_search.engine import dsl
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from flask_principal import Need
-    from invenio_records_resources.records.api import Record
+    from invenio_records.api import Record
 
 
 class Generator(InvenioGenerator):
@@ -34,16 +34,16 @@ class Generator(InvenioGenerator):
     """
 
     @override
-    def needs(self, **kwargs: Any) -> Sequence[Need]:  # type: ignore[reportIncompatibleMethodOverride]
-        return super().needs(**kwargs)  # type: ignore[no-any-return]
+    def needs(self, **kwargs: Any) -> Collection[Need]:
+        return super().needs(**kwargs)  # type: ignore[no-any-return] # mypy bug
 
     @override
-    def excludes(self, **kwargs: Any) -> Sequence[Need]:  # type: ignore[reportIncompatibleMethodOverride]
-        return super().excludes(**kwargs)  # type: ignore[no-any-return]
+    def excludes(self, **kwargs: Any) -> Collection[Need]:
+        return super().excludes(**kwargs)  # type: ignore[no-any-return] # mypy bug
 
     @override
-    def query_filter(self, **kwargs: Any) -> dsl.query.Query:  # type: ignore[reportIncompatibleMethodOverride]
-        return super().query_filter(**kwargs)  # type: ignore[no-any-return]
+    def query_filter(self, **kwargs: Any) -> dsl.query.Query:
+        return super().query_filter(**kwargs)  # type: ignore[no-any-return] # mypy bug
 
 
 class ConditionalGenerator(InvenioConditionalGenerator, ABC):
@@ -61,24 +61,24 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
         """Condition to choose generators set."""
         raise NotImplementedError  # pragma: no cover
 
-    def _generators(self, record: Record, **kwargs: Any) -> Sequence[InvenioGenerator]:
+    def _generators(self, record: Record | None = None, **kwargs: Any) -> Sequence[InvenioGenerator]:
         """Get the "then" or "else" generators."""
-        return super()._generators(record=record, **kwargs)  # type: ignore[no-any-return]
+        return super()._generators(record=record, **kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
     @override
-    def needs(self, **kwargs: Any) -> Sequence[Need]:  # type: ignore[override]
-        return super().needs(**kwargs)  # type: ignore[no-any-return]
+    def needs(self, record: Record | None = None, **kwargs: Any) -> Collection[Need]:
+        return super().needs(**kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
     @override
-    def excludes(self, **kwargs: Any) -> Sequence[Need]:  # type: ignore[override]
-        return super().excludes(**kwargs)  # type: ignore[no-any-return]
+    def excludes(self, record: Record | None = None, **kwargs: Any) -> Collection[Need]:
+        return super().excludes(**kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
     @abstractmethod
     def _query_instate(self, **context: Any) -> dsl.query.Query:
         raise NotImplementedError  # pragma: no cover
 
     @override
-    def query_filter(self, **context: Any) -> dsl.query.Query:  # type: ignore[reportIncompatibleMethodOverride]
+    def query_filter(self, **context: Any) -> dsl.query.Query:
         """Apply then or else filter."""
         then_query = super()._make_query(self.then_, **context)
         else_query = super()._make_query(self.else_, **context)
@@ -107,13 +107,13 @@ class AggregateGenerator(Generator, ABC):
         raise NotImplementedError  # pragma: no cover
 
     @override
-    def needs(self, **context: Any) -> Sequence[Need]:
+    def needs(self, **context: Any) -> Collection[Need]:
         """Get the needs from the policy."""
         needs = [generator.needs(**context) for generator in self._generators(**context)]
         return list(chain.from_iterable(needs))
 
     @override
-    def excludes(self, **context: Any) -> Sequence[Need]:
+    def excludes(self, **context: Any) -> Collection[Need]:
         """Get the excludes from the policy."""
         excludes = [generator.excludes(**context) for generator in self._generators(**context)]
         return list(chain.from_iterable(excludes))
@@ -121,4 +121,9 @@ class AggregateGenerator(Generator, ABC):
     @override
     def query_filter(self, **context: Any) -> dsl.query.Query:
         """Search filters."""
-        return ConditionalGenerator._make_query(self._generators(**context), **context)  # noqa SLF001 # type: ignore[reportReturnType]
+        ret = ConditionalGenerator._make_query(  # noqa: SLF001
+            self._generators(**context), **context
+        )
+        if ret is None:
+            return dsl.Q("match_none")
+        return ret

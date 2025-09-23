@@ -26,8 +26,9 @@ from invenio_records_resources.services.records.results import (
 
 if TYPE_CHECKING:
     from invenio_access.permissions import Identity
-    from invenio_drafts_resources.services.records.service import RecordService
+    from invenio_drafts_resources.records.api import Draft
     from invenio_records.api import RecordBase
+
 
 log = logging.getLogger(__name__)
 
@@ -60,8 +61,6 @@ class RecordItem(BaseRecordItem):
 
     components: tuple[type[ResultComponent], ...] = ()
     """A list of components that can modify the serialized record data."""
-
-    _service: RecordService  # override to draft service # type: ignore[recordIncompatibleVariableOverride]
 
     @property
     def data(self) -> Any:
@@ -118,7 +117,6 @@ class RecordItem(BaseRecordItem):
 class RecordList(BaseRecordList):
     """List of records result."""
 
-    _service: RecordService  # override to draft service # type: ignore[recordIncompatibleVariableOverride]
     components: tuple[type[ResultComponent], ...] = ()
 
     @property
@@ -154,7 +152,10 @@ class RecordList(BaseRecordList):
                 # TODO: check if this logic is correct
                 versions = hit_dict.get("versions", {})
                 if versions.get("is_latest_draft") and not versions.get("is_latest"):
-                    record = self._service.draft_cls.loads(hit_dict)
+                    draft_class: type[Draft] | None = getattr(self._service, "draft_cls", None)
+                    if draft_class is None:
+                        raise RuntimeError("Draft class is not defined in the service")  # pragma: no cover
+                    record = draft_class.loads(hit_dict)
                 else:
                     record = self._service.record_cls.loads(hit_dict)
 

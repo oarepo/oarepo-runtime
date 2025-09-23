@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from flask_resources.responses import ResponseHandler
     from flask_resources.serializers import BaseSerializer
     from invenio_drafts_resources.records.api import Draft
+    from invenio_records.systemfields import ConstantField
     from invenio_records_resources.records.api import Record
     from invenio_records_resources.records.systemfields.pid import (
         ModelPIDField,
@@ -220,7 +221,7 @@ class Model[
         if isinstance(self._service, str):
             return cast(
                 "S",
-                current_service_registry.get(self._service),  # type: ignore[attr-defined]
+                current_service_registry.get(self._service),
             )
         return self._service
 
@@ -281,7 +282,10 @@ class Model[
     @property
     def record_json_schema(self) -> str:
         """Get the json schema of the record."""
-        return self.record_cls.schema.value  # type: ignore[attr-defined, no-any-return]
+        schema: ConstantField[Record, str] | None = getattr(self.record_cls, "schema", None)
+        if schema is None:
+            raise KeyError(f"Record class {self.record_cls} does not have a schema field.")  # pragma: no cover
+        return schema.value  # type: ignore[no-any-return]
 
     @property
     def draft_pid_type(self) -> str | None:

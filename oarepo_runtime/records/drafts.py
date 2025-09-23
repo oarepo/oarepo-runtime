@@ -43,9 +43,11 @@ def get_draft(record: RecordBase) -> RecordBase | None:
 
     try:
         parent = getattr(record, "parent", None)
-        draft_cls: Record | None = getattr(record_service.config, "draft_cls", None)  # type: ignore[assignment]
+        if parent is None:
+            return None  # pragma: no cover  # just a safety check, parent should be there
+        draft_cls: Record | None = getattr(record_service.config, "draft_cls", None)
         if draft_cls is None:
-            return None
+            return None  # pragma: no cover  # just a safety check, draft_cls should be there
 
         return next(draft_cls.get_records_by_parent(parent, with_deleted=False))
     except StopIteration:
