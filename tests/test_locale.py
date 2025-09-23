@@ -16,6 +16,7 @@ from oarepo_runtime.proxies import current_timezone
 from oarepo_runtime.services.schema.ui import (
     LocalizedDate,
     LocalizedDateTime,
+    LocalizedMixin,
     LocalizedTime,
     current_default_locale,
 )
@@ -74,3 +75,13 @@ def test_default_locale(app):
         app.config["BABEL_DEFAULT_LOCALE"] = "cs"
         locale = current_default_locale()
         assert locale == "cs"
+
+
+def test_localized_mixin_uses_context_locale(monkeypatch, app):
+    with app.app_context():
+        Dummy = type("Dummy", (LocalizedMixin,), {"__init__": lambda self: None})  # noqa ARG005
+        obj = Dummy()
+        obj._locale = None  # noqa SLF001
+        obj.context = {}
+        obj.parent = object()
+        assert obj.locale in ["en", "cs"]
