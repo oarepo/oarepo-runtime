@@ -13,7 +13,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from invenio_records_resources.records.api import RecordBase
+    from invenio_drafts_resources.records.api import Record
+    from invenio_records.api import Record as RecordBase
 
 from oarepo_runtime.proxies import current_runtime
 
@@ -42,7 +43,13 @@ def get_draft(record: RecordBase) -> RecordBase | None:
 
     try:
         parent = getattr(record, "parent", None)
-        return next(record_service.config.draft_cls.get_records_by_parent(parent, with_deleted=False))
+        if parent is None:
+            return None  # pragma: no cover  # just a safety check, parent should be there
+        draft_cls: Record | None = getattr(record_service.config, "draft_cls", None)
+        if draft_cls is None:
+            return None  # pragma: no cover  # just a safety check, draft_cls should be there
+
+        return next(draft_cls.get_records_by_parent(parent, with_deleted=False))
     except StopIteration:
         # no draft found
         return None

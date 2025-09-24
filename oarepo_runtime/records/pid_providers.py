@@ -28,7 +28,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
     unpid_default_status = PIDStatus.REGISTERED
 
     @classmethod
-    def create(  # type: ignore[override]
+    def create(
         cls,
         object_type: str | None = None,
         object_uuid: str | None = None,

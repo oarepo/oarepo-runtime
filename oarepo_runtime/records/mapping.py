@@ -30,7 +30,7 @@ def prefixed_index(index: dsl.Index) -> dsl.Index:
     """Return a prefixed index for the given index."""
     return dsl.Index(
         build_alias_name(
-            index._name,  # type: ignore[attr-defined]  # noqa: SLF001
+            index._name,  # noqa: SLF001
         ),
         using=current_search_client,  # pyright: ignore[reportArgumentType]
     )

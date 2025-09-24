@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Any, cast
 from flask import current_app
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
-from invenio_records_resources.records.api import Record, RecordBase
 
 from . import config
 
@@ -28,6 +28,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from flask import Flask
     from invenio_drafts_resources.records.api import Draft
+    from invenio_records_resources.records.api import Record
+    from invenio_records_resources.records.systemfields import IndexField
     from invenio_records_resources.services.base.service import Service
     from invenio_records_resources.services.files.service import FileService
     from invenio_records_resources.services.records import RecordService
@@ -112,7 +114,10 @@ class OARepoRuntime:
         ret: dict[str, Model] = {}
         for model in self.models.values():
             if model.record_cls is not None:
-                ret[model.record_cls.schema.value] = model  # type: ignore  # noqa
+                try:
+                    ret[model.record_json_schema] = model
+                except KeyError:  # pragma: no cover
+                    continue
         return ret
 
     @cached_property
@@ -162,7 +167,7 @@ class OARepoRuntime:
     @property
     def services(self) -> dict[str, Service]:
         """Return the services registered in the extension."""
-        _services = current_service_registry._services  # type: ignore[attr-defined]  # noqa: SLF001
+        _services = current_service_registry._services  # noqa: SLF001
         return cast("dict[str, Service]", _services)
 
     def get_record_service_for_record(self, record: Any) -> RecordService:
@@ -196,7 +201,9 @@ class OARepoRuntime:
         """Return the set of published indices for RDM-compatible records only."""
         indices = set()
         for model in self.rdm_models:
-            indices.add(model.record_cls.index.search_alias)  # type: ignore[attr-defined]
+            index_field: IndexField | None = getattr(model.record_cls, "index", None)
+            if index_field is not None:
+                indices.add(index_field.search_alias)
         return indices
 
     @cached_property
@@ -205,5 +212,7 @@ class OARepoRuntime:
         indices = set()
         for model in self.rdm_models:
             if model.draft_cls is not None:
-                indices.add(model.draft_cls.index.search_alias)  # type: ignore[attr-defined]
+                draft_index = getattr(model.draft_cls, "index", None)
+                if draft_index is not None:
+                    indices.add(draft_index.search_alias)
         return indices

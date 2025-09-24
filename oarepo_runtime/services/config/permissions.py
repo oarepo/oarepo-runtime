@@ -12,67 +12,76 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection
+from typing import ClassVar
+
 from invenio_records_permissions import RecordPermissionPolicy
 from invenio_records_permissions.generators import AnyUser, Generator, SystemProcess
 
-type GeneratorList = tuple[Generator, ...]
+type GeneratorList = Collection[Generator]
 
 
 class EveryonePermissionPolicy(RecordPermissionPolicy):
     """Record policy for read-only repository."""
 
-    can_search: GeneratorList = (SystemProcess(), AnyUser())
-    can_read: GeneratorList = (SystemProcess(), AnyUser())
-    can_create: GeneratorList = (SystemProcess(), AnyUser())
-    can_update: GeneratorList = (SystemProcess(), AnyUser())
-    can_delete: GeneratorList = (SystemProcess(), AnyUser())
-    can_manage: GeneratorList = (SystemProcess(), AnyUser())
+    can_search: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_read: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_create: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_update: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_delete: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_manage: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_create_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_set_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_get_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_commit_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_read_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_update_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_delete_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_list_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_manage_files: GeneratorList = (SystemProcess(), AnyUser())
+    can_create_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_set_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_get_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_commit_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_read_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_update_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_delete_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_list_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_manage_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_edit: GeneratorList = (SystemProcess(), AnyUser())
-    can_new_version: GeneratorList = (SystemProcess(), AnyUser())
-    can_search_drafts: GeneratorList = (SystemProcess(), AnyUser())
-    can_read_draft: GeneratorList = (SystemProcess(), AnyUser())
-    can_search_versions: GeneratorList = (SystemProcess(), AnyUser())
-    can_update_draft: GeneratorList = (SystemProcess(), AnyUser())
-    can_delete_draft: GeneratorList = (SystemProcess(), AnyUser())
-    can_publish: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_create_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_set_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_get_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_commit_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_read_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_update_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_delete_files: GeneratorList = (SystemProcess(), AnyUser())
+    can_edit: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_new_version: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_search_drafts: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_read_draft: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_search_versions: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_update_draft: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_delete_draft: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_publish: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_create_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_set_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_get_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_commit_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_read_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_update_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_delete_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_add_community: GeneratorList = (SystemProcess(), AnyUser())
-    can_remove_community: GeneratorList = (SystemProcess(), AnyUser())
+    can_add_community: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_remove_community: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_read_deleted: GeneratorList = (SystemProcess(), AnyUser())
-    can_manage_record_access: GeneratorList = (SystemProcess(), AnyUser())
-    can_lift_embargo: GeneratorList = (SystemProcess(), AnyUser())
+    can_read_deleted: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_manage_record_access: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_lift_embargo: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_draft_media_create_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_read_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_set_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_get_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_commit_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_update_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_draft_media_delete_files: GeneratorList = (SystemProcess(), AnyUser())
+    can_draft_media_create_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_media_read_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_media_set_content_files: ClassVar[GeneratorList] = (
+        SystemProcess(),
+        AnyUser(),
+    )
+    can_draft_media_get_content_files: ClassVar[GeneratorList] = (
+        SystemProcess(),
+        AnyUser(),
+    )
+    can_draft_media_commit_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_media_update_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_draft_media_delete_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
 
-    can_media_read_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_get_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_create_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_set_content_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_commit_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_update_files: GeneratorList = (SystemProcess(), AnyUser())
-    can_media_delete_files: GeneratorList = (SystemProcess(), AnyUser())
+    can_media_read_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_get_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_create_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_set_content_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_commit_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_update_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())
+    can_media_delete_files: ClassVar[GeneratorList] = (SystemProcess(), AnyUser())

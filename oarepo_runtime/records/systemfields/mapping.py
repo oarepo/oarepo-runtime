@@ -40,17 +40,17 @@ class MappingSystemFieldMixin(SystemField):
 
     # The following methods are added just for typing purposes.
     @override
-    def pre_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:  # type: ignore[misc]
+    def pre_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
         """Dump record to the data - pre-dump phase."""
 
     @override
-    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:  # type: ignore[misc]
+    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
         """Dump record to the data - post-dump phase."""
 
     @override
-    def pre_load(self, data: dict, loader: Dumper | None = None) -> None:  # type: ignore[misc]
+    def pre_load(self, data: dict, loader: Dumper | None = None) -> None:
         """Load record from the data - pre-load phase."""
 
     @override
-    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:  # type: ignore[misc]
+    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
         """Load record from the data - post-load phase."""

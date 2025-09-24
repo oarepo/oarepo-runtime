@@ -9,8 +9,8 @@ description = "A set of runtime extensions of Invenio repository"
 readme = "README.md"
 license = "MIT"
 dependencies = [
+    "oarepo[rdm,tests]>=13,<15",
     "langcodes>=3.5.0",
-    "oarepo[rdm,tests]>=13,<14",
 ]
 requires-python = ">=3.13,<3.14"
 
@@ -20,6 +20,7 @@ Homepage = "https://github.com/oarepo/oarepo-runtime"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.1.2",
+    "invenio-typing-stubs @ git+https://github.com/oarepo/invenio-typing-stubs.git",
 ]
 tests = [
     "pytest>=7.1.2",
