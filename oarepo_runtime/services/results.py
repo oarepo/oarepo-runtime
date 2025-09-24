@@ -45,9 +45,7 @@ class ResultComponent:
         self._record_item = record_item
         self._record_list = record_list
 
-    def update_data(
-        self, identity: Identity, record: RecordBase, projection: dict, expand: bool
-    ) -> None:
+    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
         """Update the projection data with additional information.
 
         :param identity: The identity of the user making the request.
@@ -110,9 +108,7 @@ class RecordItem(BaseRecordItem):
         converted_errors = []
         for error in errors:
             if error.get("messages"):
-                converted_errors.extend(
-                    self.postprocess_error_messages(error["field"], error["messages"])
-                )
+                converted_errors.extend(self.postprocess_error_messages(error["field"], error["messages"]))
             else:
                 converted_errors.append(error)
         return converted_errors
@@ -156,13 +152,9 @@ class RecordList(BaseRecordList):
                 # TODO: check if this logic is correct
                 versions = hit_dict.get("versions", {})
                 if versions.get("is_latest_draft") and not versions.get("is_latest"):
-                    draft_class: type[Draft] | None = getattr(
-                        self._service, "draft_cls", None
-                    )
+                    draft_class: type[Draft] | None = getattr(self._service, "draft_cls", None)
                     if draft_class is None:
-                        raise RuntimeError(
-                            "Draft class is not defined in the service"
-                        )  # pragma: no cover
+                        raise RuntimeError("Draft class is not defined in the service")  # pragma: no cover
                     record = draft_class.loads(hit_dict)
                 else:
                     record = self._service.record_cls.loads(hit_dict)
@@ -174,12 +166,8 @@ class RecordList(BaseRecordList):
                         "record": record,
                     },
                 )
-                links_search_item = getattr(
-                    self._service.config, "links_search_item", None
-                )
-                links_search_item_tpl = getattr(
-                    self._service.config, "search_item_links_template", None
-                )
+                links_search_item = getattr(self._service.config, "links_search_item", None)
+                links_search_item_tpl = getattr(self._service.config, "search_item_links_template", None)
                 if links_search_item and links_search_item_tpl:
                     links_tpl = links_search_item_tpl(links_search_item)
                 else:
