@@ -20,7 +20,7 @@ Homepage = "https://github.com/oarepo/oarepo-runtime"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.1.2",
-    "invenio-typing-stubs @ git+https://github.com/oarepo/invenio-typing-stubs.git",
+    "oarepo-invenio-typing-stubs>=0.1.0",
 ]
 tests = [
     "pytest>=7.1.2",
