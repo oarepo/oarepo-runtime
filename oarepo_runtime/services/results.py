@@ -59,7 +59,7 @@ class ResultComponent:
 class RecordItem(BaseRecordItem):
     """Single record result."""
 
-    components: tuple[type[ResultComponent], ...] = ()
+    components: tuple[type[ResultComponent], ...] | property = ()
     """A list of components that can modify the serialized record data."""
 
     @property
@@ -117,7 +117,7 @@ class RecordItem(BaseRecordItem):
 class RecordList(BaseRecordList):
     """List of records result."""
 
-    components: tuple[type[ResultComponent], ...] = ()
+    components: tuple[type[ResultComponent], ...] | property = ()
 
     @property
     def aggregations(self) -> Any:
