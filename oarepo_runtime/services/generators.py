@@ -67,11 +67,11 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
 
     @override
     def needs(self, record: Record | None = None, **kwargs: Any) -> Collection[Need]:
-        return super().needs(**kwargs)  # type: ignore[no-any-return]  # mypy bug ?
+        return super().needs(record=record, **kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
     @override
     def excludes(self, record: Record | None = None, **kwargs: Any) -> Collection[Need]:
-        return super().excludes(**kwargs)  # type: ignore[no-any-return]  # mypy bug ?
+        return super().excludes(record=record, **kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
     @abstractmethod
     def _query_instate(self, **context: Any) -> dsl.query.Query:
