@@ -13,13 +13,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from flask_resources import RequestBodyParser
 from flask_resources.responses import ResponseHandler
 from invenio_records_resources.resources.records.headers import etag_headers
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from oarepo_runtime.api import Export
+    from oarepo_runtime.api import Export, Import
 
 
 def exports_to_response_handlers(
@@ -33,3 +34,10 @@ def exports_to_response_handlers(
         )
         for export in exports
     }
+
+
+def imports_to_request_body_parsers(
+    imports: Iterable[Import],
+) -> dict[str, RequestBodyParser]:
+    """Convert imports to a dictionary of mimetype -> request body parsers."""
+    return {import_option.mimetype: RequestBodyParser(import_option.deserializer) for import_option in imports}

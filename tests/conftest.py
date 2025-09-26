@@ -20,11 +20,12 @@ from __future__ import annotations
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from flask_resources import JSONDeserializer
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.proxies import current_service_registry
 from invenio_vocabularies.records.models import VocabularyType
 
-from oarepo_runtime.api import Export
+from oarepo_runtime.api import Export, Import
 from oarepo_runtime.info.views import create_wellknown_blueprint
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
@@ -109,6 +110,16 @@ def _export(code: str, mimetype: str) -> Export:
         name="Test",
         mimetype=mimetype,
         serializer=DummySerializer(),
+        description="Test description",
+    )
+
+
+def _import(code: str, mimetype: str) -> Import:
+    return Import(
+        code=code,
+        name="Test",
+        mimetype=mimetype,
+        deserializer=JSONDeserializer(),
         description="Test description",
     )
 

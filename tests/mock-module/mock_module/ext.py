@@ -17,7 +17,7 @@ from invenio_records_resources.resources.records import RecordResource
 from invenio_records_resources.services.files import FileService
 
 from oarepo_runtime import Model
-from tests.conftest import _export
+from tests.conftest import _export, _import
 
 from .resource import RecordResourceConfig
 from .service import (
@@ -55,6 +55,7 @@ class MockModuleExt:
             file_service=FileService(FileServiceConfig()),
             draft_file_service=FileService(DraftFileServiceConfig()),
             exports=[_export("mock-api", "application/json")],
+            imports=[_import("mock-api", "application/json")],
             features={"draft": {"enabled": True}, "files": {"enabled": True}, "requests": {"enabled": True}},
         )
 

@@ -456,3 +456,37 @@ def test_features_property_with_value():
     )
 
     assert model.features == features_mock
+
+
+def test_imports_property_default():
+    """Test imports property with default value."""
+    service = MockService()
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+
+    assert model.imports == []
+
+
+def test_imports_property_with_value():
+    """Test imports property with custom value."""
+    from oarepo_runtime.api import Import
+
+    service = MockService()
+    import_mock = MagicMock(spec=Import)
+    imports_list = [import_mock]
+
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        imports=imports_list,
+    )
+
+    assert model.imports == imports_list
