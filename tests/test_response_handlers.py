@@ -14,29 +14,8 @@ from __future__ import annotations
 from flask_resources.responses import ResponseHandler
 from invenio_records_resources.resources.records.headers import etag_headers
 
-from oarepo_runtime.api import Export
 from oarepo_runtime.resources.config import exports_to_response_handlers
-
-
-class DummySerializer:
-    """Minimal serializer stub used in tests."""
-
-    def serialize_object(self, obj):  # pragma: no cover - not used here
-        """Serialize a single object."""
-        return f"obj:{obj}"
-
-    def serialize_object_list(self, obj_list):  # pragma: no cover - not used here
-        """Serialize a list of objects."""
-        return f"list:{len(obj_list)}"
-
-
-def _export(code: str, mimetype: str) -> Export:
-    return Export(
-        code=code,
-        name="Test",
-        mimetype=mimetype,
-        serializer=DummySerializer(),
-    )
+from tests.conftest import _export
 
 
 def test_exports_to_response_handlers_empty_iterable_returns_empty_dict():

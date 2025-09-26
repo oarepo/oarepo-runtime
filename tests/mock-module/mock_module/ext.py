@@ -13,10 +13,13 @@ from functools import cached_property
 
 from invenio_drafts_resources.services.records import RecordService
 from invenio_records_resources.proxies import current_service_registry
+from invenio_records_resources.resources.records import RecordResource
 from invenio_records_resources.services.files import FileService
 
 from oarepo_runtime import Model
+from tests.conftest import _export
 
+from .resource import RecordResourceConfig
 from .service import (
     DraftFileServiceConfig,
     DraftMediaFileServiceConfig,
@@ -48,9 +51,11 @@ class MockModuleExt:
             version="1.0.0",
             service="mock-record-service",
             records_alias_enabled=True,
-            resource_config="invenio_records_resources.resources.records.config.RecordResourceConfig",
-            file_service=FileService(FileServiceConfig),
-            draft_file_service=FileService(DraftFileServiceConfig),
+            resource_config=self.resource_config,
+            file_service=FileService(FileServiceConfig()),
+            draft_file_service=FileService(DraftFileServiceConfig()),
+            exports=[_export("mock-api", "application/json")],
+            features={"draft": {"enabled": True}, "files": {"enabled": True}, "requests": {"enabled": True}},
         )
 
     @cached_property
@@ -81,6 +86,16 @@ class MockModuleExt:
             files_service=self.file_service,
             draft_files_service=self.draft_file_service,
         )
+
+    @cached_property
+    def resource_config(self):
+        """Resource fixture."""
+        return RecordResourceConfig()
+
+    @cached_property
+    def resource(self):
+        """Resource fixture."""
+        return RecordResource(self.resource_config, self.service)
 
 
 def finalize_mock_module(app):
