@@ -91,7 +91,11 @@ def test_facet_groups_property_present_and_absent() -> None:
 
 def test_facet_builder() -> None:
     facets = get_basic_facet(
-        {}, None, "metadata.jej.c.keyword", [], "invenio_records_resources.services.records.facets.TermsFacet"
+        {},
+        None,
+        "metadata.jej.c.keyword",
+        [],
+        "invenio_records_resources.services.records.facets.TermsFacet",
     )
 
     assert "metadata.jej.c" in facets

@@ -73,7 +73,13 @@ class LocalizedDate(LocalizedMixin, FormatDate):
 class FormatTimeString(FormatTime):
     """Time formater."""
 
-    def parse(self, value: Any, as_time: bool = False, as_date: bool = False, as_datetime: bool = False) -> Any:
+    def parse(
+        self,
+        value: Any,
+        as_time: bool = False,
+        as_date: bool = False,
+        as_datetime: bool = False,
+    ) -> Any:
         """Parse date value."""
         if value and isinstance(value, str) and as_time:
             match = re.match(r"^(\d|0\d|1\d|2[0-3]):(\d|[0-5]\d|60)(:(\d|[0-5]\d|60))?$", value)
@@ -98,7 +104,12 @@ class MultilayerFormatEDTF(BabelFormatField):
             return format_edtf(value, format=self._format, locale=self.locale)
 
     def parse(
-        self, value: str, as_time: bool = False, as_date: bool = False, as_datetime: bool = False, **kwargs: Any
+        self,
+        value: str,
+        as_time: bool = False,
+        as_date: bool = False,
+        as_datetime: bool = False,
+        **kwargs: Any,
     ) -> Any:
         """Parse date value."""
         _, _, _ = as_time, as_date, as_datetime
