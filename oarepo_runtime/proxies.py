@@ -20,6 +20,10 @@ from werkzeug.local import LocalProxy
 if TYPE_CHECKING:
     from oarepo_runtime.ext import OARepoRuntime
 
-current_runtime: LocalProxy[OARepoRuntime] = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
+    current_runtime: OARepoRuntime  # type: ignore[reportRedeclaration]
 
-current_timezone: ContextVar = ContextVar("timezone")  # idk how or exactly why to use the LocalProxy here
+# note: mypy does not understand LocalProxy[OARepoRuntime], so we type it as OARepoRuntime
+# and ignore the redeclaration error
+current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
+
+current_timezone: ContextVar = ContextVar("timezone")
