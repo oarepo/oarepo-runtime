@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from flask_babel.speaklater import LazyString
+    from flask_resources.deserializers import DeserializerMixin
     from flask_resources.responses import ResponseHandler
     from flask_resources.serializers import BaseSerializer
     from invenio_drafts_resources.records.api import Draft
@@ -92,6 +93,26 @@ class Export:
     """Description of the export format, human readable."""
 
 
+@dataclasses.dataclass
+class Import:
+    """Configuration of an import format."""
+
+    code: str
+    """Code of the import format, used to identify the import format in the URL."""
+
+    name: LazyString
+    """Name of the import format, human readable."""
+
+    mimetype: str
+    """MIME type of the import format."""
+
+    deserializer: DeserializerMixin
+    """Deserializer used to deserialize the record into the import format."""
+
+    description: LazyString | None = None
+    """Description of the import format, human readable."""
+
+
 class Model[
     S: RecordService = RecordService,
     C: RecordServiceConfig = RecordServiceConfig,
@@ -131,6 +152,7 @@ class Model[
         records_alias_enabled: bool = True,
         model_metadata: ModelMetadata | None = None,
         features: Mapping[str, Any] | None = None,
+        imports: list[Import] | None = None,
     ):
         """Initialize the model configuration.
 
@@ -155,6 +177,8 @@ class Model[
             Such models will be searchable via the `/api/records` endpoint.
         :param model_metadata: Metadata of the model.
         :param features: Features of the model. Filled by the feature presets themselves during registration.
+        :param imports: List of import formats that can be used to import the record.
+            If not provided, no imports are available.
         """
         self._code = code
         self._name = name
@@ -176,6 +200,7 @@ class Model[
         self._resource = resource
         self._resource_config = resource_config
         self._exports = exports or []
+        self._imports = imports or []
         self._model_metadata = model_metadata
         self._features = features
 
@@ -358,3 +383,8 @@ class Model[
     def features(self) -> Mapping[str, Any] | None:
         """Get a mapping of features."""
         return self._features
+
+    @property
+    def imports(self) -> list[Import]:
+        """Get all importable request body parsers."""
+        return self._imports

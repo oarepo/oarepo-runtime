@@ -11,11 +11,12 @@
 
 from __future__ import annotations
 
+from flask_resources import RequestBodyParser
 from flask_resources.responses import ResponseHandler
 from invenio_records_resources.resources.records.headers import etag_headers
 
-from oarepo_runtime.resources.config import exports_to_response_handlers
-from tests.conftest import _export
+from oarepo_runtime.resources.config import exports_to_response_handlers, imports_to_request_body_parsers
+from tests.conftest import _export, _import
 
 
 def test_exports_to_response_handlers_empty_iterable_returns_empty_dict():
@@ -60,3 +61,16 @@ def test_exports_to_response_handlers_accepts_generators_as_iterable():
     for mt in result:
         assert isinstance(result[mt], ResponseHandler)
         assert result[mt].headers is etag_headers
+
+
+def test_imports_to_response_handlers_accepts_generators_as_iterable():
+    def gen():  # noqa
+        """Provide a generator of exports."""
+        yield _import("g1", "text/csv")
+        yield _import("g2", "application/csv")
+
+    result = imports_to_request_body_parsers(gen())
+
+    assert set(result.keys()) == {"text/csv", "application/csv"}
+    for mt in result:
+        assert isinstance(result[mt], RequestBodyParser)
