@@ -22,7 +22,10 @@ import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.proxies import current_service_registry
+from invenio_vocabularies.records.models import VocabularyType
 
+from oarepo_runtime.api import Export
+from oarepo_runtime.info.views import create_wellknown_blueprint
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
 pytest_plugins = ("celery.contrib.pytest",)
@@ -44,6 +47,11 @@ def app_config(app_config):
     app_config["RECORDS_REFRESOLVER_STORE"] = "invenio_jsonschemas.proxies.current_refresolver_store"
 
     app_config["THEME_FRONTPAGE"] = False
+
+    # only API app is running
+    app_config["SITE_API_URL"] = "https://127.0.0.1:5000/api"
+    app_config["SERVER_NAME"] = "127.0.0.1:5000"
+    app_config["PREFERRED_URL_SCHEME"] = "https"
 
     return app_config
 
@@ -81,3 +89,38 @@ def search_with_field_mapping(app, search):
 @pytest.fixture(scope="module")
 def service(app):
     return current_service_registry.get("mock-record-service")
+
+
+class DummySerializer:
+    """Minimal serializer stub used in tests."""
+
+    def serialize_object(self, obj):  # pragma: no cover - not used here
+        """Serialize a single object."""
+        return f"obj:{obj}"
+
+    def serialize_object_list(self, obj_list):  # pragma: no cover - not used here
+        """Serialize a list of objects."""
+        return f"list:{len(obj_list)}"
+
+
+def _export(code: str, mimetype: str) -> Export:
+    return Export(
+        code=code,
+        name="Test",
+        mimetype=mimetype,
+        serializer=DummySerializer(),
+        description="Test description",
+    )
+
+
+@pytest.fixture
+def lang_type(db):
+    """Get a language vocabulary type."""
+    v = VocabularyType.create(id="languages", pid_type="lng")
+    db.session.commit()
+    return v
+
+
+@pytest.fixture
+def info_blueprint(app):
+    app.register_blueprint(create_wellknown_blueprint(app))

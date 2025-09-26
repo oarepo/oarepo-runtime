@@ -24,3 +24,6 @@ build-backend = "hatchling.build"
 
 [project.entry-points."invenio_base.api_finalize_app"]
     draftsresources = "mock_module.ext:finalize_mock_module"
+
+[project.entry-points."invenio_base.api_blueprints"]
+    draftsresources = "mock_module.views:create_mock_blueprint"

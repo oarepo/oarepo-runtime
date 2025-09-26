@@ -88,6 +88,9 @@ class Export:
     oai_namespace: str | None = None
     """OAI namespace, if applicable. If not set, the export can not be used in OAI-PMH responses."""
 
+    description: LazyString | None = None
+    """Description of the export format, human readable."""
+
 
 class Model[
     S: RecordService = RecordService,
