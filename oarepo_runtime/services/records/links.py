@@ -11,7 +11,27 @@
 
 from __future__ import annotations
 
+from invenio_records_resources.services import RecordEndpointLink
 from invenio_records_resources.services.base.links import EndpointLink
+
+
+def pagination_record_endpoint_links(endpoint: str, params: list[str] | None = None) -> dict[str, RecordEndpointLink]:
+    """Create pagination links (prev/self/next) from the same endpoint."""
+    return {
+        "prev": RecordEndpointLink(
+            endpoint,
+            when=lambda pagination, _ctx: pagination.has_prev,
+            vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.prev_page.page}),
+            params=params,
+        ),
+        "self": RecordEndpointLink(endpoint, params=params),
+        "next": RecordEndpointLink(
+            endpoint,
+            when=lambda pagination, _ctx: pagination.has_next,
+            vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.next_page.page}),
+            params=params,
+        ),
+    }
 
 
 def pagination_endpoint_links_html(endpoint: str, params: list[str] | None = None) -> dict[str, EndpointLink]:

@@ -56,7 +56,11 @@ class MockModuleExt:
             draft_file_service=FileService(DraftFileServiceConfig()),
             exports=[_export("mock-api", "application/json")],
             imports=[_import("mock-api", "application/json")],
-            features={"draft": {"enabled": True}, "files": {"enabled": True}, "requests": {"enabled": True}},
+            features={
+                "draft": {"enabled": True},
+                "files": {"enabled": True},
+                "requests": {"enabled": True},
+            },
         )
 
     @cached_property

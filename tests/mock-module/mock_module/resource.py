@@ -13,7 +13,9 @@
 
 from __future__ import annotations
 
-from invenio_drafts_resources.resources import RecordResourceConfig as RecordResourceConfigBase
+from invenio_drafts_resources.resources import (
+    RecordResourceConfig as RecordResourceConfigBase,
+)
 from invenio_records_resources.resources import (
     FileResourceConfig as FileResourceConfigBase,
 )

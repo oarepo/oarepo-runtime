@@ -15,7 +15,10 @@ from flask_resources import RequestBodyParser
 from flask_resources.responses import ResponseHandler
 from invenio_records_resources.resources.records.headers import etag_headers
 
-from oarepo_runtime.resources.config import exports_to_response_handlers, imports_to_request_body_parsers
+from oarepo_runtime.resources.config import (
+    exports_to_response_handlers,
+    imports_to_request_body_parsers,
+)
 from tests.conftest import _export, _import
 
 
