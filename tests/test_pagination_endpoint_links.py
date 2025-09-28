@@ -29,8 +29,8 @@ def app_with_blueprint(app):
     def search() -> str:
         return "search"  # pragma: no cover - used only for link generation
 
-    @bp.route("/pagination_test/record_search/<id>/versions")
-    def record_search(id) -> str:  # noqa: A002
+    @bp.route("/pagination_test/record_search/<pid_value>/versions")
+    def record_search(pid_value) -> str:
         return "search"  # pragma: no cover - used only for link generation
 
     app.register_blueprint(bp)

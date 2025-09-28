@@ -30,15 +30,15 @@ def rdm_pagination_record_endpoint_links(endpoint: str, params: list[str] | None
     service but not in invenio_drafts_resources service, where the parameter is
     called "id" instead of "pid_value". That is why this function is called rdm_...
     """
-    params = [*(params or []), "id"]
+    params = [*(params or []), "pid_value"]
 
     class RecordEndpointLinkWithId(EndpointLink):
         @override
         @staticmethod
         def vars(obj: Any, vars: dict[str, Any]) -> None:
-            pid_value = vars.pop("pid_value", None)
+            pid_value = vars.pop("id", None)
             if pid_value is not None:
-                vars["id"] = pid_value
+                vars["pid_value"] = pid_value
 
     return {
         "prev": RecordEndpointLinkWithId(
