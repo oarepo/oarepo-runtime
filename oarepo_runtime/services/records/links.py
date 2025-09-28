@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+from typing import Any, override
+
 from invenio_records_resources.services.base.links import EndpointLink
 
 
@@ -28,16 +30,28 @@ def rdm_pagination_record_endpoint_links(endpoint: str, params: list[str] | None
     service but not in invenio_drafts_resources service, where the parameter is
     called "id" instead of "pid_value". That is why this function is called rdm_...
     """
-    params = [*(params or []), "pid_value"]
+    params = [*(params or []), "id"]
+
+    class RecordEndpointLinkWithId(EndpointLink):
+        @override
+        @staticmethod
+        def vars(obj: Any, vars: dict[str, Any]) -> None:
+            pid_value = vars.pop("pid_value", None)
+            if pid_value is not None:
+                vars["id"] = pid_value
+
     return {
-        "prev": EndpointLink(
+        "prev": RecordEndpointLinkWithId(
             endpoint,
             when=lambda pagination, _ctx: pagination.has_prev,
             vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.prev_page.page}),
             params=params,
         ),
-        "self": EndpointLink(endpoint, params=params),
-        "next": EndpointLink(
+        "self": RecordEndpointLinkWithId(
+            endpoint,
+            params=params,
+        ),
+        "next": RecordEndpointLinkWithId(
             endpoint,
             when=lambda pagination, _ctx: pagination.has_next,
             vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.next_page.page}),

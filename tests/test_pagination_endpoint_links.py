@@ -29,8 +29,8 @@ def app_with_blueprint(app):
     def search() -> str:
         return "search"  # pragma: no cover - used only for link generation
 
-    @bp.route("/pagination_test/record_search/<pid_value>/versions")
-    def record_search(pid_value) -> str:
+    @bp.route("/pagination_test/record_search/<id>/versions")
+    def record_search(id) -> str:  # noqa: A002
         return "search"  # pragma: no cover - used only for link generation
 
     app.register_blueprint(bp)
@@ -61,6 +61,9 @@ def test_pagination_endpoint_links(app_with_blueprint):
 
 
 def test_pagination_rdm_record_endpoint_links(app_with_blueprint):
+    #
+    # rdm records scan uses pid_value parameter
+    #
     links = rdm_pagination_record_endpoint_links("pagination_test.record_search")
     pagination = SimpleNamespace(
         page=3,
@@ -69,6 +72,32 @@ def test_pagination_rdm_record_endpoint_links(app_with_blueprint):
         next_page=SimpleNamespace(page=4),
     )
     context = {"args": {"page": 3, "size": 10}, "pid_value": "123"}
+    assert (
+        links["prev"].expand(pagination, context)
+        == "https://127.0.0.1:5000/api/pagination_test/record_search/123/versions?page=2&size=10"
+    )
+    assert (
+        links["self"].expand(pagination, context)
+        == "https://127.0.0.1:5000/api/pagination_test/record_search/123/versions?page=3&size=10"
+    )
+    assert (
+        links["next"].expand(pagination, context)
+        == "https://127.0.0.1:5000/api/pagination_test/record_search/123/versions?page=4&size=10"
+    )
+
+
+def test_pagination_rdm_record_endpoint_links_with_id(app_with_blueprint):
+    #
+    # draft records search uses id parameter
+    #
+    links = rdm_pagination_record_endpoint_links("pagination_test.record_search")
+    pagination = SimpleNamespace(
+        page=3,
+        size=10,
+        prev_page=SimpleNamespace(page=2),
+        next_page=SimpleNamespace(page=4),
+    )
+    context = {"args": {"page": 3, "size": 10}, "id": "123"}
     assert (
         links["prev"].expand(pagination, context)
         == "https://127.0.0.1:5000/api/pagination_test/record_search/123/versions?page=2&size=10"
