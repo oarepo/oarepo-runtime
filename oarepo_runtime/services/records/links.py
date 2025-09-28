@@ -11,21 +11,33 @@
 
 from __future__ import annotations
 
-from invenio_records_resources.services import RecordEndpointLink
 from invenio_records_resources.services.base.links import EndpointLink
 
 
-def pagination_record_endpoint_links(endpoint: str, params: list[str] | None = None) -> dict[str, RecordEndpointLink]:
-    """Create pagination links (prev/self/next) from the same endpoint."""
+def rdm_pagination_record_endpoint_links(endpoint: str, params: list[str] | None = None) -> dict[str, EndpointLink]:
+    """Create pagination links (prev/self/next) from the same endpoint.
+
+    These links are used on a record instance where we want to have a list of something,
+    for example /records/<pid>/versions.
+
+    Note: using RecordEndpointLink here is fragile as it normally expects
+    a record as the first argument to vars, but here we pass pagination
+    as the first argument to vars. Because pagination does not have pid_value
+    attribute, the vars method will just skip adding pid_value to vars and
+    the pid_value must be passed via params. This is done in invenio_rdm_records'
+    service but not in invenio_drafts_resources service, where the parameter is
+    called "id" instead of "pid_value". That is why this function is called rdm_...
+    """
+    params = [*(params or []), "pid_value"]
     return {
-        "prev": RecordEndpointLink(
+        "prev": EndpointLink(
             endpoint,
             when=lambda pagination, _ctx: pagination.has_prev,
             vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.prev_page.page}),
             params=params,
         ),
-        "self": RecordEndpointLink(endpoint, params=params),
-        "next": RecordEndpointLink(
+        "self": EndpointLink(endpoint, params=params),
+        "next": EndpointLink(
             endpoint,
             when=lambda pagination, _ctx: pagination.has_next,
             vars=lambda pagination, _vars: _vars["args"].update({"page": pagination.next_page.page}),

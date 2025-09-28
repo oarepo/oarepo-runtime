@@ -26,10 +26,22 @@ from invenio_records_resources.proxies import current_service_registry
 from invenio_vocabularies.records.models import VocabularyType
 
 from oarepo_runtime.api import Export, Import
-from oarepo_runtime.info.views import create_wellknown_blueprint
+from oarepo_runtime.info.views import InfoResource, create_wellknown_blueprint
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
 pytest_plugins = ("celery.contrib.pytest",)
+
+
+class TestInfoComponent:
+    """Test info component."""
+
+    def __init__(self, resource: InfoResource) -> None:
+        """Create the component."""
+        self.resource = resource
+
+    def repository(self, data):
+        """Repository info."""
+        data["test_info"] = "test"
 
 
 @pytest.fixture(scope="module")
@@ -53,6 +65,10 @@ def app_config(app_config):
     app_config["SITE_API_URL"] = "https://127.0.0.1:5000/api"
     app_config["SERVER_NAME"] = "127.0.0.1:5000"
     app_config["PREFERRED_URL_SCHEME"] = "https"
+
+    app_config["INFO_ENDPOINT_COMPONENTS"] = [
+        TestInfoComponent,
+    ]
 
     return app_config
 

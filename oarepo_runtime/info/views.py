@@ -16,13 +16,12 @@ import logging
 import os
 import re
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import marshmallow as ma
 from flask import Blueprint, Flask, current_app, request, url_for
 from flask_resources import (
-    Resource,
     ResourceConfig,
     from_conf,
     request_parser,
@@ -30,6 +29,7 @@ from flask_resources import (
     response_handler,
     route,
 )
+from flask_resources.resources import Resource as BaseResource
 from invenio_base import invenio_url_for
 from invenio_base.utils import obj_or_import_string
 from invenio_jsonschemas import current_jsonschemas
@@ -38,14 +38,28 @@ from invenio_records_resources.proxies import (
 )
 from werkzeug.routing import BuildError
 
+from oarepo_runtime.proxies import current_runtime
+
 if TYPE_CHECKING:
     from invenio_records.systemfields import ConstantField
     from invenio_records_resources.records.api import Record
 
     from oarepo_runtime import Model
-from oarepo_runtime.proxies import current_runtime
 
 logger = logging.getLogger("oarepo_runtime.info")
+
+
+class InfoComponent(Protocol):
+    """Info component protocol."""
+
+    def __init__(self, resource: InfoResource) -> None:
+        """Create the component."""
+
+    def repository(self, data: dict) -> None:
+        """Modify repository info endpoint data."""
+
+    def model(self, data: list[dict]) -> None:
+        """Modify model info endpoint data."""
 
 
 class InfoConfig(ResourceConfig):
@@ -62,16 +76,19 @@ class InfoConfig(ResourceConfig):
         self.app = app
 
     @cached_property
-    def components(self) -> tuple[object, ...]:
+    def components(self) -> tuple[type[InfoComponent], ...]:
         """Get the components for the info resource from config."""
-        return tuple(obj_or_import_string(x) for x in self.app.config.get("INFO_ENDPOINT_COMPONENTS", []))
+        return tuple(
+            cast("type[InfoComponent]", obj_or_import_string(x))
+            for x in self.app.config.get("INFO_ENDPOINT_COMPONENTS", [])
+        )
 
 
 schema_view_args = request_parser(from_conf("schema_view_args"), location="view_args")
 model_view_args = request_parser(from_conf("model_view_args"), location="view_args")
 
 
-class InfoResource(Resource):
+class InfoResource(BaseResource):
     """Info resource."""
 
     def create_url_rules(self) -> list[dict[str, Any]]:
@@ -149,6 +166,7 @@ class InfoResource(Resource):
             feature_keys.append("files")
         return feature_keys
 
+    # TODO: this should be done differently - we should add this to the model
     def _get_model_html_endpoint(self, model: Model) -> Any:
         base = self._get_model_api_endpoint(model)
         if not base:
@@ -160,7 +178,7 @@ class InfoResource(Resource):
         try:
             alias = model.api_blueprint_name
             return model.api_url("search", type=alias, _external=True)
-        except BuildError:
+        except BuildError:  # pragma: no cover
             logger.exception("Failed to get model api endpoint")
             return None
 
@@ -181,7 +199,7 @@ class InfoResource(Resource):
             service = model.service
             service_class = model.service.__class__
             if not service or not isinstance(service, service_class):
-                continue
+                continue  # pragma: no cover - sanity check
 
             model_features = self._get_model_features(model)
 

@@ -39,6 +39,7 @@ def test_info_repository_endpoint(client, lang_type, info_blueprint):
     assert repository_info["version"] == "local development"
     assert repository_info["schema"] == "local://introspection-v1.0.0"
     assert repository_info["default_model"] == "mock"
+    assert repository_info["test_info"] == "test"  # check that the component from conftest is used
 
     assert models_info == [
         {
