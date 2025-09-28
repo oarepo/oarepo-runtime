@@ -22,7 +22,6 @@ from urllib.parse import urljoin, urlparse, urlunparse
 import marshmallow as ma
 from flask import Blueprint, Flask, current_app, request, url_for
 from flask_resources import (
-    Resource,
     ResourceConfig,
     from_conf,
     request_parser,
@@ -30,6 +29,7 @@ from flask_resources import (
     response_handler,
     route,
 )
+from flask_resources.resources import Resource as BaseResource
 from invenio_base import invenio_url_for
 from invenio_base.utils import obj_or_import_string
 from invenio_jsonschemas import current_jsonschemas
@@ -38,12 +38,13 @@ from invenio_records_resources.proxies import (
 )
 from werkzeug.routing import BuildError
 
+from oarepo_runtime.proxies import current_runtime
+
 if TYPE_CHECKING:
     from invenio_records.systemfields import ConstantField
     from invenio_records_resources.records.api import Record
 
     from oarepo_runtime import Model
-from oarepo_runtime.proxies import current_runtime
 
 logger = logging.getLogger("oarepo_runtime.info")
 
@@ -87,7 +88,7 @@ schema_view_args = request_parser(from_conf("schema_view_args"), location="view_
 model_view_args = request_parser(from_conf("model_view_args"), location="view_args")
 
 
-class InfoResource(Resource[InfoConfig]):
+class InfoResource(BaseResource):
     """Info resource."""
 
     def create_url_rules(self) -> list[dict[str, Any]]:
