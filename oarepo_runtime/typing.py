@@ -16,6 +16,9 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from invenio_records_resources.records.api import Record
+    from invenio_records_resources.services.records.results import RecordItem
+
 
 def require_kwargs(*kwargs_names: str) -> Any:
     """Wrap function to require specific kwargs in a function call.
@@ -58,3 +61,8 @@ def require_kwargs(*kwargs_names: str) -> Any:
         return wrapped_f
 
     return wrapper
+
+
+def record_from_result(result: RecordItem) -> Record:
+    """Convert a RecordItem to a Record."""
+    return result._record  # noqa: SLF001

@@ -21,6 +21,7 @@ from invenio_records_resources.services.records.results import (
 )
 
 from oarepo_runtime.services.results import RecordItem, RecordList, ResultComponent
+from oarepo_runtime.typing import record_from_result
 
 
 class MockResultComponent(ResultComponent):
@@ -181,6 +182,8 @@ def test_record_item_to_dict_no_errors():
         record=Mock(),
         schema=mock_schema,
     )
+
+    assert record_from_result(item) is item._record  # noqa: SLF001
 
     with patch.object(RecordItem, "data", new_callable=PropertyMock) as mock_data:
         mock_data.return_value = base_data
