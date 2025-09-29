@@ -310,10 +310,10 @@ class Model[
     @property
     def record_json_schema(self) -> str:
         """Get the json schema of the record."""
-        schema: ConstantField[Record, str] | None = getattr(self.record_cls, "schema", None)
+        schema: ConstantField | None = getattr(self.record_cls, "schema", None)
         if schema is None:
             raise KeyError(f"Record class {self.record_cls} does not have a schema field.")  # pragma: no cover
-        return schema.value  # type: ignore[no-any-return]
+        return cast("str", schema.value)
 
     @property
     def draft_pid_type(self) -> str | None:

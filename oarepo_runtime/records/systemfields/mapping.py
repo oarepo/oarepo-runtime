@@ -10,17 +10,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, override
+
+from invenio_records.api import Record
+
+from .base import TypedSystemField
 
 if TYPE_CHECKING:
-    from invenio_records.api import RecordBase
     from invenio_records.dumpers import Dumper
     from invenio_records.systemfields import SystemField
 else:
     SystemField = object
 
 
-class MappingSystemFieldMixin(SystemField):
+class MappingSystemFieldMixin[R: Record = Record, V: Any = Any](TypedSystemField[R, V]):
     """Mixin class that provides default mapping, mapping settings, and dynamic templates for system fields."""
 
     @property
@@ -40,11 +43,11 @@ class MappingSystemFieldMixin(SystemField):
 
     # The following methods are added just for typing purposes.
     @override
-    def pre_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+    def pre_dump(self, record: R, data: dict, dumper: Dumper | None = None) -> None:
         """Dump record to the data - pre-dump phase."""
 
     @override
-    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+    def post_dump(self, record: R, data: dict, dumper: Dumper | None = None) -> None:
         """Dump record to the data - post-dump phase."""
 
     @override
@@ -52,5 +55,5 @@ class MappingSystemFieldMixin(SystemField):
         """Load record from the data - pre-load phase."""
 
     @override
-    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
+    def post_load(self, record: R, data: dict, loader: Dumper | None = None) -> None:
         """Load record from the data - post-load phase."""
