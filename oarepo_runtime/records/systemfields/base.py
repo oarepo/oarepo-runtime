@@ -15,10 +15,9 @@ from typing import Any, Self, overload
 from invenio_records.api import Record
 from invenio_records.extensions import ExtensionMixin
 from invenio_records.systemfields import SystemField
-from oarepo_typing.descriptors import Descriptor
 
 
-class TypedSystemField[R: Record = Record, V: Any = Any](Descriptor[R, V], SystemField, ExtensionMixin):
+class TypedSystemField[R: Record = Record, V: Any = Any](SystemField, ExtensionMixin):
     """Base class for typed system fields."""
 
     @overload
@@ -29,9 +28,9 @@ class TypedSystemField[R: Record = Record, V: Any = Any](Descriptor[R, V], Syste
 
     def __get__(self, instance: R | None, owner: type[R]) -> Self | V:  # type: ignore[override]
         """Get the value of the field."""
-        if instance is None:
-            return self
-        raise NotImplementedError
+        if instance is None:  # pragma: no cover
+            return self  # pragma: no cover
+        raise NotImplementedError  # pragma: no cover
 
     @overload
     def __set__(self, instance: None, value: Self) -> None: ...
@@ -41,6 +40,6 @@ class TypedSystemField[R: Record = Record, V: Any = Any](Descriptor[R, V], Syste
 
     def __set__(self, instance: R | None, value: V | Self) -> None:  # type: ignore[override]
         """Set the value of the field."""
-        if instance is None:
-            raise ValueError("Cannot set value on class.")
-        raise NotImplementedError
+        if instance is None:  # pragma: no cover
+            raise ValueError("Cannot set value on class.")  # pragma: no cover
+        raise NotImplementedError  # pragma: no cover

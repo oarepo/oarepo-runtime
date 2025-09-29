@@ -256,7 +256,7 @@ class InfoResource(BaseResource):
             can_export: bool = True,
             can_deposit: bool = False,
         ) -> dict:
-            schema_field = cast("ConstantField[Record, str] | None", getattr(record, "schema", None))
+            schema_field = cast("ConstantField | None", getattr(record, "schema", None))
             if schema_field is not None:
                 schema_field_value = schema_field.value
                 schema_path = base_url + schema_field_value.replace("local://", "")
