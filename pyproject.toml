@@ -11,6 +11,7 @@ license = "MIT"
 dependencies = [
     "oarepo[rdm,tests]>=13,<15",
     "langcodes>=3.5.0",
+    "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
 ]
 requires-python = ">=3.13,<3.14"
 
@@ -20,7 +21,6 @@ Homepage = "https://github.com/oarepo/oarepo-runtime"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.1.2",
-    "oarepo-invenio-typing-stubs>=0.1.0",
 ]
 tests = [
     "pytest>=7.1.2",

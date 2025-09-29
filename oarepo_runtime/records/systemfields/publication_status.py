@@ -12,16 +12,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, override
 
-from invenio_records.systemfields import SystemField
+from invenio_records.api import Record
 
 from .mapping import MappingSystemFieldMixin
 
 if TYPE_CHECKING:
-    from invenio_records.api import RecordBase
     from invenio_records.dumpers import Dumper
 
 
-class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
+class PublicationStatusSystemField(MappingSystemFieldMixin[Record, str]):
     """A system field to track the status of a record (either 'draft' or 'published').
 
     The default key for this field is 'publication_status', but it can be customized.
@@ -41,11 +40,11 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
         }
 
     @override
-    def post_load(self, record: RecordBase, data: dict, loader: Dumper | None = None) -> None:
+    def post_load(self, record: Record, data: dict, loader: Dumper | None = None) -> None:
         data.pop(self.key, None)
 
     @override
-    def post_dump(self, record: RecordBase, data: dict, dumper: Dumper | None = None) -> None:
+    def post_dump(self, record: Record, data: dict, dumper: Dumper | None = None) -> None:
         if self.key is None:
             return  # pragma: no cover
         if not self.attr_name:
@@ -54,7 +53,7 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, SystemField):
             )
         data[self.key] = getattr(record, self.attr_name)
 
-    def __get__(self, record: RecordBase | None, owner: Any = None) -> Any:
+    def __get__(self, record: Record | None, owner: Any = None) -> Any:
         """Access the attribute."""
         if record is None:
             return self

@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
+from .base import TypedSystemField
 from .mapping import MappingSystemFieldMixin
 from .publication_status import PublicationStatusSystemField
 
-__all__ = ("MappingSystemFieldMixin", "PublicationStatusSystemField")
+__all__ = (
+    "MappingSystemFieldMixin",
+    "PublicationStatusSystemField",
+    "TypedSystemField",
+)
