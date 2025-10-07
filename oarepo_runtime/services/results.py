@@ -15,7 +15,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from invenio_access.permissions import Identity
-from invenio_records.api import RecordBase
 from invenio_records_resources.errors import _iter_errors_dict
 from invenio_records_resources.services.records.results import (
     RecordItem as BaseRecordItem,
@@ -27,7 +26,7 @@ from invenio_records_resources.services.records.results import (
 if TYPE_CHECKING:
     from invenio_access.permissions import Identity
     from invenio_drafts_resources.records.api import Draft
-    from invenio_records.api import RecordBase
+    from invenio_records_resources.records.api import Record
 
 
 log = logging.getLogger(__name__)
@@ -45,7 +44,7 @@ class ResultComponent:
         self._record_item = record_item
         self._record_list = record_list
 
-    def update_data(self, identity: Identity, record: RecordBase, projection: dict, expand: bool) -> None:
+    def update_data(self, identity: Identity, record: Record, projection: dict, expand: bool) -> None:
         """Update the projection data with additional information.
 
         :param identity: The identity of the user making the request.
@@ -151,7 +150,9 @@ class RecordList(BaseRecordList):
                 # Project the record
                 # TODO: check if this logic is correct
                 versions = hit_dict.get("versions", {})
-                if versions.get("is_latest_draft") and not versions.get("is_latest"):
+                if (versions.get("is_latest_draft") and not versions.get("is_latest")) or (
+                    "publication_status" in hit_dict and hit_dict["publication_status"] == "draft"
+                ):
                     draft_class: type[Draft] | None = getattr(self._service, "draft_cls", None)
                     if draft_class is None:
                         raise RuntimeError("Draft class is not defined in the service")  # pragma: no cover
