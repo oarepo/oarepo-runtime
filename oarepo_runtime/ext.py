@@ -15,6 +15,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, cast
 
 from flask import current_app
+from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record as RecordBase
@@ -146,20 +147,20 @@ class OARepoRuntime:
 
         If the filter matches multiple services, an error is raised.
         """
-        pids = PersistentIdentifier.query.filter_by(**filter_kwargs).all()
+        pids = db.session.query(PersistentIdentifier).filter_by(**filter_kwargs).all()
 
         filtered_pids = [pid for pid in pids if pid.pid_type in self.record_class_by_pid_type]
         if not filtered_pids:
             raise PIDDoesNotExistError(
-                None,
-                filter_kwargs,
+                "unknown_pid",
+                str(filter_kwargs),
                 "The pid value/record uuid is not associated with any record.",
             )
 
         if len(filtered_pids) > 1:
             raise PIDDoesNotExistError(
-                None,
-                filter_kwargs,
+                "unknown_pid",
+                str(filter_kwargs),
                 f"Multiple records found for pid value/record uuid: {filtered_pids}",
             )
         return filtered_pids[0]

@@ -9,7 +9,7 @@ description = "A set of runtime extensions of Invenio repository"
 readme = "README.md"
 license = "MIT"
 dependencies = [
-    "oarepo[rdm,tests]>=13,<15",
+    "oarepo[rdm,tests]>=14,<15",
     "langcodes>=3.5.0",
     "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
 ]
@@ -24,9 +24,6 @@ dev = [
 ]
 tests = [
     "pytest>=7.1.2",
-]
-oarepo13=[
-    "oarepo[rdm]>=13,<14",
 ]
 oarepo14=[
     "oarepo[rdm]>=14,<15",

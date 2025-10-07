@@ -28,7 +28,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
     unpid_default_status = PIDStatus.REGISTERED
 
     @classmethod
-    def create(
+    def create(  # type: ignore[override] # as pid type and value are given
         cls,
         object_type: str | None = None,
         object_uuid: str | None = None,
@@ -50,7 +50,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
 
         PersistentIdentifier.create(
             cls.unpid_pid_type,
-            pid.pid.pid_value,
+            cast("str", pid.pid.pid_value),
             pid_provider=None,
             object_type=object_type,
             object_uuid=object_uuid,
