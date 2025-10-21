@@ -149,5 +149,34 @@ def lang_type(db):
 
 
 @pytest.fixture
+def vocab_records(app, db, search_clear):
+    from invenio_access.permissions import system_identity
+    from invenio_vocabularies.proxies import current_service as vocabulary_service
+
+    try:
+        vocab_type = vocabulary_service.create_type(system_identity, "test-vocab", "v-test")
+        vocabulary_service.create(
+            system_identity,
+            {
+                "type": vocab_type.id,
+                "id": "a",
+                "title": {"en": "Test A", "cs": "Test A CS"},
+            },
+        )
+        vocabulary_service.create(
+            system_identity,
+            {
+                "type": vocab_type.id,
+                "id": "b",
+                "title": {"en": "Test B", "cs": "Test B CS"},
+            },
+        )
+        vocabulary_service.indexer.refresh()
+    # not sure why the database is not rolled back
+    except Exception:  # noqa: S110, BLE001
+        pass
+
+
+@pytest.fixture
 def info_blueprint(app):
     app.register_blueprint(create_wellknown_blueprint(app))
