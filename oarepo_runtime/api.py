@@ -409,3 +409,10 @@ class Model[
     def imports(self) -> list[Import]:
         """Get all importable request body parsers."""
         return self._imports
+
+    @property
+    def entity_type(self) -> str | None:
+        """Get the entity type."""
+        if self._has_entity:
+            return self.code
+        return None
