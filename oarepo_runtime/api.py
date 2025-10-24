@@ -411,8 +411,8 @@ class Model[
         return self._imports
 
     @property
-    def entity_type(self) -> str | None:
+    def entity_type(self) -> str:
         """Get the entity type."""
-        if self._has_entity:
-            return self.code
-        return None
+        if self.records_alias_enabled:
+            return cast("str", self.service.id)
+        raise TypeError("This model does not have associated entity type.")

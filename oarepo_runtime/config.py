@@ -52,7 +52,6 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.resources.config.VocabulariesResourceConfig",
         resource="invenio_vocabularies.resources.resource.VocabulariesResource",
-        has_entity=False,
     ),
     # affiliations
     "affiliations": Model(
@@ -64,7 +63,6 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.contrib.affiliations.resources.AffiliationsResourceConfig",
         resource="invenio_vocabularies.contrib.affiliations.resources.AffiliationsResource",
-        has_entity=False,
     ),
     # funders
     "funders": Model(
@@ -76,7 +74,6 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.contrib.funders.resources.FundersResourceConfig",
         resource="invenio_vocabularies.contrib.funders.resources.FundersResource",
-        has_entity=False,
     ),
     # awards
     "awards": Model(
@@ -88,7 +85,6 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.contrib.awards.resources.AwardsResourceConfig",
         resource="invenio_vocabularies.contrib.awards.resources.AwardsResource",
-        has_entity=False,
     ),
     # names
     "names": Model(
@@ -100,7 +96,6 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.contrib.names.resources.NamesResourceConfig",
         resource="invenio_vocabularies.contrib.names.resources.NamesResource",
-        has_entity=False,
     ),
     # subjects
     "subjects": Model(
@@ -112,6 +107,5 @@ OAREPO_MODELS: dict[str, Model] = {
         records_alias_enabled=False,
         resource_config="invenio_vocabularies.contrib.subjects.resources.SubjectsResourceConfig",
         resource="invenio_vocabularies.contrib.subjects.resources.SubjectsResource",
-        has_entity=False,
     ),
 }
