@@ -112,6 +112,20 @@ def test_api_url(app):
     assert search_url.endswith("/api/vocabularies/languages")
 
 
+def test_model_without_ui_blueprint_name(app):
+    """Test api_url method."""
+    service = MockService()
+    model = Model(
+        code="test_model_code",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+    )
+    assert model.ui_blueprint_name is None
+    assert model.ui_url("bla") is None
+
+
 def test_code_property():
     """Test code property."""
     service = MockService()
@@ -374,6 +388,7 @@ def test_exports_property_default():
     )
 
     assert model.exports == []
+    assert model.get_export_by_mimetype("test") is None
 
 
 def test_exports_property_with_value():

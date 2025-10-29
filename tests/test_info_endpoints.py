@@ -52,7 +52,15 @@ def test_info_repository_endpoint(client, lang_type, info_blueprint):
                     "description": "Test description",
                     "name": "Test",
                     "schema": "https://127.0.0.1:5000/.well-known/repository/schema/records/record-v1.0.0.json",
-                }
+                },
+                {
+                    "can_deposit": False,
+                    "can_export": True,
+                    "code": "datacite",
+                    "content_type": "application/vnd.datacite.datacite+json",
+                    "description": "Test description",
+                    "name": "Test",
+                },
             ],
             "description": None,
             "features": ["requests", "drafts", "files"],

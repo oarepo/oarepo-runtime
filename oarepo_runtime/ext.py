@@ -177,6 +177,12 @@ class OARepoRuntime:
             raise ValueError("Need to pass a record instance, got None")
         return self.get_record_service_for_record_class(type(record))
 
+    def get_model_for_record(self, record: Any) -> Model:
+        """Retrieve the associated service for a given record."""
+        if record is None:
+            raise ValueError("Need to pass a record instance, got None")
+        return self.get_model_for_record_class(type(record))
+
     def get_file_service_for_record(self, record: Any) -> FileService | None:
         """Return the file service for the given record (draft or published)."""
         model = self.models_by_record_class.get(type(record))
@@ -189,12 +195,15 @@ class OARepoRuntime:
 
     def get_record_service_for_record_class(self, record_cls: type[RecordBase]) -> RecordService:
         """Retrieve the service associated with a given record class."""
+        return self.get_model_for_record_class(record_cls).service
+
+    def get_model_for_record_class(self, record_cls: type[RecordBase]) -> Model:
+        """Retrieve the service associated with a given record class."""
         for t in record_cls.mro():
             if t is RecordBase:
                 break
             if t in self.models_by_record_class:
-                model = self.models_by_record_class[t]
-                return model.service
+                return self.models_by_record_class[t]
         raise KeyError(f"No service found for record class '{record_cls.__name__}'.")
 
     @cached_property

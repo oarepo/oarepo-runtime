@@ -18,9 +18,14 @@ fixtures are available.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
+from flask import Blueprint
 from flask_principal import Identity, Need, UserNeed
 from flask_resources import JSONDeserializer
+from flask_resources.serializers import BaseSerializer
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.proxies import current_service_registry
 from invenio_vocabularies.records.models import VocabularyType
@@ -120,12 +125,21 @@ class DummySerializer:
         return f"list:{len(obj_list)}"
 
 
-def _export(code: str, mimetype: str) -> Export:
+class DataciteSerializer(BaseSerializer):
+    """Minimal datacite serializer stub used in tests."""
+
+    def serialize_object(self, _obj):
+        """Serialize a single object."""
+        with (Path(__file__).parent / "data/datacite_export.json").open() as f:
+            return json.load(f)
+
+
+def _export(code: str, mimetype: str, serializer=DummySerializer) -> Export:
     return Export(
         code=code,
         name="Test",
         mimetype=mimetype,
-        serializer=DummySerializer(),
+        serializer=serializer(),
         description="Test description",
     )
 
@@ -180,3 +194,40 @@ def vocab_records(app, db, search_clear):
 @pytest.fixture
 def info_blueprint(app):
     app.register_blueprint(create_wellknown_blueprint(app))
+
+
+@pytest.fixture(scope="module")
+def app_with_mock_ui_bp(app):
+    bp = Blueprint("mock", __name__)
+
+    # mock UI resource
+    @bp.route("/test-ui-links/preview/<pid_value>", methods=["GET"])
+    def preview(pid_value: str) -> str:
+        return "preview ok"
+
+    @bp.route("/test-ui-links/", methods=["GET"])
+    def search() -> str:
+        return "search ok"
+
+    @bp.route("/test-ui-links/uploads/<pid_value>", methods=["GET"])
+    def deposit_edit(pid_value: str) -> str:
+        return "deposit edit ok"
+
+    @bp.route("/test-ui-links/uploads/new", methods=["GET"])
+    def deposit_create() -> str:
+        return "deposit create ok"
+
+    @bp.route("/test-ui-links/records/<pid_value>")
+    def record_detail(pid_value) -> str:
+        return "detail ok"
+
+    @bp.route("/test-ui-links/records/<pid_value>/latest", methods=["GET"])
+    def record_latest(pid_value: str) -> str:
+        return "latest ok"
+
+    @bp.route("/test-ui-links/records/<pid_value>/export/<export_format>", methods=["GET"])
+    def export(pid_value, export_format: str) -> str:
+        return "export ok"
+
+    app.register_blueprint(bp)
+    return app

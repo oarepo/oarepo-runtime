@@ -260,3 +260,8 @@ def test_get_file_service_for_published_record(app, service, identity_simple):
     created._record.is_draft = False  # noqa: SLF001
     file_service = current_runtime.get_file_service_for_record(created._record)  # noqa: SLF001
     assert isinstance(file_service, FileService)
+
+
+def test_get_model_for_record_value_error(app):
+    with pytest.raises(ValueError, match=r"Need to pass a record instance, got None"):
+        current_runtime.get_model_for_record(record=None)

@@ -17,7 +17,7 @@ from invenio_records_resources.resources.records import RecordResource
 from invenio_records_resources.services.files import FileService
 
 from oarepo_runtime import Model
-from tests.conftest import _export, _import
+from tests.conftest import DataciteSerializer, _export, _import
 
 from .resource import RecordResourceConfig
 from .service import (
@@ -52,15 +52,19 @@ class MockModuleExt:
             service="mock-record-service",
             records_alias_enabled=True,
             resource_config=self.resource_config,
-            file_service=FileService(FileServiceConfig()),
-            draft_file_service=FileService(DraftFileServiceConfig()),
-            exports=[_export("mock-api", "application/json")],
+            file_service=self.file_service,
+            draft_file_service=self.draft_file_service,
+            exports=[
+                _export("mock-api", "application/json"),
+                _export("datacite", "application/vnd.datacite.datacite+json", serializer=DataciteSerializer),
+            ],
             imports=[_import("mock-api", "application/json")],
             features={
                 "draft": {"enabled": True},
                 "files": {"enabled": True},
                 "requests": {"enabled": True},
             },
+            ui_blueprint_name="mock",
         )
 
     @cached_property
@@ -112,4 +116,12 @@ def finalize_mock_module(app):
         current_service_registry.register(
             app.extensions["mock-module"].service,
             service_id="mock-record-service",
+        )
+        current_service_registry.register(
+            app.extensions["mock-module"].file_service,
+            service_id="mock-record-file-service",
+        )
+        current_service_registry.register(
+            app.extensions["mock-module"].draft_file_service,
+            service_id="mock-record-draft-file-service",
         )
