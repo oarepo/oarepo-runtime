@@ -113,6 +113,11 @@ class ServiceConfig(RecordServiceConfig):
         "record": RecordLink("{+api}/mocks/{id}", when=is_draft),
         "publish": RecordLink("{+api}/mocks/{id}/draft/actions/publish", when=is_draft),
         "versions": RecordLink("{+api}/mocks/{id}/versions"),
+        "files": ConditionalLink(
+            cond=is_record,
+            if_=RecordLink("{+api}/mocks/{id}/files"),
+            else_=RecordLink("{+api}/mocks/{id}/draft/files"),
+        ),
     }
 
 

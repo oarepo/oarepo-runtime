@@ -153,6 +153,7 @@ class Model[
         model_metadata: ModelMetadata | None = None,
         features: Mapping[str, Any] | None = None,
         imports: list[Import] | None = None,
+        ui_blueprint_name: str | None = None,
     ):
         """Initialize the model configuration.
 
@@ -179,6 +180,7 @@ class Model[
         :param features: Features of the model. Filled by the feature presets themselves during registration.
         :param imports: List of import formats that can be used to import the record.
             If not provided, no imports are available.
+        :param ui_blueprint_name: Name of the UI blueprint
         """
         self._code = code
         self._name = name
@@ -203,6 +205,7 @@ class Model[
         self._imports = imports or []
         self._model_metadata = model_metadata
         self._features = features
+        self._ui_blueprint_name = ui_blueprint_name
 
     @property
     def code(self) -> str:
@@ -303,6 +306,11 @@ class Model[
         return cast("str", self.resource_config.blueprint_name)
 
     @property
+    def ui_blueprint_name(self) -> str | None:
+        """Get the API blueprint name for the model."""
+        return self._ui_blueprint_name
+
+    @property
     def record_pid_type(self) -> str | None:
         """Get the PID type for the model."""
         return self._pid_type_from_record(self.record_cls)
@@ -342,6 +350,12 @@ class Model[
         """Get the API URL for the model."""
         return cast("str", invenio_url_for(f"{self.api_blueprint_name}.{view_name}", **kwargs))
 
+    def ui_url(self, view_name: str, **kwargs: Any) -> str | None:
+        """Get the UI URL for the model."""
+        if self.ui_blueprint_name is None:
+            return None
+        return cast("str", invenio_url_for(f"{self.ui_blueprint_name}.{view_name}", **kwargs))
+
     @cached_property
     def resource_config(self) -> RC:
         """Get the resource configuration."""
@@ -373,6 +387,13 @@ class Model[
     def exports(self) -> list[Export]:
         """Get all exportable response handlers."""
         return self._exports
+
+    def get_export_by_mimetype(self, mimetype: str) -> Export | None:
+        """Get an export by mimetype."""
+        for export in self._exports:
+            if export.mimetype == mimetype:
+                return export
+        return None
 
     @property
     def response_handlers(self) -> dict[str, ResponseHandler]:
