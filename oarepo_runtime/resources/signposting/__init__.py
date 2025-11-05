@@ -30,15 +30,12 @@ describedby <-> describes
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Literal, cast, overload
+from typing import Any, Literal, cast, overload
 from urllib.parse import urljoin
 
-if TYPE_CHECKING:
-    from invenio_records_resources.services.records.results import RecordItem
 from signposting import AbsoluteURI, LinkRel, Signpost
 
 from oarepo_runtime.proxies import current_runtime
-from oarepo_runtime.typing import record_from_result
 
 
 def signpost_link_to_str(signpost_link: Signpost) -> str:
@@ -152,21 +149,21 @@ def list_of_signpost_links_to_http_header(links_list: list[Signpost]) -> str:
     return f"Link: {', '.join(links)}"
 
 
-def create_linkset(datacite_dict: dict, record_item: RecordItem) -> str:
+def create_linkset(datacite_dict: dict, record_dict: dict) -> str:
     """Create a linkset for the record item in the application/linkset format.
 
     Args:
         datacite_dict:  dictionary with datacite data
-        record_item: record item, for which signpost links should be generated
+        record_dict: record item dict, for which signpost links should be generated
 
     Returns: linkset in string format
 
     """
-    landing_page_url = record_item.links.get("self_html")
+    landing_page_url = record_dict.get("links", {}).get("self_html")
     # just sanity check, we don't expect this to happen, not covered in tests
     if not landing_page_url:  # pragma: no cover
         return ""
-    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_item, short=False)
+    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
     additional_links: list[Signpost] = get_additional_links(landing_page_links, landing_page_url, as_dict=False)
     anchored_links = [
         anchor_signpost_link(signpost_link, landing_page_url) for signpost_link in landing_page_links
@@ -175,21 +172,21 @@ def create_linkset(datacite_dict: dict, record_item: RecordItem) -> str:
     return ", ".join(links)
 
 
-def create_linkset_json(datacite_dict: dict, record_item: RecordItem) -> dict[str, list[dict[str, Any]]]:
+def create_linkset_json(datacite_dict: dict, record_dict: dict) -> dict[str, list[dict[str, Any]]]:
     """Create a linkset for the record item in the application/linkset+json format.
 
     Args:
         datacite_dict:  dictionary with datacite data
-        record_item: record item, for which signpost links should be generated
+        record_dict: record item dict, for which signpost links should be generated
 
     Returns: linkset in JSON format
 
     """
-    landing_page_url = record_item.links.get("self_html")
+    landing_page_url = record_dict.get("links", {}).get("self_html")
     # just sanity check, we don't expect this to happen, not covered in tests
     if not landing_page_url:  # pragma: no cover
         return {}
-    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_item, short=False)
+    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
     dict_of_links_by_relation = defaultdict(list)
     for link in landing_page_links:
         dict_of_links_by_relation[str(link.rel)].append(link)
@@ -204,18 +201,17 @@ def create_linkset_json(datacite_dict: dict, record_item: RecordItem) -> dict[st
     return {"linkset": [dict(links_json), *[x for x in additional_links if x]]}
 
 
-def file_content_signpost_links_list(record_item: RecordItem) -> list[Signpost]:
+def file_content_signpost_links_list(record_dict: dict) -> list[Signpost]:
     """Create a list of signpost links for the file content of the record item.
 
     Args:
-        record_item: record item with the file to generate a signpost link for
+        record_dict: record item dict with the file to generate a signpost link for
 
     Returns: list with the signpost link for the file content
 
     """
-    record = record_from_result(record_item)
-    model = current_runtime.get_model_for_record(record)
-    landing_page_url = model.ui_url(view_name="record_detail", pid_value=record.pid.pid_value)
+    model = current_runtime.models_by_schema[record_dict["$schema"]]
+    landing_page_url = model.ui_url(view_name="record_detail", pid_value=record_dict["id"])
     if not landing_page_url:  # pragma: no cover
         return []
     return [
@@ -237,47 +233,48 @@ def file_content_signpost_links_list(record_item: RecordItem) -> list[Signpost]:
     ]
 
 
-def export_format_signpost_links_list(record_item: RecordItem) -> list[Signpost]:
+def export_format_signpost_links_list(record_dict: dict) -> list[Signpost]:
     """Create a list of signpost links for the export format of the record item.
 
     Args:
-    record_item: record item with the export format to generate a signpost link for
+    record_dict: record item dict with the export format to generate a signpost link for
     code: code of the export format
 
     Returns: list with the signpost link for the export format
 
     """
+    landing_page_url = record_dict.get("links", {}).get("self_html")
+    if not landing_page_url:  # pragma: no cover
+        return []
     return [
         Signpost(
             rel=LinkRel.linkset,
-            target=record_item.links["self_html"],
+            target=landing_page_url,
             media_type="application/linkset",
         ),
         Signpost(
             rel=LinkRel.linkset,
-            target=record_item.links["self_html"],
+            target=landing_page_url,
             media_type="application/linkset+json",
         ),
-        Signpost(rel=LinkRel.describes, target=record_item.links["self_html"], media_type="text/html"),
+        Signpost(rel=LinkRel.describes, target=landing_page_url, media_type="text/html"),
     ]
 
 
-def landing_page_signpost_links_list(datacite_dict: dict, record_item: RecordItem, short: bool) -> list[Signpost]:
+def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, short: bool) -> list[Signpost]:
     """Create a list of signpost links for the landing page of the record item.
 
     Args:
         datacite_dict: dictionary with datacite data
-        record_item: record item, for which signpost links should be generated
+        record_dict: record item dict, for which signpost links should be generated
         short: If true, lists only the first three links for relations with greater count
 
     Returns: list of signpost links for the landing page
 
     """
     signposting_links: list[Signpost] = []
-    record = record_from_result(record_item)
-    record_data = record_item.data  # self.html
-    record_files = record_data.get("files", {}).get("entries", {})
-    model = current_runtime.get_model_for_record(record)
+    record_files = record_dict.get("files", {}).get("entries", {})
+    model = current_runtime.models_by_schema[record_dict["$schema"]]
 
     # author - prvni tri
     data = datacite_dict["data"]
@@ -297,7 +294,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_item: RecordIte
     # describedby
     for model_export in model.exports:
         model_export_url = model.ui_url(
-            view_name="export", pid_value=record.pid.pid_value, export_format=model_export.code
+            view_name="export", pid_value=record_dict["id"], export_format=model_export.code
         )
         # just sanity check, we don't expect this to happen, not covered in tests
         if not model_export_url:  # pragma: no cover
@@ -310,7 +307,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_item: RecordIte
     record_file_values = record_files.values()
     if short:
         record_file_values = list(record_file_values)[:3]
-    record_files_url = record_item.links.get("files")
+    record_files_url = record_dict.get("links", {}).get("files")
     if record_files_url:
         signposting_links.extend(
             Signpost(
@@ -343,23 +340,21 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_item: RecordIte
     return signposting_links
 
 
-def record_to_linkset(record_item: RecordItem) -> str:
-    """Create a linkset from the record item. Get datacite to build linkset from model exports."""
-    record = record_from_result(record_item)
-    model = current_runtime.get_model_for_record(record)
+def record_dict_to_linkset(record_dict: dict) -> str:
+    """Create a linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
+    model = current_runtime.models_by_schema[record_dict["$schema"]]
     datacite_export = model.get_export_by_mimetype("application/vnd.datacite.datacite+json")
     if not datacite_export:
         return ""
-    datacite_dict = datacite_export.serializer.serialize_object(record)
-    return create_linkset(datacite_dict, record_item)
+    datacite_dict = datacite_export.serializer.serialize_object(record_dict)
+    return create_linkset(datacite_dict, record_dict)
 
 
-def record_to_json_linkset(record_item: RecordItem) -> dict[str, list[dict[str, Any]]]:
-    """Create a JSON linkset from the record item. Get datacite to build linkset from model exports."""
-    record = record_from_result(record_item)
-    model = current_runtime.get_model_for_record(record)
+def record_dict_to_json_linkset(record_dict: dict) -> dict[str, list[dict[str, Any]]]:
+    """Create a JSON linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
+    model = current_runtime.models_by_schema[record_dict["$schema"]]
     datacite_export = model.get_export_by_mimetype("application/vnd.datacite.datacite+json")
     if not datacite_export:
         return {}
-    datacite_dict = datacite_export.serializer.serialize_object(record)
-    return create_linkset_json(datacite_dict, record_item)
+    datacite_dict = datacite_export.serializer.serialize_object(record_dict)
+    return create_linkset_json(datacite_dict, record_dict)

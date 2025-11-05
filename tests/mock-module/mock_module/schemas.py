@@ -109,6 +109,7 @@ class RecordSchema(BaseRecordSchema):
     metadata = fields.Nested(MetadataSchema)
     files = fields.Nested(FilesSchema)
     media_files = fields.Nested(FilesSchema)
+    schema = fields.String(attribute="schema", data_key="$schema")
 
     @pre_load
     def clean_data(self, input_data, **_kwargs: Any) -> dict[str, Any]:
