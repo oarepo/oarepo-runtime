@@ -22,8 +22,8 @@ from oarepo_runtime.resources.signposting import (
     file_content_signpost_links_list,
     landing_page_signpost_links_list,
     list_of_signpost_links_to_http_header,
-    record_to_json_linkset,
-    record_to_linkset,
+    record_dict_to_json_linkset,
+    record_dict_to_linkset,
     signpost_link_to_str,
 )
 from oarepo_runtime.typing import record_from_result
@@ -59,16 +59,16 @@ def test_signposting_linkset(
     file_service = current_runtime.get_file_service_for_record(record)
     file_item = add_file_to_record(file_service, record_item.id, "test.png", identity_simple)
 
-    record_item = service.read_draft(identity_simple, record_item.id, expand=True)
+    record_item = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
 
     with (Path(__file__).parent / "data/datacite_export.json").open() as f:
         datacite_dict = json.load(f)
     signposting_links = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_item=record_item, short=True
+        datacite_dict=datacite_dict, record_dict=record_item, short=True
     )
-    signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_item=record_item)
-    signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_item=record_item)
-    record_id = record_item.id
+    signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_item)
+    signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_item)
+    record_id = record_item["id"]
     assert signposting_linkset_json == {
         "linkset": [
             {
@@ -147,7 +147,7 @@ def test_signposting_linkset(
         f'anchor="https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}"'
     )
 
-    assert record_to_linkset(record_item) == (
+    assert record_dict_to_linkset(record_item) == (
         f'<https://orcid.org/0000-0001-5727-2427>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://ror.org/04wxnsj81>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://doi.org/10.82433/b09z-4k37>; rel=cite-as; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -167,7 +167,7 @@ def test_signposting_linkset(
         f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=collection; type="text/html"; '
         f'anchor="https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png"'
     )
-    assert record_to_json_linkset(record_item) == {
+    assert record_dict_to_json_linkset(record_item) == {
         "linkset": [
             {
                 "anchor": f"https://127.0.0.1:5000/uploads/{record_id}",
@@ -206,8 +206,8 @@ def test_signposting_linkset(
     model = current_runtime.get_model_for_record(record)
     model_exports = model.exports
     model._exports = []  # noqa: SLF001
-    assert record_to_json_linkset(record_item) == {}
-    assert record_to_linkset(record_item) == ""
+    assert record_dict_to_json_linkset(record_item) == {}
+    assert record_dict_to_linkset(record_item) == ""
     model._exports = model_exports  # noqa: SLF001
 
 
@@ -223,15 +223,16 @@ def test_files_signposting(
                 "enabled": True,
             },
         },
-    )
-    file_content_signposting = file_content_signpost_links_list(record_item=record_item)
+    ).to_dict()
+    file_content_signposting = file_content_signpost_links_list(record_dict=record_item)
+    record_id = record_item["id"]
     assert str(file_content_signposting) == (
         "[<Signpost rel=linkset "
-        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id} "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id} "
         "type=application/linkset>, <Signpost rel=linkset "
-        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id} "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id} "
         "type=application/linkset+json>, <Signpost rel=collection "
-        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id} "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id} "
         "type=text/html>]"
     )
 
@@ -248,14 +249,15 @@ def test_export_format_signposting(
                 "enabled": True,
             },
         },
-    )
-    export_format_signposting = export_format_signpost_links_list(record_item=record_item)
+    ).to_dict()
+    export_format_signposting = export_format_signpost_links_list(record_dict=record_item)
+    record_id = record_item["id"]
     assert str(export_format_signposting) == (
-        f"[<Signpost rel=linkset target=https://127.0.0.1:5000/uploads/{record_item.id} "
+        f"[<Signpost rel=linkset target=https://127.0.0.1:5000/uploads/{record_id} "
         "type=application/linkset>, <Signpost rel=linkset "
-        f"target=https://127.0.0.1:5000/uploads/{record_item.id} "
+        f"target=https://127.0.0.1:5000/uploads/{record_id} "
         "type=application/linkset+json>, <Signpost rel=describes "
-        f"target=https://127.0.0.1:5000/uploads/{record_item.id} type=text/html>]"
+        f"target=https://127.0.0.1:5000/uploads/{record_id} type=text/html>]"
     )
 
 
@@ -271,21 +273,22 @@ def test_landing_page_signposting(
                 "enabled": True,
             },
         },
-    )
+    ).to_dict()
     with (Path(__file__).parent / "data/datacite_export.json").open() as f:
         datacite_dict = json.load(f)
     landing_page_signposting = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_item=record_item, short=True
+        datacite_dict=datacite_dict, record_dict=record_item, short=True
     )
+    record_id = record_item["id"]
     assert str(landing_page_signposting) == (
         "[<Signpost rel=author target=https://orcid.org/0000-0001-5727-2427>, "
         "<Signpost rel=author target=https://ror.org/04wxnsj81>, "
         "<Signpost rel=cite-as target=https://doi.org/10.82433/b09z-4k37>, "
         "<Signpost rel=describedby "
-        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id}/export/mock-api "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api "
         "type=application/json>, "
         "<Signpost rel=describedby "
-        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id}/export/datacite "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite "
         "type=application/vnd.datacite.datacite+json>, "
         "<Signpost rel=license target=https://spdx.org/licenses/cc-by-4.0>, "
         "<Signpost rel=type target=https://schema.org/Dataset>, "
@@ -305,20 +308,21 @@ def test_create_signposting_header(
                 "enabled": True,
             },
         },
-    )
+    ).to_dict()
     with (Path(__file__).parent / "data/datacite_export.json").open() as f:
         datacite_dict = json.load(f)
     signposting_links = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_item=record_item, short=True
+        datacite_dict=datacite_dict, record_dict=record_item, short=True
     )
     signposting_header = list_of_signpost_links_to_http_header(links_list=signposting_links)
+    record_id = record_item["id"]
     assert signposting_header == (
         "Link: <https://orcid.org/0000-0001-5727-2427>; rel=author, "
         "<https://ror.org/04wxnsj81>; rel=author, "
         "<https://doi.org/10.82433/b09z-4k37>; rel=cite-as, "
-        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id}/export/mock-api>; "
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
         'rel=describedby; type="application/json", '
-        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_item.id}/export/datacite>; "
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; "
         'rel=describedby; type="application/vnd.datacite.datacite+json", '
         "<https://spdx.org/licenses/cc-by-4.0>; rel=license, "
         "<https://schema.org/Dataset>; rel=type, <https://schema.org/AboutPage>; "
