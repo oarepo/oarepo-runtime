@@ -294,7 +294,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
     # describedby
     for model_export in model.exports:
         model_export_url = model.ui_url(
-            view_name="export", pid_value=record_dict["id"], export_format=model_export.code
+            view_name="record_export", pid_value=record_dict["id"], export_format=model_export.code
         )
         # just sanity check, we don't expect this to happen, not covered in tests
         if not model_export_url:  # pragma: no cover
