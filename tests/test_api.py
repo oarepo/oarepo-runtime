@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -541,3 +542,20 @@ def test_entity_type_without_entity():
 
     with pytest.raises(TypeError):
         model.entity_type  # noqa B018
+
+
+def test_namespace_present():
+    """Test imports property with custom value."""
+    service = MockService()
+    namespace = SimpleNamespace()
+
+    model = Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=service,  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        namespace=namespace,
+    )
+
+    assert model.namespace is namespace
