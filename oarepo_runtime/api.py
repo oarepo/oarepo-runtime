@@ -22,6 +22,7 @@ from invenio_records_resources.proxies import current_service_registry
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from types import SimpleNamespace
 
     from flask_babel.speaklater import LazyString
     from flask_resources.deserializers import DeserializerMixin
@@ -154,6 +155,7 @@ class Model[
         features: Mapping[str, Any] | None = None,
         imports: list[Import] | None = None,
         ui_blueprint_name: str | None = None,
+        namespace: SimpleNamespace | None = None,
     ):
         """Initialize the model configuration.
 
@@ -181,6 +183,7 @@ class Model[
         :param imports: List of import formats that can be used to import the record.
             If not provided, no imports are available.
         :param ui_blueprint_name: Name of the UI blueprint
+        :param namespace: SimpleNamespace where the model is being created. Used by oarepo-model.
         """
         self._code = code
         self._name = name
@@ -206,6 +209,7 @@ class Model[
         self._model_metadata = model_metadata
         self._features = features
         self._ui_blueprint_name = ui_blueprint_name
+        self._namespace = namespace
 
     @property
     def code(self) -> str:
@@ -416,3 +420,8 @@ class Model[
         if self.records_alias_enabled:
             return cast("str", self.service.id)
         raise TypeError("This model does not have associated entity type.")
+
+    @property
+    def namespace(self) -> SimpleNamespace | None:
+        """Get the namespace where the model is being created."""
+        return self._namespace
