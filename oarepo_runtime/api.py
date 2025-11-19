@@ -95,7 +95,7 @@ class Export:
     """Description of the export format, human readable."""
 
     extension: str | None = None
-    """Ext."""
+    """Extension of the export format, used in the filename when downloading the export."""
 
     def __post_init__(self):
         """Post init with extension guessing."""
@@ -103,8 +103,10 @@ class Export:
             extension = guess_extension(self.mimetype)
             if not extension:
                 first, second = self.mimetype.rsplit("/", maxsplit=1)
-                _, second = second.rsplit("+", maxsplit=1)
-                extension = guess_extension(f"{first}/{second}")
+                second = second.rsplit("+", maxsplit=1)[-1]
+                mimetype = f"{first}/{second}"
+                if mimetype != self.mimetype:
+                    extension = guess_extension(mimetype)
             self.extension = extension
         if not self.extension:
             self.extension = ".bin"
