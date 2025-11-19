@@ -422,7 +422,7 @@ def test_export_extension():
     """Test exports property with custom value."""
     from oarepo_runtime.api import Export
 
-    export_without_extension = Export(
+    export_without_extension_1 = Export(
         code="test",
         name="Test",
         mimetype="test/test+test",
@@ -430,7 +430,16 @@ def test_export_extension():
         description="Test description",
     )
 
-    assert export_without_extension.extension == ".bin"
+    export_without_extension_2 = Export(
+        code="test",
+        name="Test",
+        mimetype="test/test",
+        serializer=DummySerializer(),
+        description="Test description",
+    )
+
+    assert export_without_extension_1.extension == ".bin"
+    assert export_without_extension_2.extension == ".bin"
 
 
 def test_model_metadata_property_none():
