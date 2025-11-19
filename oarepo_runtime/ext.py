@@ -11,8 +11,10 @@
 
 from __future__ import annotations
 
+import json
+from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from flask import current_app
 from invenio_db import db
@@ -20,6 +22,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
+from lxml.etree import fromstring
 
 from . import config
 
@@ -34,8 +37,17 @@ if TYPE_CHECKING:  # pragma: no cover
     from invenio_records_resources.services.base.service import Service
     from invenio_records_resources.services.files.service import FileService
     from invenio_records_resources.services.records import RecordService
+    from lxml.etree import Element
 
     from .api import Model
+
+
+class ExportRepresentation(Enum):
+    """Representation of the export, which can be response, dictionary or XML."""
+
+    RESPONSE = ("response",)  # Response
+    DICTIONARY = ("dictionary",)  # python dictionary
+    XML = ("xml",)  # XML Element
 
 
 class OARepoRuntime:
@@ -226,3 +238,106 @@ class OARepoRuntime:
                 if draft_index is not None:
                     indices.add(draft_index.search_alias)
         return indices
+
+    @overload
+    def get_export_from_serialized_record(
+        self,
+        record_dict: dict,
+        representation: Literal[ExportRepresentation.RESPONSE],
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+    ) -> tuple[Any, int, dict[str, str]] | None: ...
+
+    @overload
+    def get_export_from_serialized_record(
+        self,
+        record_dict: dict,
+        representation: Literal[ExportRepresentation.DICTIONARY],
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+    ) -> dict: ...
+
+    @overload
+    def get_export_from_serialized_record(
+        self,
+        record_dict: dict,
+        representation: Literal[ExportRepresentation.XML],
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+    ) -> Element: ...
+
+    def get_export_from_serialized_record(
+        self,
+        record_dict: dict,
+        representation: Literal[
+            ExportRepresentation.RESPONSE, ExportRepresentation.DICTIONARY, ExportRepresentation.XML
+        ],
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+    ):
+        """Retrieve and prepare the export of a record item based on the specified parameters.
+
+        This function processes the input `record_item` and converts it to the appropriate
+        export format based on the `representation` and either `export_code` or `export_mimetype`.
+        It ensures strict constraints on input validity and raises errors when conditions
+        are violated.
+
+        Args:
+            record_dict: The record item serialized as a dictionary
+            representation: The desired output representation of the export. It must be one
+                of the defined values of `ExportRepresentation`.
+            export_code: The code representing the type of export to retrieve. Only one of
+                `export_code` or `export_mimetype` should be provided.
+            export_mimetype: The MIME type representing the type of export to retrieve. Only
+                one of `export_code` or `export_mimetype` should be provided.
+
+        Raises:
+            ValueError: Raised if both `export_code` and `export_mimetype` are None.
+            ValueError: Raised if both `export_code` and `export_mimetype` are provided
+                simultaneously.
+            ValueError: Raised if no export is found for the given `export_code` or
+                `export_mimetype`.
+
+        Returns:
+            Union[Tuple[str, int, dict], dict, etree._Element]: Depending on the `representation`
+            specified:
+                - If `ExportRepresentation.RESPONSE`, returns a tuple with the serialized export,
+                  HTTP status code (200), and the HTTP headers containing content type and
+                  disposition.
+                - If `ExportRepresentation.DICTIONARY`, returns a dictionary representation of
+                  the exported record item.
+                - If `ExportRepresentation.XML`, returns an XML element structure of the exported
+                  record.
+
+        """
+        model = self.models_by_schema[record_dict["$schema"]]
+        if export_mimetype:
+            if export_code is not None:
+                raise ValueError("Only one of the parameters export_code/export_mimetype must be set, both are set")
+            model_export = model.get_export_by_mimetype(mimetype=export_mimetype)
+        elif export_code:
+            model_export = model.get_export_by_code(code=export_code)
+        else:
+            raise ValueError("One of the parameters export_code/export_mimetype must be set, both are None")
+
+        if model_export is None:
+            raise ValueError("No export found for the given mimetype or code")
+
+        exported_record = model_export.serializer.serialize_object(record_dict)
+
+        match representation:
+            case ExportRepresentation.RESPONSE:
+                filename = f"{record_dict['id']}{model_export.extension}"
+                headers = {
+                    "Content-Type": model_export.mimetype,
+                    "Content-Disposition": f"attachment; filename={filename}",
+                }
+                return (exported_record, 200, headers)
+
+            case ExportRepresentation.DICTIONARY:
+                if isinstance(exported_record, str):
+                    exported_record = json.loads(exported_record)
+                return exported_record
+
+            case ExportRepresentation.XML:
+                return fromstring(exported_record)

@@ -262,6 +262,20 @@ def test_get_file_service_for_published_record(app, service, identity_simple):
     assert isinstance(file_service, FileService)
 
 
+def test_get_model_for_record(app, service, identity_simple):
+    created = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "PID test"},
+            "files": {"enabled": False},
+        },
+    )
+    # Simulate published record
+    created._record.is_draft = False  # noqa: SLF001
+    model = current_runtime.get_model_for_record(record=created._record)  # noqa: SLF001
+    assert isinstance(model, Model)
+
+
 def test_get_model_for_record_value_error(app):
     with pytest.raises(ValueError, match=r"Need to pass a record instance, got None"):
         current_runtime.get_model_for_record(record=None)

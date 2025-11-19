@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import dataclasses
 from functools import cached_property
+from mimetypes import guess_extension
 from typing import TYPE_CHECKING, Any, cast
 
 from flask import current_app
@@ -92,6 +93,21 @@ class Export:
 
     description: LazyString | None = None
     """Description of the export format, human readable."""
+
+    extension: str | None = None
+    """Ext."""
+
+    def __post_init__(self):
+        """Post init with extension guessing."""
+        if self.extension is None:
+            extension = guess_extension(self.mimetype)
+            if not extension:
+                first, second = self.mimetype.rsplit("/", maxsplit=1)
+                _, second = second.rsplit("+", maxsplit=1)
+                extension = guess_extension(f"{first}/{second}")
+            self.extension = extension
+        if not self.extension:
+            self.extension = ".bin"
 
 
 @dataclasses.dataclass
@@ -396,6 +412,13 @@ class Model[
         """Get an export by mimetype."""
         for export in self._exports:
             if export.mimetype == mimetype:
+                return export
+        return None
+
+    def get_export_by_code(self, code: str) -> Export | None:
+        """Get an export by code."""
+        for export in self._exports:
+            if export.code == code:
                 return export
         return None
 
