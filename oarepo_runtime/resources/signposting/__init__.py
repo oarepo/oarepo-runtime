@@ -35,6 +35,7 @@ from urllib.parse import urljoin
 
 from signposting import AbsoluteURI, LinkRel, Signpost
 
+from oarepo_runtime.ext import ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 
 
@@ -277,9 +278,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
     model = current_runtime.models_by_schema[record_dict["$schema"]]
 
     # author - prvni tri
-    data = datacite_dict["data"]
-    attributes = data["attributes"]
-    creators = attributes.get("creators", [])
+    creators = datacite_dict.get("creators", [])
     if short:
         creators = creators[:3]
     for attribute in creators:
@@ -289,7 +288,9 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
         )
 
     # cite-as = DOI
-    signposting_links.append(Signpost(rel=LinkRel.cite_as, target=urljoin("https://doi.org/", attributes.get("doi"))))
+    signposting_links.append(
+        Signpost(rel=LinkRel.cite_as, target=urljoin("https://doi.org/", datacite_dict.get("doi")))
+    )
 
     # describedby
     for model_export in model.exports:
@@ -319,7 +320,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
         )
 
     # license
-    for attribute in attributes.get("rightsList"):
+    for attribute in datacite_dict.get("rightsList", []):
         # check for schemeUri, rightsIdentifier and 'rightsIdentifierScheme' == SPDX, fallback rightsUri, else nothing
         license_url = attribute.get("rightsUri")
         if (
@@ -331,7 +332,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
         signposting_links.append(Signpost(rel=LinkRel.license, target=license_url))
 
     # type
-    schema_org = attributes.get("types", {}).get("schemaOrg")
+    schema_org = datacite_dict.get("types", {}).get("schemaOrg")
     if schema_org:
         resource_type_url = "https://schema.org/" + schema_org
         signposting_links.append(Signpost(rel=LinkRel.type, target=resource_type_url))
@@ -342,19 +343,19 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
 
 def record_dict_to_linkset(record_dict: dict) -> str:
     """Create a linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
-    model = current_runtime.models_by_schema[record_dict["$schema"]]
-    datacite_export = model.get_export_by_mimetype("application/vnd.datacite.datacite+json")
-    if not datacite_export:
-        return ""
-    datacite_dict = datacite_export.serializer.serialize_object(record_dict)
+    datacite_dict = current_runtime.get_export_from_serialized_record(
+        record_dict=record_dict,
+        representation=ExportRepresentation.DICTIONARY,
+        export_mimetype="application/vnd.datacite.datacite+json",
+    )
     return create_linkset(datacite_dict, record_dict)
 
 
 def record_dict_to_json_linkset(record_dict: dict) -> dict[str, list[dict[str, Any]]]:
     """Create a JSON linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
-    model = current_runtime.models_by_schema[record_dict["$schema"]]
-    datacite_export = model.get_export_by_mimetype("application/vnd.datacite.datacite+json")
-    if not datacite_export:
-        return {}
-    datacite_dict = datacite_export.serializer.serialize_object(record_dict)
+    datacite_dict = current_runtime.get_export_from_serialized_record(
+        record_dict=record_dict,
+        representation=ExportRepresentation.DICTIONARY,
+        export_mimetype="application/vnd.datacite.datacite+json",
+    )
     return create_linkset_json(datacite_dict, record_dict)

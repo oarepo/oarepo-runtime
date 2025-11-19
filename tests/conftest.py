@@ -131,7 +131,17 @@ class DataciteSerializer(BaseSerializer):
     def serialize_object(self, _obj):
         """Serialize a single object."""
         with (Path(__file__).parent / "data/datacite_export.json").open() as f:
-            return json.load(f)
+            ret = json.load(f)
+            return json.dumps(ret["data"]["attributes"])
+
+
+class DublinCoreSerializer(BaseSerializer):
+    """Minimal datacite serializer stub used in tests."""
+
+    def serialize_object(self, _obj):
+        """Serialize a single object."""
+        with (Path(__file__).parent / "data/dublincore_export.xml").open("rb") as f:
+            return f.read()
 
 
 def _export(code: str, mimetype: str, serializer=DummySerializer) -> Export:
@@ -141,6 +151,7 @@ def _export(code: str, mimetype: str, serializer=DummySerializer) -> Export:
         mimetype=mimetype,
         serializer=serializer(),
         description="Test description",
+        extension="test",
     )
 
 

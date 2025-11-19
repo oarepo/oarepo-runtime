@@ -14,6 +14,10 @@ import json
 from io import BytesIO
 from pathlib import Path
 
+import pytest
+from lxml.etree import Element
+
+from oarepo_runtime.ext import ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.resources.signposting import (
     create_linkset,
@@ -59,16 +63,17 @@ def test_signposting_linkset(
     file_service = current_runtime.get_file_service_for_record(record)
     file_item = add_file_to_record(file_service, record_item.id, "test.png", identity_simple)
 
-    record_item = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
+    record_dict = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
 
     with (Path(__file__).parent / "data/datacite_export.json").open() as f:
-        datacite_dict = json.load(f)
+        datacite_file = json.load(f)
+    datacite_dict = datacite_file["data"]["attributes"]
     signposting_links = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_dict=record_item, short=True
+        datacite_dict=datacite_dict, record_dict=record_dict, short=True
     )
-    signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_item)
-    signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_item)
-    record_id = record_item["id"]
+    signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_dict)
+    signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_dict)
+    record_id = record_dict["id"]
     assert signposting_linkset_json == {
         "linkset": [
             {
@@ -83,6 +88,10 @@ def test_signposting_linkset(
                     {
                         "href": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite",
                         "type": "application/vnd.datacite.datacite+json",
+                    },
+                    {
+                        "href": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
+                        "type": "application/x-dc+xml",
                     },
                 ],
                 "item": [
@@ -103,6 +112,10 @@ def test_signposting_linkset(
                 "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
             },
             {
+                "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
+                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+            },
+            {
                 "anchor": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}",
                 "collection": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
             },
@@ -114,9 +127,14 @@ def test_signposting_linkset(
         "rel=cite-as target=https://doi.org/10.82433/b09z-4k37>, "
         "<Signpost rel=describedby "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api "
-        "type=application/json>, <Signpost rel=describedby "
+        "type=application/json>, "
+        "<Signpost rel=describedby "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite "
-        "type=application/vnd.datacite.datacite+json>, <Signpost rel=item "
+        "type=application/vnd.datacite.datacite+json>, "
+        "<Signpost rel=describedby "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore "
+        "type=application/x-dc+xml>, "
+        "<Signpost rel=item "
         f"target=https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id} "
         "type=image/png>, <Signpost rel=license "
         "target=https://spdx.org/licenses/cc-by-4.0>, <Signpost rel=type "
@@ -134,6 +152,9 @@ def test_signposting_linkset(
         f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; "
         'rel=describedby; type="application/vnd.datacite.datacite+json"; '
         f'anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore>; "
+        'rel=describedby; type="application/x-dc+xml"; '
+        f'anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f"<https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}>; "
         f'rel=item; type="image/png"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://spdx.org/licenses/cc-by-4.0>; rel=license; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -143,11 +164,13 @@ def test_signposting_linkset(
         f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api", '
         f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=describes; type="text/html"; '
         f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite", '
+        f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=describes; type="text/html"; '
+        f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore", '
         f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=collection; type="text/html"; '
         f'anchor="https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}"'
     )
 
-    assert record_dict_to_linkset(record_item) == (
+    assert record_dict_to_linkset(record_dict) == (
         f'<https://orcid.org/0000-0001-5727-2427>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://ror.org/04wxnsj81>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://doi.org/10.82433/b09z-4k37>; rel=cite-as; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -155,6 +178,8 @@ def test_signposting_linkset(
         f'type="application/json"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; rel=describedby; "
         f'type="application/vnd.datacite.datacite+json"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore>; rel=describedby; "
+        f'type="application/x-dc+xml"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png>; rel=item; type="image/png"; '
         f'anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://spdx.org/licenses/cc-by-4.0>; rel=license; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -164,10 +189,12 @@ def test_signposting_linkset(
         f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api", '
         f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=describes; type="text/html"; '
         f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite", '
+        f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=describes; type="text/html"; '
+        f'anchor="https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore", '
         f'<https://127.0.0.1:5000/uploads/{record_id}>; rel=collection; type="text/html"; '
         f'anchor="https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png"'
     )
-    assert record_dict_to_json_linkset(record_item) == {
+    assert record_dict_to_json_linkset(record_dict) == {
         "linkset": [
             {
                 "anchor": f"https://127.0.0.1:5000/uploads/{record_id}",
@@ -181,6 +208,10 @@ def test_signposting_linkset(
                     {
                         "href": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite",
                         "type": "application/vnd.datacite.datacite+json",
+                    },
+                    {
+                        "href": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
+                        "type": "application/x-dc+xml",
                     },
                 ],
                 "item": [
@@ -198,23 +229,21 @@ def test_signposting_linkset(
                 "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
             },
             {
+                "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
+                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+            },
+            {
                 "anchor": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png",
                 "collection": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
             },
         ]
     }
-    model = current_runtime.get_model_for_record(record)
-    model_exports = model.exports
-    model._exports = []  # noqa: SLF001
-    assert record_dict_to_json_linkset(record_item) == {}
-    assert record_dict_to_linkset(record_item) == ""
-    model._exports = model_exports  # noqa: SLF001
 
 
 def test_files_signposting(
     app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
 ):
-    record_item = service.create(
+    record_dict = service.create(
         identity=identity_simple,
         data={
             "metadata": {"title": "Test Record"},
@@ -224,8 +253,8 @@ def test_files_signposting(
             },
         },
     ).to_dict()
-    file_content_signposting = file_content_signpost_links_list(record_dict=record_item)
-    record_id = record_item["id"]
+    file_content_signposting = file_content_signpost_links_list(record_dict=record_dict)
+    record_id = record_dict["id"]
     assert str(file_content_signposting) == (
         "[<Signpost rel=linkset "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id} "
@@ -240,7 +269,7 @@ def test_files_signposting(
 def test_export_format_signposting(
     app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
 ):
-    record_item = service.create(
+    record_dict = service.create(
         identity=identity_simple,
         data={
             "metadata": {"title": "Test Record"},
@@ -250,8 +279,8 @@ def test_export_format_signposting(
             },
         },
     ).to_dict()
-    export_format_signposting = export_format_signpost_links_list(record_dict=record_item)
-    record_id = record_item["id"]
+    export_format_signposting = export_format_signpost_links_list(record_dict=record_dict)
+    record_id = record_dict["id"]
     assert str(export_format_signposting) == (
         f"[<Signpost rel=linkset target=https://127.0.0.1:5000/uploads/{record_id} "
         "type=application/linkset>, <Signpost rel=linkset "
@@ -264,7 +293,7 @@ def test_export_format_signposting(
 def test_landing_page_signposting(
     app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
 ):
-    record_item = service.create(
+    record_dict = service.create(
         identity=identity_simple,
         data={
             "metadata": {"title": "Test Record"},
@@ -275,11 +304,12 @@ def test_landing_page_signposting(
         },
     ).to_dict()
     with (Path(__file__).parent / "data/datacite_export.json").open() as f:
-        datacite_dict = json.load(f)
+        datacite_file = json.load(f)
+    datacite_dict = datacite_file["data"]["attributes"]
     landing_page_signposting = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_dict=record_item, short=True
+        datacite_dict=datacite_dict, record_dict=record_dict, short=True
     )
-    record_id = record_item["id"]
+    record_id = record_dict["id"]
     assert str(landing_page_signposting) == (
         "[<Signpost rel=author target=https://orcid.org/0000-0001-5727-2427>, "
         "<Signpost rel=author target=https://ror.org/04wxnsj81>, "
@@ -290,6 +320,9 @@ def test_landing_page_signposting(
         "<Signpost rel=describedby "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite "
         "type=application/vnd.datacite.datacite+json>, "
+        "<Signpost rel=describedby "
+        f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore "
+        "type=application/x-dc+xml>, "
         "<Signpost rel=license target=https://spdx.org/licenses/cc-by-4.0>, "
         "<Signpost rel=type target=https://schema.org/Dataset>, "
         "<Signpost rel=type target=https://schema.org/AboutPage>]"
@@ -297,6 +330,43 @@ def test_landing_page_signposting(
 
 
 def test_create_signposting_header(
+    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+):
+    record_dict = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "Test Record"},
+            "unknown": True,
+            "files": {
+                "enabled": True,
+            },
+        },
+    ).to_dict()
+    with (Path(__file__).parent / "data/datacite_export.json").open() as f:
+        datacite_file = json.load(f)
+    datacite_dict = datacite_file["data"]["attributes"]
+    signposting_links = landing_page_signpost_links_list(
+        datacite_dict=datacite_dict, record_dict=record_dict, short=True
+    )
+    signposting_header = list_of_signpost_links_to_http_header(links_list=signposting_links)
+    record_id = record_dict["id"]
+    assert signposting_header == (
+        "Link: <https://orcid.org/0000-0001-5727-2427>; rel=author, "
+        "<https://ror.org/04wxnsj81>; rel=author, "
+        "<https://doi.org/10.82433/b09z-4k37>; rel=cite-as, "
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
+        'rel=describedby; type="application/json", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; "
+        'rel=describedby; type="application/vnd.datacite.datacite+json", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore>; "
+        'rel=describedby; type="application/x-dc+xml", '
+        "<https://spdx.org/licenses/cc-by-4.0>; rel=license, "
+        "<https://schema.org/Dataset>; rel=type, <https://schema.org/AboutPage>; "
+        "rel=type"
+    )
+
+
+def test_model_exports(
     app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
 ):
     record_item = service.create(
@@ -308,23 +378,64 @@ def test_create_signposting_header(
                 "enabled": True,
             },
         },
-    ).to_dict()
-    with (Path(__file__).parent / "data/datacite_export.json").open() as f:
-        datacite_dict = json.load(f)
-    signposting_links = landing_page_signpost_links_list(
-        datacite_dict=datacite_dict, record_dict=record_item, short=True
     )
-    signposting_header = list_of_signpost_links_to_http_header(links_list=signposting_links)
-    record_id = record_item["id"]
-    assert signposting_header == (
-        "Link: <https://orcid.org/0000-0001-5727-2427>; rel=author, "
-        "<https://ror.org/04wxnsj81>; rel=author, "
-        "<https://doi.org/10.82433/b09z-4k37>; rel=cite-as, "
-        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
-        'rel=describedby; type="application/json", '
-        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; "
-        'rel=describedby; type="application/vnd.datacite.datacite+json", '
-        "<https://spdx.org/licenses/cc-by-4.0>; rel=license, "
-        "<https://schema.org/Dataset>; rel=type, <https://schema.org/AboutPage>; "
-        "rel=type"
+
+    record_dict = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
+
+    # no mimetype or code provided
+    with pytest.raises(
+        ValueError, match="One of the parameters export_code/export_mimetype must be set, both are None"
+    ):
+        assert current_runtime.get_export_from_serialized_record(
+            record_dict, representation=ExportRepresentation.DICTIONARY
+        )
+
+    # both mimetype and code provided
+    with pytest.raises(
+        ValueError, match="Only one of the parameters export_code/export_mimetype must be set, both are set"
+    ):
+        assert current_runtime.get_export_from_serialized_record(
+            record_dict, representation=ExportRepresentation.DICTIONARY, export_code="a", export_mimetype="b"
+        )
+
+    # nonexistent export
+    with pytest.raises(ValueError, match="No export found for the given mimetype or code"):
+        assert current_runtime.get_export_from_serialized_record(
+            record_dict, representation=ExportRepresentation.DICTIONARY, export_code="nonexistent"
+        )
+
+    export_by_code = current_runtime.get_export_from_serialized_record(
+        record_dict, representation=ExportRepresentation.DICTIONARY, export_code="datacite"
     )
+
+    assert isinstance(export_by_code, dict)
+
+    # export as dictionary
+    export_by_mimetype = current_runtime.get_export_from_serialized_record(
+        record_dict,
+        representation=ExportRepresentation.DICTIONARY,
+        export_mimetype="application/vnd.datacite.datacite+json",
+    )
+
+    assert isinstance(export_by_mimetype, dict)
+
+    # export as response
+    export_as_response = current_runtime.get_export_from_serialized_record(
+        record_dict,
+        representation=ExportRepresentation.RESPONSE,
+        export_mimetype="application/vnd.datacite.datacite+json",
+    )
+
+    assert isinstance(export_as_response, tuple)
+
+    # export as xml
+    export_as_xml = current_runtime.get_export_from_serialized_record(
+        record_dict, representation=ExportRepresentation.XML, export_mimetype="application/x-dc+xml"
+    )
+
+    assert isinstance(export_as_xml, Element)
+
+    model = current_runtime.models_by_schema[record_dict["$schema"]]
+    model_exports = model.exports
+    model._exports = []  # noqa: SLF001
+    model._exports = model_exports  # noqa: SLF001

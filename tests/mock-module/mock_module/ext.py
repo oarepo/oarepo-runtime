@@ -17,7 +17,7 @@ from invenio_records_resources.resources.records import RecordResource
 from invenio_records_resources.services.files import FileService
 
 from oarepo_runtime import Model
-from tests.conftest import DataciteSerializer, _export, _import
+from tests.conftest import DataciteSerializer, DublinCoreSerializer, _export, _import
 
 from .resource import RecordResourceConfig
 from .service import (
@@ -57,6 +57,7 @@ class MockModuleExt:
             exports=[
                 _export("mock-api", "application/json"),
                 _export("datacite", "application/vnd.datacite.datacite+json", serializer=DataciteSerializer),
+                _export("dublincore", "application/x-dc+xml", serializer=DublinCoreSerializer),
             ],
             imports=[_import("mock-api", "application/json")],
             features={

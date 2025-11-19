@@ -17,6 +17,7 @@ import pytest
 
 from oarepo_runtime.api import Model
 from oarepo_runtime.proxies import current_runtime
+from tests.conftest import DummySerializer
 
 
 class MockService:
@@ -415,6 +416,21 @@ def test_exports_property_with_value():
     )
 
     assert model.exports == exports_list
+
+
+def test_export_extension():
+    """Test exports property with custom value."""
+    from oarepo_runtime.api import Export
+
+    export_without_extension = Export(
+        code="test",
+        name="Test",
+        mimetype="test/test+test",
+        serializer=DummySerializer(),
+        description="Test description",
+    )
+
+    assert export_without_extension.extension == ".bin"
 
 
 def test_model_metadata_property_none():
