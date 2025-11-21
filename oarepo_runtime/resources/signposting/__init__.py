@@ -31,18 +31,21 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Any, Literal, cast, overload
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin, urlparse
 
 from signposting import AbsoluteURI, LinkRel, Signpost
 
 from oarepo_runtime.ext import ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 
+LINK_PREFIX = "Link: "
+TEXT_HTML_TYPE = "text/html"
+
 
 def signpost_link_to_str(signpost_link: Signpost) -> str:
     """Convert a signpost link to string."""
     link_str = str(signpost_link)
-    if link_str[:6] == "Link: ":
+    if link_str.startswith(LINK_PREFIX):
         return f"{link_str[6:]}"
     raise ValueError(f"Invalid signpost link: {link_str}")  # pragma: no cover
 
@@ -73,18 +76,20 @@ def signpost_link_to_additional_link(
             if as_dict:
                 return {
                     "anchor": link.target,
-                    str(LinkRel.collection): [{"href": landing_page_url, "type": "text/html"}],
+                    str(LinkRel.collection): [{"href": landing_page_url, "type": TEXT_HTML_TYPE}],
                 }
             return Signpost(
-                rel=LinkRel.collection, target=landing_page_url, media_type="text/html", context=link.target
+                rel=LinkRel.collection, target=landing_page_url, media_type=TEXT_HTML_TYPE, context=link.target
             )
         case LinkRel.describedby:
             if as_dict:
                 return {
                     "anchor": link.target,
-                    str(LinkRel.describes): [{"href": landing_page_url, "type": "text/html"}],
+                    str(LinkRel.describes): [{"href": landing_page_url, "type": TEXT_HTML_TYPE}],
                 }
-            return Signpost(rel=LinkRel.describes, target=landing_page_url, media_type="text/html", context=link.target)
+            return Signpost(
+                rel=LinkRel.describes, target=landing_page_url, media_type=TEXT_HTML_TYPE, context=link.target
+            )
         case LinkRel.cite_as:
             return None
         # anchor is generated only for item & describedby, not for license
@@ -146,16 +151,17 @@ def list_of_signpost_links_to_http_header(links_list: list[Signpost]) -> str:
     Returns: signpost header with formatted links.
 
     """
-    links = [str(link)[6:] for link in links_list if str(link)[:6] == "Link: "]
-    return f"Link: {', '.join(links)}"
+    links = [str(link)[6:] for link in links_list if str(link).startswith(LINK_PREFIX)]
+    return f"{LINK_PREFIX}{', '.join(links)}"
 
 
-def create_linkset(datacite_dict: dict, record_dict: dict) -> str:
+def create_linkset(datacite_dict: dict, record_dict: dict, include_reverse_relations: bool = True) -> str:
     """Create a linkset for the record item in the application/linkset format.
 
     Args:
         datacite_dict:  dictionary with datacite data
         record_dict: record item dict, for which signpost links should be generated
+        include_reverse_relations: if True, inverse relations are included in the linkset
 
     Returns: linkset in string format
 
@@ -165,20 +171,23 @@ def create_linkset(datacite_dict: dict, record_dict: dict) -> str:
     if not landing_page_url:  # pragma: no cover
         return ""
     landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
-    additional_links: list[Signpost] = get_additional_links(landing_page_links, landing_page_url, as_dict=False)
-    anchored_links = [
-        anchor_signpost_link(signpost_link, landing_page_url) for signpost_link in landing_page_links
-    ] + additional_links
-    links = [str(link)[6:] for link in anchored_links if str(link)[:6] == "Link: "]
+    anchored_links = [anchor_signpost_link(signpost_link, landing_page_url) for signpost_link in landing_page_links]
+    if include_reverse_relations:
+        additional_links: list[Signpost] = get_additional_links(landing_page_links, landing_page_url, as_dict=False)
+        anchored_links.extend(additional_links)
+    links = [str(link)[6:] for link in anchored_links if str(link).startswith(LINK_PREFIX)]
     return ", ".join(links)
 
 
-def create_linkset_json(datacite_dict: dict, record_dict: dict) -> dict[str, list[dict[str, Any]]]:
+def create_linkset_json(
+    datacite_dict: dict, record_dict: dict, include_reverse_relations: bool = True
+) -> dict[str, list[dict[str, Any]]]:
     """Create a linkset for the record item in the application/linkset+json format.
 
     Args:
         datacite_dict:  dictionary with datacite data
         record_dict: record item dict, for which signpost links should be generated
+        include_reverse_relations: if True, inverse relations are included in the linkset
 
     Returns: linkset in JSON format
 
@@ -194,12 +203,16 @@ def create_linkset_json(datacite_dict: dict, record_dict: dict) -> dict[str, lis
     links_json = defaultdict(list)
     links_json["anchor"] = landing_page_url
 
-    additional_links: list[dict[str, Any]] = get_additional_links(landing_page_links, landing_page_url)
     for link_relation_from_dict, list_of_links_for_relation in dict_of_links_by_relation.items():
         for link in list_of_links_for_relation:
             links_json[link_relation_from_dict].append(signpost_link_to_dict(link))
 
-    return {"linkset": [dict(links_json), *[x for x in additional_links if x]]}
+    json_linkset = {"linkset": [dict(links_json)]}
+    if include_reverse_relations:
+        additional_links: list[dict[str, Any]] = get_additional_links(landing_page_links, landing_page_url)
+        for additional_link in additional_links:
+            json_linkset["linkset"].append(additional_link)
+    return json_linkset
 
 
 def file_content_signpost_links_list(record_dict: dict) -> list[Signpost]:
@@ -229,7 +242,7 @@ def file_content_signpost_links_list(record_dict: dict) -> list[Signpost]:
         Signpost(
             rel=LinkRel.collection,
             target=landing_page_url,
-            media_type="text/html",
+            media_type=TEXT_HTML_TYPE,
         ),
     ]
 
@@ -258,7 +271,7 @@ def export_format_signpost_links_list(record_dict: dict) -> list[Signpost]:
             target=landing_page_url,
             media_type="application/linkset+json",
         ),
-        Signpost(rel=LinkRel.describes, target=landing_page_url, media_type="text/html"),
+        Signpost(rel=LinkRel.describes, target=landing_page_url, media_type=TEXT_HTML_TYPE),
     ]
 
 
@@ -274,23 +287,29 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
 
     """
     signposting_links: list[Signpost] = []
+    creators = datacite_dict.get("creators", [])
     record_files = record_dict.get("files", {}).get("entries", {})
+    record_file_values = record_files.values()
+    if short:
+        record_file_values = list(record_file_values)[:3]
+        creators = creators[:3]
     model = current_runtime.models_by_schema[record_dict["$schema"]]
 
-    # author - prvni tri
-    creators = datacite_dict.get("creators", [])
-    if short:
-        creators = creators[:3]
+    # authors
     for attribute in creators:
         signposting_links.extend(
             Signpost(rel=LinkRel.author, target=name_identifier["nameIdentifier"])
             for name_identifier in attribute["nameIdentifiers"]
+            if all(
+                [urlparse(name_identifier["nameIdentifier"]).scheme, urlparse(name_identifier["nameIdentifier"]).netloc]
+            )
         )
 
     # cite-as = DOI
-    signposting_links.append(
-        Signpost(rel=LinkRel.cite_as, target=urljoin("https://doi.org/", datacite_dict.get("doi")))
-    )
+    if datacite_dict.get("doi"):
+        signposting_links.append(
+            Signpost(rel=LinkRel.cite_as, target=urljoin("https://doi.org/", datacite_dict.get("doi")))
+        )
 
     # describedby
     for model_export in model.exports:
@@ -304,17 +323,14 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
             Signpost(rel=LinkRel.describedby, target=model_export_url, media_type=model_export.mimetype)
         )
 
-    # item
-    record_file_values = record_files.values()
-    if short:
-        record_file_values = list(record_file_values)[:3]
+    # items
     record_files_url = record_dict.get("links", {}).get("files")
     if record_files_url:
         signposting_links.extend(
             Signpost(
                 rel=LinkRel.item,
                 media_type=record_file.get("mimetype"),
-                target=f"{record_files_url}/{record_file.get('key')}",
+                target=f"{record_files_url}/{quote(record_file.get('key'))}",
             )
             for record_file in record_file_values
         )
@@ -341,21 +357,23 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
     return signposting_links
 
 
-def record_dict_to_linkset(record_dict: dict) -> str:
+def record_dict_to_linkset(record_dict: dict, include_reverse_relations: bool = True) -> str:
     """Create a linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
     datacite_dict = current_runtime.get_export_from_serialized_record(
         record_dict=record_dict,
         representation=ExportRepresentation.DICTIONARY,
         export_mimetype="application/vnd.datacite.datacite+json",
     )
-    return create_linkset(datacite_dict, record_dict)
+    return create_linkset(datacite_dict, record_dict, include_reverse_relations)
 
 
-def record_dict_to_json_linkset(record_dict: dict) -> dict[str, list[dict[str, Any]]]:
+def record_dict_to_json_linkset(
+    record_dict: dict, include_reverse_relations: bool = True
+) -> dict[str, list[dict[str, Any]]]:
     """Create a JSON linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
     datacite_dict = current_runtime.get_export_from_serialized_record(
         record_dict=record_dict,
         representation=ExportRepresentation.DICTIONARY,
         export_mimetype="application/vnd.datacite.datacite+json",
     )
-    return create_linkset_json(datacite_dict, record_dict)
+    return create_linkset_json(datacite_dict, record_dict, include_reverse_relations)

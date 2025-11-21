@@ -73,12 +73,16 @@ def test_signposting_linkset(
     )
     signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_dict)
     signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_dict)
+    signposting_linkset_without_inverse_relations = create_linkset(
+        datacite_dict=datacite_dict, record_dict=record_dict, include_reverse_relations=False
+    )
+
     record_id = record_dict["id"]
     assert signposting_linkset_json == {
         "linkset": [
             {
                 "anchor": f"https://127.0.0.1:5000/uploads/{record_id}",
-                "author": [{"href": "https://orcid.org/0000-0001-5727-2427"}, {"href": "https://ror.org/04wxnsj81"}],
+                "author": [{"href": "https://orcid.org/0000-0001-5727-2427"}],
                 "cite-as": [{"href": "https://doi.org/10.82433/b09z-4k37"}],
                 "describedby": [
                     {
@@ -123,8 +127,7 @@ def test_signposting_linkset(
     }
     assert str(signposting_links) == (
         "[<Signpost rel=author target=https://orcid.org/0000-0001-5727-2427>, "
-        "<Signpost rel=author target=https://ror.org/04wxnsj81>, <Signpost "
-        "rel=cite-as target=https://doi.org/10.82433/b09z-4k37>, "
+        "<Signpost rel=cite-as target=https://doi.org/10.82433/b09z-4k37>, "
         "<Signpost rel=describedby "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api "
         "type=application/json>, "
@@ -143,9 +146,25 @@ def test_signposting_linkset(
     )
     assert signpost_link_to_str(signposting_links[0]) == "<https://orcid.org/0000-0001-5727-2427>; rel=author"
 
+    assert signposting_linkset_without_inverse_relations == (
+        f'<https://orcid.org/0000-0001-5727-2427>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f'<https://doi.org/10.82433/b09z-4k37>; rel=cite-as; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
+        f'rel=describedby; type="application/json"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite>; "
+        'rel=describedby; type="application/vnd.datacite.datacite+json"; '
+        f'anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore>; "
+        'rel=describedby; type="application/x-dc+xml"; '
+        f'anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f"<https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}>; "
+        f'rel=item; type="image/png"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f'<https://spdx.org/licenses/cc-by-4.0>; rel=license; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f'<https://schema.org/Dataset>; rel=type; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
+        f'<https://schema.org/AboutPage>; rel=type; anchor="https://127.0.0.1:5000/uploads/{record_id}"'
+    )
     assert signposting_linkset == (
         f'<https://orcid.org/0000-0001-5727-2427>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
-        f'<https://ror.org/04wxnsj81>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://doi.org/10.82433/b09z-4k37>; rel=cite-as; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
         f'rel=describedby; type="application/json"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -172,7 +191,6 @@ def test_signposting_linkset(
 
     assert record_dict_to_linkset(record_dict) == (
         f'<https://orcid.org/0000-0001-5727-2427>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
-        f'<https://ror.org/04wxnsj81>; rel=author; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f'<https://doi.org/10.82433/b09z-4k37>; rel=cite-as; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
         f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; rel=describedby; "
         f'type="application/json"; anchor="https://127.0.0.1:5000/uploads/{record_id}", '
@@ -198,7 +216,7 @@ def test_signposting_linkset(
         "linkset": [
             {
                 "anchor": f"https://127.0.0.1:5000/uploads/{record_id}",
-                "author": [{"href": "https://orcid.org/0000-0001-5727-2427"}, {"href": "https://ror.org/04wxnsj81"}],
+                "author": [{"href": "https://orcid.org/0000-0001-5727-2427"}],
                 "cite-as": [{"href": "https://doi.org/10.82433/b09z-4k37"}],
                 "describedby": [
                     {
@@ -312,7 +330,6 @@ def test_landing_page_signposting(
     record_id = record_dict["id"]
     assert str(landing_page_signposting) == (
         "[<Signpost rel=author target=https://orcid.org/0000-0001-5727-2427>, "
-        "<Signpost rel=author target=https://ror.org/04wxnsj81>, "
         "<Signpost rel=cite-as target=https://doi.org/10.82433/b09z-4k37>, "
         "<Signpost rel=describedby "
         f"target=https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api "
@@ -352,7 +369,6 @@ def test_create_signposting_header(
     record_id = record_dict["id"]
     assert signposting_header == (
         "Link: <https://orcid.org/0000-0001-5727-2427>; rel=author, "
-        "<https://ror.org/04wxnsj81>; rel=author, "
         "<https://doi.org/10.82433/b09z-4k37>; rel=cite-as, "
         f"<https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api>; "
         'rel=describedby; type="application/json", '
