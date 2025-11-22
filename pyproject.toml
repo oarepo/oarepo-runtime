@@ -14,7 +14,7 @@ dependencies = [
     "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
     "signposting>=0.9.9"    # signposting support
 ]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13,<3.15"
 
 [project.urls]
 Homepage = "https://github.com/oarepo/oarepo-runtime"
