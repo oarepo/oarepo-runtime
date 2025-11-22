@@ -42,6 +42,9 @@ oarepo = "oarepo_runtime.cli:oarepo"
 [project.entry-points."oarepo.cli.search.init"]
 runtime_update_mappings = "oarepo_runtime.services.records.mapping:update_all_records_mappings"
 
+[project.entry-points."invenio_base.blueprints"]
+oarepo_runtime_info = "oarepo_runtime.info.views:create_wellknown_blueprint"
+
 [tool.hatch.version]
 path = "oarepo_runtime/__init__.py"
 
