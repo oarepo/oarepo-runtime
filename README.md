@@ -1,148 +1,420 @@
-# OARepo runtime
+# OARepo Runtime
 
-The base of `invenio oarepo` client and a set of classes/functions that help with code-generated features:
+Runtime extensions for [Invenio](https://inveniosoftware.org/) framework.
 
-## Custom fields
+## Overview
 
-Provides support for custom fields identification and iteration and `invenio oarepo cf init` 
-initialization tool for customfields.
+This package extends Invenio with:
 
-## Expansions
+- Model registry for unified record type configuration
+- Typed system fields with dynamic OpenSearch mapping
+- Nested and date-range facets with permission-based filtering
+- Service component dependency ordering
+- Multilingual schema support (I18N)
+- FAIR Signposting implementation (HTTP Link headers and linksets)
+- Repository information endpoints
+- Custom field mapping updates
+- CLI extensions for search initialization
 
-Provides expandable field implementation and service mixin for referenced record (in case you do not want to use relations).
+## Installation
 
-## Facets
-
-An implementation of nested labeled facet.
-
-## i18n
-
-Validator for language codes.
-
-## Relations
-
-Replacement of Invenio relations. Fixes the following issues:
-
-1. Invenio relations can occur only on specific paths and for each pattern, different class must be used
-   (Relation, ListRelation, NestedListRelation)
-2. PID Cache is isolated per request, not set directly on field
-3. Allows to map keys - A key from related object can be renamed/remapped to a different key/path
-4. Provides classes to reference parts of the same record
-
-```yaml
-# article, id 12
-metadata:
-    title: blah
+```bash
+pip install oarepo-runtime
 ```
 
-with mapping referenced article would look like (mapping: `{key: 'metadata.title', target: 'title'}`):
+### Requirements
 
-```yaml
-# dataset:
-metadata:
-    articles:
-    - id: 12
-      @v: 1
-      title: blah
+- Python 3.13+
+- Invenio 14.x
+- OpenSearch/Elasticsearch compatible search backend
+
+## Key Features
+
+### 1. Model Registry and Management
+
+**Source:** [`oarepo_runtime/api.py`](oarepo_runtime/api.py), [`oarepo_runtime/ext.py`](oarepo_runtime/ext.py), [`oarepo_runtime/config.py`](oarepo_runtime/config.py)
+
+The `Model` class provides a unified configuration structure for record types in your repository:
+
+```python
+from oarepo_runtime import Model
+from flask_babel import lazy_gettext as _
+
+model = Model(
+    code="my_record",
+    name=_("My Record Type"),
+    version="1.0.0",
+    service="my_records",
+    resource_config="my_app.resources.config.MyRecordResourceConfig",
+    description=_("Custom record type for my repository"),
+    exports=[
+        Export(
+            code="datacite",
+            name=_("DataCite JSON"),
+            mimetype="application/vnd.datacite.datacite+json",
+            serializer=DataCiteSerializer()
+        )
+    ],
+    records_alias_enabled=True
+)
 ```
 
-With Invenio PID relation, it would be:
+Normally, it is created automatically when using the `oarepo-model` library.
 
-```yaml
-# dataset:
-metadata:
-    articles:
-    - id: 12
-      "@v": 1
-      metadata:
-        title: blah
+The `OARepoRuntime` extension manages all registered models:
+
+```python
+from oarepo_runtime import current_runtime
+
+# Access models by code
+model = current_runtime.models["my_record"]
+
+# Get service for a record instance
+service = current_runtime.get_record_service_for_record(record)
+
+# Find records by PID type
+record_class = current_runtime.record_class_by_pid_type["recid"]
+
+# Get all RDM-compatible models
+rdm_models = list(current_runtime.rdm_models)
 ```
 
-## Validation
+**Key capabilities:**
 
-This module provides a marshmallow validator for date strings.
+- Centralized model registration via `OAREPO_MODELS` configuration
+- Automatic service and resource resolution
+- PID type to record class mapping
+- Schema to model mapping for serialization
+- Support for draft/published record workflows
+- File service integration
 
-## Config
+### 2. Enhanced System Fields
 
-Provides interface and definitions for loading 
-preconfigured permission sets to service config.
+**Source:** [`oarepo_runtime/records/systemfields/`](oarepo_runtime/records/systemfields/)
 
-## ICU sort and suggestions
+#### Typed System Fields
 
-To use ICU sort and suggestion custom fields, provide the following configuration
-to `oarepo-model-builder` (or put this stuff to your custom superclasses).
+Base class for system fields with type hints and proper typing support:
 
-```yaml
-  record:
-    imports:
-      - import: invenio_records_resources.records.api.Record
-        alias: InvenioRecord
-      - import: oarepo_runtime.records.SystemFieldDumperExt
-      - import: oarepo_runtime.records.icu.ICUSortField
-      - import: oarepo_runtime.records.icu.ICUSuggestField
-    extra-code: |-2
-          # extra custom fields for testing ICU sorting and suggesting
-          sort = ICUSortField(source_field="metadata.title")
-          suggest = ICUSuggestField(source_field="metadata.title")
-  search-options:
-    base-classes:
-      - I18nSearchOptions
-    imports:
-      - import: oarepo_runtime.services.icu.I18nSearchOptions
-      - import: oarepo_runtime.services.icu.ICUSuggestParser
-      - import: oarepo_runtime.services.icu.ICUSortOptions
-    sort-options-field: extra_sort_options
-    extra-code: |-2
-          suggest_parser_cls = ICUSuggestParser("records2")
-          sort_options = ICUSortOptions("records2")
+```python
+from oarepo_runtime.records.systemfields import TypedSystemField
 
-  record-dumper:
-    extensions:
-      - SystemFieldDumperExt()
+class MyCustomField(TypedSystemField[MyRecord, str]):
+    def obj_get(self, record: MyRecord) -> str:
+        # Implementation
+        pass
 ```
 
-Run `invenio oarepo cf init` to initialize custom fields,
-`invenio oarepo index reindex` if you already have data 
-inside the repository and from this moment on, 
-`/records?sort=title` and `/records?suggest=abc` should work
+#### Mapping System Fields
 
-# Command-line utils
+Dynamic OpenSearch mapping support for system fields that need custom indexing:
 
-## `invenio oarepo version`
+```python
+from oarepo_runtime.records.systemfields import MappingSystemFieldMixin
 
-Prints a json with versions of all installed packages. Format:
+class DynamicField(MappingSystemFieldMixin, TypedSystemField):
+    def mapping_settings(self, record_class):
+        return {
+            "type": "keyword",
+            "eager_global_ordinals": True
+        }
+```
 
-```json
-{
-   "package_name": "package_version",
-   "package_name2": "package_version2",
-   ...
+#### Publication Status System Field
+
+Built-in field for tracking record publication status:
+
+```python
+from oarepo_runtime.records.systemfields import PublicationStatusSystemField
+
+class MyRecord(Record):
+    publication_status = PublicationStatusSystemField()
+```
+
+### 3. Advanced Faceting System
+
+**Source:** [`oarepo_runtime/services/facets/`](oarepo_runtime/services/facets/)
+
+#### Date Range Facets
+
+Support for date-based faceting with configurable intervals:
+
+```python
+from oarepo_runtime.services.facets.date import DateRangeFacet
+
+facets = {
+    "created": DateRangeFacet(
+        field="created",
+        label="Created Date",
+        interval="year"
+    )
 }
 ```
 
-## `invenio oarepo check`
+#### Nested Facets
 
-Checks the repository if it has access to all infrastructure components
-and that they have been initialized correctly.
+Faceting on nested objects with label resolution:
 
-Call as `invenio oarepo check -` or `invenio oarepo check <output-file>`.
-Will print/write to file a json with the following format:
+```python
+from oarepo_runtime.services.facets.nested_facet import NestedLabeledFacet
 
-```json5
-{
-  "db": "ok|connection_error|not_initialized|migration_pending",
-  "opensearch": "ok|connection_error|index_missing:<index_name>",
-  "files": "ok|db_connection_error|default_location_missing|bucket_does_not_exist:<bucket_name>|db_error",
-  "mq": "ok|connection_error|mq_error",
-  "cache": "ok|connection_error|cache_error|cache_exception", 
-  "configuration": {
-     // contains the configuration from the flask app
-     "key": "value",
-     "key2": "value2",
-     ...
-  }
+facets = {
+    "contributors": NestedLabeledFacet(
+        field="metadata.contributors.person.id",
+        nested_path="metadata.contributors",
+        value_labels={
+            "person123": {"cs": "Jan Novák", "en": "Jan Novak"}
+        }
+    )
 }
 ```
-```json
 
+#### Grouped Facets with Permissions
+
+Permission-based facet grouping for different user roles:
+
+```python
+from oarepo_runtime.services.facets.params import GroupedFacetsParam
+
+search_config = {
+    "facets": base_facets,
+    "facet_groups": {
+        "admin": {
+            "label": "Admin Facets",
+            "facets": ["internal_status", "workflow_state"],
+            "provides_needs": [AdminNeed()]
+        }
+    }
+}
 ```
+
+### 4. Service Component Ordering
+
+**Source:** [`oarepo_runtime/services/config/components.py`](oarepo_runtime/services/config/components.py)
+
+Deterministic ordering of service components with dependency resolution:
+
+```python
+class ComponentOrderingMixin:
+    """Mixin that ensures service components execute in the correct order."""
+    
+    @property
+    def components(self):
+        # Components are automatically ordered based on:
+        # - depends_on declarations
+        # - affects declarations  
+        # - wildcard semantics (*)
+        # - input order preservation where possible
+        return self._ordered_components
+```
+
+Components can declare dependencies:
+
+```python
+class MyComponent(ServiceComponent):
+    depends_on = [ValidationComponent]  # Runs after ValidationComponent
+    affects = "*"  # Affects all subsequent components
+```
+
+### 5. Multilingual Support
+
+**Source:** [`oarepo_runtime/services/schema/`](oarepo_runtime/services/schema/)
+
+#### I18N UI Schema Support
+
+Marshmallow schemas with multilingual field support:
+
+```python
+from oarepo_runtime.services.schema.i18n_ui import I18nUISchema, MultilingualUIField
+
+class MyUISchema(I18nUISchema):
+    title = MultilingualUIField()
+    description = MultilingualUIField(ui_params={
+        "widget": "textarea",
+        "placeholder": {"en": "Enter description", "cs": "Zadejte popis"}
+    })
+```
+
+#### Locale Handling
+
+```python
+from oarepo_runtime.services.schema.i18n import LocalizedDateTime
+
+class RecordSchema(Schema):
+    created = LocalizedDateTime()  # Automatically formats dates per locale
+```
+
+### 6. Signposting and FAIR Data
+
+**Source:** [`oarepo_runtime/resources/signposting/`](oarepo_runtime/resources/signposting/)
+
+Full implementation of [FAIR Signposting](https://signposting.org/) for machine-readable links:
+
+```python
+from oarepo_runtime.resources.signposting import (
+    landing_page_signpost_links_list,
+    create_linkset,
+    create_linkset_json
+)
+
+# Generate signposting links for a landing page
+links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
+
+# Create HTTP Link header
+header = list_of_signpost_links_to_http_header(links)
+
+# Create application/linkset format
+linkset = create_linkset(datacite_dict, record_dict)
+
+# Create application/linkset+json format  
+linkset_json = create_linkset_json(datacite_dict, record_dict)
+```
+
+**Supported relation types:**
+
+- `author` - Links to author identifiers
+- `cite-as` - Persistent identifier (DOI)
+- `describedby` - Metadata export formats
+- `item` - File contents
+- `license` - License URIs
+- `type` - Resource type (schema.org)
+
+### 7. Repository Information API
+
+**Source:** [`oarepo_runtime/info/views.py`](oarepo_runtime/info/views.py)
+
+Machine-readable endpoint for repository metadata:
+
+```python
+# GET /.well-known/repository
+{
+    "models": {
+        "my_record": {
+            "code": "my_record",
+            "name": "My Record Type",
+            "version": "1.0.0",
+            "links": {
+                "search": "/api/my-records/",
+                "ui": "/my-records/"
+            },
+            "jsonschemas": {
+                "record": "https://localhost/schemas/my-records-1.0.0.json"
+            },
+            "exports": [
+                {
+                    "code": "datacite",
+                    "mimetype": "application/vnd.datacite.datacite+json"
+                }
+            ]
+        }
+    }
+}
+```
+
+### 8. CLI Extensions
+
+**Source:** [`oarepo_runtime/cli/`](oarepo_runtime/cli/)
+
+Enhanced search index initialization:
+
+```bash
+# Initialize search indices with custom field mapping updates
+invenio index init
+
+# The init command automatically runs registered hooks from:
+# - oarepo.cli.search.init entry point
+# - Updates dynamic mappings for all registered models
+```
+
+Extension point for custom initialization:
+
+```python
+# In your package's entry points:
+[project.entry-points."oarepo.cli.search.init"]
+my_init = "my_app.init:update_custom_mappings"
+```
+
+### 9. Custom Fields and Relations
+
+**Source:** [`oarepo_runtime/services/records/`](oarepo_runtime/services/records/)
+
+Support for updating record mappings with custom fields:
+
+```python
+from oarepo_runtime.services.records.custom_fields import (
+    update_all_records_mappings_relation_fields
+)
+
+# Update OpenSearch mappings for all records with relation fields
+update_all_records_mappings_relation_fields()
+```
+
+### 10. Permission Generators
+
+**Source:** [`oarepo_runtime/services/config/permissions.py`](oarepo_runtime/services/config/permissions.py)
+
+Pre-configured permission policy for open access repositories:
+
+```python
+from oarepo_runtime.services.config.permissions import EveryonePermissionPolicy
+
+class MyServiceConfig(RecordServiceConfig):
+    permission_policy_cls = EveryonePermissionPolicy
+    # Grants all permissions to any authenticated or anonymous user
+```
+
+## Development
+
+### Setup
+
+```bash
+# Clone repository
+git clone https://github.com/oarepo/oarepo-runtime.git
+cd oarepo-runtime
+
+./run.sh venv
+```
+
+### Running Tests
+
+```bash
+./run.sh test
+```
+
+## Entry Points
+
+The package registers several Invenio entry points:
+
+```python
+[project.entry-points."invenio_base.api_apps"]
+oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
+
+[project.entry-points."invenio_base.apps"]
+oarepo_runtime = "oarepo_runtime.ext:OARepoRuntime"
+
+[project.entry-points."flask.commands"]
+oarepo = "oarepo_runtime.cli:oarepo"
+
+[project.entry-points."oarepo.cli.search.init"]
+runtime_update_mappings = "oarepo_runtime.services.records.mapping:update_all_records_mappings"
+
+[project.entry-points."invenio_base.blueprints"]
+oarepo_runtime_info = "oarepo_runtime.info.views:create_wellknown_blueprint"
+```
+
+## License
+
+Copyright (c) 2020-2025 CESNET z.s.p.o.
+
+OARepo Runtime is free software; you can redistribute it and/or modify it under the terms of the MIT License. See [LICENSE](LICENSE) file for more details.
+
+## Links
+
+- Documentation: <https://github.com/oarepo/oarepo-runtime>
+- PyPI: <https://pypi.org/project/oarepo-runtime/>
+- Issues: <https://github.com/oarepo/oarepo-runtime/issues>
+- OARepo Project: <https://github.com/oarepo>
+
+## Acknowledgments
+
+This project builds upon [Invenio Framework](https://inveniosoftware.org/) and is developed as part of the OARepo ecosystem.
