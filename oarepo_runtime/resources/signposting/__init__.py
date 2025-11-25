@@ -79,7 +79,10 @@ def signpost_link_to_additional_link(
                     str(LinkRel.collection): [{"href": landing_page_url, "type": TEXT_HTML_TYPE}],
                 }
             return Signpost(
-                rel=LinkRel.collection, target=landing_page_url, media_type=TEXT_HTML_TYPE, context=link.target
+                rel=LinkRel.collection,
+                target=landing_page_url,
+                media_type=TEXT_HTML_TYPE,
+                context=link.target,
             )
         case LinkRel.describedby:
             if as_dict:
@@ -88,7 +91,10 @@ def signpost_link_to_additional_link(
                     str(LinkRel.describes): [{"href": landing_page_url, "type": TEXT_HTML_TYPE}],
                 }
             return Signpost(
-                rel=LinkRel.describes, target=landing_page_url, media_type=TEXT_HTML_TYPE, context=link.target
+                rel=LinkRel.describes,
+                target=landing_page_url,
+                media_type=TEXT_HTML_TYPE,
+                context=link.target,
             )
         case LinkRel.cite_as:
             return None
@@ -105,13 +111,17 @@ def anchor_signpost_link(signpost_link: Signpost, anchor_url: str) -> Signpost:
 
 @overload
 def get_additional_links(
-    list_of_signpost_links: list[Signpost], landing_page_url: str, as_dict: Literal[True] = True
+    list_of_signpost_links: list[Signpost],
+    landing_page_url: str,
+    as_dict: Literal[True] = True,
 ) -> list[dict[str, Any]]: ...
 
 
 @overload
 def get_additional_links(
-    list_of_signpost_links: list[Signpost], landing_page_url: str, as_dict: Literal[False]
+    list_of_signpost_links: list[Signpost],
+    landing_page_url: str,
+    as_dict: Literal[False],
 ) -> list[Signpost]: ...
 
 
@@ -203,7 +213,10 @@ def create_linkset_json(
     links_json = defaultdict(list)
     links_json["anchor"] = landing_page_url
 
-    for link_relation_from_dict, list_of_links_for_relation in dict_of_links_by_relation.items():
+    for (
+        link_relation_from_dict,
+        list_of_links_for_relation,
+    ) in dict_of_links_by_relation.items():
         for link in list_of_links_for_relation:
             links_json[link_relation_from_dict].append(signpost_link_to_dict(link))
 
@@ -301,26 +314,38 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
             Signpost(rel=LinkRel.author, target=name_identifier["nameIdentifier"])
             for name_identifier in attribute["nameIdentifiers"]
             if all(
-                [urlparse(name_identifier["nameIdentifier"]).scheme, urlparse(name_identifier["nameIdentifier"]).netloc]
+                [
+                    urlparse(name_identifier["nameIdentifier"]).scheme,
+                    urlparse(name_identifier["nameIdentifier"]).netloc,
+                ]
             )
         )
 
     # cite-as = DOI
     if datacite_dict.get("doi"):
         signposting_links.append(
-            Signpost(rel=LinkRel.cite_as, target=urljoin("https://doi.org/", datacite_dict.get("doi")))
+            Signpost(
+                rel=LinkRel.cite_as,
+                target=urljoin("https://doi.org/", datacite_dict.get("doi")),
+            )
         )
 
     # describedby
     for model_export in model.exports:
         model_export_url = model.ui_url(
-            view_name="record_export", pid_value=record_dict["id"], export_format=model_export.code
+            view_name="record_export",
+            pid_value=record_dict["id"],
+            export_format=model_export.code,
         )
         # just sanity check, we don't expect this to happen, not covered in tests
         if not model_export_url:  # pragma: no cover
             continue
         signposting_links.append(
-            Signpost(rel=LinkRel.describedby, target=model_export_url, media_type=model_export.mimetype)
+            Signpost(
+                rel=LinkRel.describedby,
+                target=model_export_url,
+                media_type=model_export.mimetype,
+            )
         )
 
     # items

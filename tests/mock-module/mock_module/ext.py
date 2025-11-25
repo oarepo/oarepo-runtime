@@ -56,8 +56,16 @@ class MockModuleExt:
             draft_file_service=self.draft_file_service,
             exports=[
                 _export("mock-api", "application/json"),
-                _export("datacite", "application/vnd.datacite.datacite+json", serializer=DataciteSerializer),
-                _export("dublincore", "application/x-dc+xml", serializer=DublinCoreSerializer),
+                _export(
+                    "datacite",
+                    "application/vnd.datacite.datacite+json",
+                    serializer=DataciteSerializer,
+                ),
+                _export(
+                    "dublincore",
+                    "application/x-dc+xml",
+                    serializer=DublinCoreSerializer,
+                ),
             ],
             imports=[_import("mock-api", "application/json")],
             features={

@@ -272,9 +272,7 @@ class InfoResource(BaseResource):
                 schema_field_value = schema_field.value
                 schema_path = base_url + schema_field_value.replace("local://", "")
             else:
-                raise ValueError(
-                    f"Record {record} has no schema field"
-                )  # pragma: no cover
+                raise ValueError(f"Record {record} has no schema field")  # pragma: no cover
 
             if not base_url.endswith("/"):
                 base_url += "/"
@@ -306,26 +304,14 @@ class InfoResource(BaseResource):
                 "metadata": False,
             }
 
-        base_url = invenio_url_for(
-            "vocabularies.search", type="languages", _external=True
-        )
+        base_url = invenio_url_for("vocabularies.search", type="languages", _external=True)
         base_url = replace_path_in_url(base_url, "/")
         ret = [
-            _generate_rdm_vocabulary(
-                base_url, Affiliation, "affiliations", "Affiliations", "", special=True
-            ),
-            _generate_rdm_vocabulary(
-                base_url, Award, "awards", "Awards", "", special=True
-            ),
-            _generate_rdm_vocabulary(
-                base_url, Funder, "funders", "Funders", "", special=True
-            ),
-            _generate_rdm_vocabulary(
-                base_url, Subject, "subjects", "Subjects", "", special=True
-            ),
-            _generate_rdm_vocabulary(
-                base_url, Name, "names", "Names", "", special=True
-            ),
+            _generate_rdm_vocabulary(base_url, Affiliation, "affiliations", "Affiliations", "", special=True),
+            _generate_rdm_vocabulary(base_url, Award, "awards", "Awards", "", special=True),
+            _generate_rdm_vocabulary(base_url, Funder, "funders", "Funders", "", special=True),
+            _generate_rdm_vocabulary(base_url, Subject, "subjects", "Subjects", "", special=True),
+            _generate_rdm_vocabulary(base_url, Name, "names", "Names", "", special=True),
             _generate_rdm_vocabulary(
                 base_url,
                 Affiliation,
@@ -374,9 +360,7 @@ class InfoResource(BaseResource):
         ]
 
         vc_types = {vc.id for vc in cast("Any", VocabularyType).query.all()}
-        vocab_type_metadata = current_app.config.get(
-            "INVENIO_VOCABULARY_TYPE_METADATA", {}
-        )
+        vocab_type_metadata = current_app.config.get("INVENIO_VOCABULARY_TYPE_METADATA", {})
         vc_types.update(vocab_type_metadata.keys())
 
         for vc in sorted(vc_types):
@@ -440,9 +424,7 @@ def create_wellknown_blueprint(app: Flask) -> Blueprint:
     """Create an info blueprint."""
     info_endpoint_config = app.config.get("INFO_ENDPOINT_CONFIG")
     config_class = (
-        cast("type[InfoConfig]", obj_or_import_string(info_endpoint_config))
-        if info_endpoint_config
-        else InfoConfig
+        cast("type[InfoConfig]", obj_or_import_string(info_endpoint_config)) if info_endpoint_config else InfoConfig
     )
 
     return InfoResource(config=config_class(app)).as_blueprint()
