@@ -69,7 +69,7 @@ class MockModuleExt:
             ],
             imports=[_import("mock-api", "application/json")],
             features={
-                "draft": {"enabled": True},
+                "drafts-records": {"enabled": True},
                 "files": {"enabled": True},
                 "requests": {"enabled": True},
             },
