@@ -270,7 +270,9 @@ class OARepoRuntime:
         self,
         record_dict: dict,
         representation: Literal[
-            ExportRepresentation.RESPONSE, ExportRepresentation.DICTIONARY, ExportRepresentation.XML
+            ExportRepresentation.RESPONSE,
+            ExportRepresentation.DICTIONARY,
+            ExportRepresentation.XML,
         ],
         export_code: str | None = None,
         export_mimetype: str | None = None,

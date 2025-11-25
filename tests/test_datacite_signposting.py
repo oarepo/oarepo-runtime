@@ -47,7 +47,13 @@ def add_file_to_record(file_service, record_item_id, file_id, identity, data=Non
 
 
 def test_signposting_linkset(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_item = service.create(
         identity=identity_simple,
@@ -74,7 +80,9 @@ def test_signposting_linkset(
     signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_dict)
     signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_dict)
     signposting_linkset_without_inverse_relations = create_linkset(
-        datacite_dict=datacite_dict, record_dict=record_dict, include_reverse_relations=False
+        datacite_dict=datacite_dict,
+        record_dict=record_dict,
+        include_reverse_relations=False,
     )
 
     record_id = record_dict["id"]
@@ -105,23 +113,46 @@ def test_signposting_linkset(
                     }
                 ],
                 "license": [{"href": "https://spdx.org/licenses/cc-by-4.0"}],
-                "type": [{"href": "https://schema.org/Dataset"}, {"href": "https://schema.org/AboutPage"}],
+                "type": [
+                    {"href": "https://schema.org/Dataset"},
+                    {"href": "https://schema.org/AboutPage"},
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/{file_item.file_id}",
-                "collection": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "collection": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
         ]
     }
@@ -233,33 +264,65 @@ def test_signposting_linkset(
                     },
                 ],
                 "item": [
-                    {"href": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png", "type": "image/png"}
+                    {
+                        "href": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png",
+                        "type": "image/png",
+                    }
                 ],
                 "license": [{"href": "https://spdx.org/licenses/cc-by-4.0"}],
-                "type": [{"href": "https://schema.org/Dataset"}, {"href": "https://schema.org/AboutPage"}],
+                "type": [
+                    {"href": "https://schema.org/Dataset"},
+                    {"href": "https://schema.org/AboutPage"},
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/mock-api",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/datacite",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/test-ui-links/records/{record_id}/export/dublincore",
-                "describes": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "describes": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
             {
                 "anchor": f"https://127.0.0.1:5000/api/mocks/{record_id}/draft/files/test.png",
-                "collection": [{"href": f"https://127.0.0.1:5000/uploads/{record_id}", "type": "text/html"}],
+                "collection": [
+                    {
+                        "href": f"https://127.0.0.1:5000/uploads/{record_id}",
+                        "type": "text/html",
+                    }
+                ],
             },
         ]
     }
 
 
 def test_files_signposting(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_dict = service.create(
         identity=identity_simple,
@@ -285,7 +348,13 @@ def test_files_signposting(
 
 
 def test_export_format_signposting(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_dict = service.create(
         identity=identity_simple,
@@ -309,7 +378,13 @@ def test_export_format_signposting(
 
 
 def test_landing_page_signposting(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_dict = service.create(
         identity=identity_simple,
@@ -347,7 +422,13 @@ def test_landing_page_signposting(
 
 
 def test_create_signposting_header(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_dict = service.create(
         identity=identity_simple,
@@ -383,7 +464,13 @@ def test_create_signposting_header(
 
 
 def test_model_exports(
-    app_with_mock_ui_bp, db, search_with_field_mapping, service, search_clear, identity_simple, location
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
 ):
     record_item = service.create(
         identity=identity_simple,
@@ -400,7 +487,8 @@ def test_model_exports(
 
     # no mimetype or code provided
     with pytest.raises(
-        ValueError, match="One of the parameters export_code/export_mimetype must be set, both are None"
+        ValueError,
+        match="One of the parameters export_code/export_mimetype must be set, both are None",
     ):
         assert current_runtime.get_export_from_serialized_record(
             record_dict, representation=ExportRepresentation.DICTIONARY
@@ -408,20 +496,28 @@ def test_model_exports(
 
     # both mimetype and code provided
     with pytest.raises(
-        ValueError, match="Only one of the parameters export_code/export_mimetype must be set, both are set"
+        ValueError,
+        match="Only one of the parameters export_code/export_mimetype must be set, both are set",
     ):
         assert current_runtime.get_export_from_serialized_record(
-            record_dict, representation=ExportRepresentation.DICTIONARY, export_code="a", export_mimetype="b"
+            record_dict,
+            representation=ExportRepresentation.DICTIONARY,
+            export_code="a",
+            export_mimetype="b",
         )
 
     # nonexistent export
     with pytest.raises(ValueError, match="No export found for the given mimetype or code"):
         assert current_runtime.get_export_from_serialized_record(
-            record_dict, representation=ExportRepresentation.DICTIONARY, export_code="nonexistent"
+            record_dict,
+            representation=ExportRepresentation.DICTIONARY,
+            export_code="nonexistent",
         )
 
     export_by_code = current_runtime.get_export_from_serialized_record(
-        record_dict, representation=ExportRepresentation.DICTIONARY, export_code="datacite"
+        record_dict,
+        representation=ExportRepresentation.DICTIONARY,
+        export_code="datacite",
     )
 
     assert isinstance(export_by_code, dict)
@@ -446,7 +542,9 @@ def test_model_exports(
 
     # export as xml
     export_as_xml = current_runtime.get_export_from_serialized_record(
-        record_dict, representation=ExportRepresentation.XML, export_mimetype="application/x-dc+xml"
+        record_dict,
+        representation=ExportRepresentation.XML,
+        export_mimetype="application/x-dc+xml",
     )
 
     assert isinstance(export_as_xml, Element)
