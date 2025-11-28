@@ -43,7 +43,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class ExportRepresentation(Enum):
-    """Representation of the export, which can be response, dictionary or XML."""
+    """Representation of the export, which can be response, dictionary, or XML."""
 
     RESPONSE = ("response",)  # Response
     DICTIONARY = ("dictionary",)  # python dictionary
