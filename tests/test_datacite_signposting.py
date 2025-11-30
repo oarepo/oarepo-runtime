@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from lxml.etree import Element
 
-from oarepo_runtime.ext import ExportRepresentation
+from oarepo_runtime.api import ExportEngine, ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.resources.signposting import (
     create_linkset,
@@ -548,6 +548,15 @@ def test_model_exports(
     )
 
     assert isinstance(export_as_xml, Element)
+
+    # export using ExportEngine
+    export_engine = ExportEngine()
+    export_as_dict_from_export_engine = export_engine.export(
+        record_dict=record_dict, export_mimetype="application/vnd.datacite.datacite+json"
+    )
+
+    assert isinstance(export_as_xml, Element)
+    assert export_by_mimetype == export_as_dict_from_export_engine
 
     model = current_runtime.models_by_schema[record_dict["$schema"]]
     model_exports = model.exports
