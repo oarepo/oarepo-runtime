@@ -131,6 +131,13 @@ class Import:
     description: LazyString | None = None
     """Description of the import format, human readable."""
 
+    oai_name: tuple[str, str] | None = None
+    """Name of OAI metadata element.
+
+    The name is a tuple of (namespace, localname). If not set, the import
+    can not be used in OAI-PMH requests.
+    """
+
 
 class Model[
     S: RecordService = RecordService,
