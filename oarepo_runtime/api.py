@@ -11,18 +11,24 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
-from functools import cached_property
+from collections import OrderedDict
+from contextvars import ContextVar
+from enum import Enum
+from functools import cached_property, wraps
 from mimetypes import guess_extension
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 from flask import current_app
 from invenio_base import invenio_url_for
 from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.proxies import current_service_registry
 
+from oarepo_runtime.proxies import current_runtime
+
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Iterator, Mapping
     from types import SimpleNamespace
 
     from flask_babel.speaklater import LazyString
@@ -457,3 +463,113 @@ class Model[
     def namespace(self) -> SimpleNamespace | None:
         """Get the namespace where the model is being created."""
         return self._namespace
+
+
+P = ParamSpec("P")
+R = TypeVar("R")
+type ExportCacheKey = tuple[str | None, str]
+type ExportCacheValue = dict[Any, Any] | None
+type ExportCache = OrderedDict[ExportCacheKey, ExportCacheValue]
+
+
+class ExportEngine:
+    """Serializes record exports and can cache repeated export lookups in one operation.
+
+    Usage:
+        Decorate top-level export operations with ``@ExportEngine.with_export_cache``
+        to enable per-call caching:
+
+            @ExportEngine.with_export_cache
+            def build_response(record_dict):
+                return ExportEngine.export(record_dict, export_code="json")
+
+        Calls to ``ExportEngine.export`` inside the decorated function share the
+        same temporary cache. The cache is reset automatically when the decorated
+        function returns or raises.
+
+    Attributes:
+        CACHE_MAXSIZE (int): Maximum number of serialized exports kept in the
+            per-operation cache.
+        export_cache_context (ContextVar[ExportCache | None]): Context variable
+            holding the current per-operation export cache.
+
+    """
+
+    CACHE_MAXSIZE = 100
+
+    export_cache_context: ContextVar[ExportCache | None] = ContextVar("exports", default=None)
+
+    @classmethod
+    def with_export_cache(cls, f: Callable[P, R]) -> Callable[P, R]:
+        """Run the decorated operation with a scoped export cache.
+
+        The decorator initializes an export cache for the duration of the wrapped
+        function call and stores it in ``export_cache_context``. Calls to
+        ``ExportEngine.export`` made within the same context can then reuse serialized
+        exports instead of resolving them repeatedly.
+
+        The cache is isolated to the current execution context and is reset after the
+        wrapped function finishes, even if it raises an exception.
+
+        Args:
+            f: Callable to execute with an active export cache.
+
+        Returns:
+            A wrapped callable that runs with a temporary export cache context.
+
+        """
+
+        @wraps(f)
+        def view(*args: P.args, **kwargs: P.kwargs) -> R:
+            with cls.export_cache():
+                return f(*args, **kwargs)
+
+        return view
+
+    @classmethod
+    @contextlib.contextmanager
+    def export_cache(cls) -> Iterator[None]:
+        """Create a temporary export cache for the current execution context."""
+        reset_token = cls.export_cache_context.set(OrderedDict())
+        try:
+            yield
+        finally:
+            cls.export_cache_context.reset(reset_token)
+
+    @classmethod
+    def export(
+        cls, record_dict: dict, export_code: str | None = None, export_mimetype: str | None = None
+    ) -> dict | None:
+        """Get serialized export of a record based on provided criteria."""
+        record_id = record_dict["id"]
+        export_key: ExportCacheKey = (
+            (export_code, record_id) if export_code is not None else (export_mimetype, record_id)
+        )
+
+        exports_cache = cls.export_cache_context.get()
+
+        if exports_cache is not None and export_key in exports_cache:
+            exports_cache.move_to_end(export_key)
+            return exports_cache[export_key]
+
+        serialized_export = current_runtime.get_export_from_serialized_record(
+            record_dict=record_dict,
+            export_code=export_code,
+            export_mimetype=export_mimetype,
+            representation=ExportRepresentation.DICTIONARY,
+        )
+
+        if exports_cache is not None:
+            if len(exports_cache) > cls.CACHE_MAXSIZE:
+                exports_cache.popitem(last=False)
+            exports_cache[export_key] = serialized_export
+
+        return serialized_export
+
+
+class ExportRepresentation(Enum):
+    """Representation of the export, which can be response, dictionary or XML."""
+
+    RESPONSE = ("response",)  # Response
+    DICTIONARY = ("dictionary",)  # python dictionary
+    XML = ("xml",)  # XML Element
