@@ -13,8 +13,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from oarepo_runtime.api import Model
-from oarepo_runtime.resources.serializers.rdm import RecordUISerializer, DefaultRDMUISchema
+from oarepo_runtime.resources.serializers.rdm import DefaultRDMUISchema, RecordUISerializer
 
 
 class MockService:
@@ -29,6 +28,7 @@ class MockService:
         """Get test service id."""
         return "test"
 
+
 def test_rdm_record_ui_serializer():
     """Test exports property with default value."""
     serializer = RecordUISerializer()
@@ -39,4 +39,3 @@ def test_rdm_record_ui_serializer():
 
     assert serializer.dump_obj(datacite_dict) == ""
     assert schema.dump(datacite_dict=datacite_dict) == ""
-
