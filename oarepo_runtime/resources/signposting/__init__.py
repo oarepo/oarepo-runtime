@@ -36,7 +36,7 @@ from urllib.parse import quote, urljoin, urlparse
 from flask import current_app
 from signposting import AbsoluteURI, LinkRel, Signpost
 
-from oarepo_runtime.ext import ExportRepresentation
+from oarepo_runtime.api import ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 
 LINK_PREFIX = "Link: "
