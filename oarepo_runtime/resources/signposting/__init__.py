@@ -33,6 +33,7 @@ from collections import defaultdict
 from typing import Any, Literal, cast, overload
 from urllib.parse import quote, urljoin, urlparse
 
+from flask import current_app
 from signposting import AbsoluteURI, LinkRel, Signpost
 
 from oarepo_runtime.ext import ExportRepresentation
@@ -176,17 +177,21 @@ def create_linkset(datacite_dict: dict, record_dict: dict, include_reverse_relat
     Returns: linkset in string format
 
     """
-    landing_page_url = record_dict.get("links", {}).get("self_html")
-    # just sanity check, we don't expect this to happen, not covered in tests
-    if not landing_page_url:  # pragma: no cover
+    try:
+        landing_page_url = record_dict.get("links", {}).get("self_html")
+        # just sanity check, we don't expect this to happen, not covered in tests
+        if not landing_page_url:  # pragma: no cover
+            return ""
+        landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
+        anchored_links = [anchor_signpost_link(signpost_link, landing_page_url) for signpost_link in landing_page_links]
+        if include_reverse_relations:
+            additional_links: list[Signpost] = get_additional_links(landing_page_links, landing_page_url, as_dict=False)
+            anchored_links.extend(additional_links)
+        links = [str(link)[6:] for link in anchored_links if str(link).startswith(LINK_PREFIX)]
+        return ", ".join(links)
+    except Exception:
+        current_app.logger.exception("Failed to create linkset")
         return ""
-    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
-    anchored_links = [anchor_signpost_link(signpost_link, landing_page_url) for signpost_link in landing_page_links]
-    if include_reverse_relations:
-        additional_links: list[Signpost] = get_additional_links(landing_page_links, landing_page_url, as_dict=False)
-        anchored_links.extend(additional_links)
-    links = [str(link)[6:] for link in anchored_links if str(link).startswith(LINK_PREFIX)]
-    return ", ".join(links)
 
 
 def create_linkset_json(
@@ -202,30 +207,35 @@ def create_linkset_json(
     Returns: linkset in JSON format
 
     """
-    landing_page_url = record_dict.get("links", {}).get("self_html")
-    # just sanity check, we don't expect this to happen, not covered in tests
-    if not landing_page_url:  # pragma: no cover
-        return {}
-    landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
-    dict_of_links_by_relation = defaultdict(list)
-    for link in landing_page_links:
-        dict_of_links_by_relation[str(link.rel)].append(link)
-    links_json = defaultdict(list)
-    links_json["anchor"] = landing_page_url
+    try:
+        landing_page_url = record_dict.get("links", {}).get("self_html")
+        # just sanity check, we don't expect this to happen, not covered in tests
+        if not landing_page_url:  # pragma: no cover
+            return {}
+        landing_page_links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
+        dict_of_links_by_relation = defaultdict(list)
+        for link in landing_page_links:
+            dict_of_links_by_relation[str(link.rel)].append(link)
+        links_json = defaultdict(list)
+        links_json["anchor"] = landing_page_url
 
-    for (
-        link_relation_from_dict,
-        list_of_links_for_relation,
-    ) in dict_of_links_by_relation.items():
-        for link in list_of_links_for_relation:
-            links_json[link_relation_from_dict].append(signpost_link_to_dict(link))
+        for (
+            link_relation_from_dict,
+            list_of_links_for_relation,
+        ) in dict_of_links_by_relation.items():
+            for link in list_of_links_for_relation:
+                links_json[link_relation_from_dict].append(signpost_link_to_dict(link))
 
-    json_linkset = {"linkset": [dict(links_json)]}
-    if include_reverse_relations:
-        additional_links: list[dict[str, Any]] = get_additional_links(landing_page_links, landing_page_url)
-        for additional_link in additional_links:
-            json_linkset["linkset"].append(additional_link)
-    return json_linkset
+        json_linkset = {"linkset": [dict(links_json)]}
+        if include_reverse_relations:
+            additional_links: list[dict[str, Any]] = get_additional_links(landing_page_links, landing_page_url)
+            for additional_link in additional_links:
+                json_linkset["linkset"].append(additional_link)
+    except Exception:
+        current_app.logger.exception("Failed to create json linkset")
+        return {"linkset": []}
+    else:
+        return json_linkset
 
 
 def file_content_signpost_links_list(record_dict: dict) -> list[Signpost]:
