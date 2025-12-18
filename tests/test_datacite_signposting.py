@@ -553,3 +553,32 @@ def test_model_exports(
     model_exports = model.exports
     model._exports = []  # noqa: SLF001
     model._exports = model_exports  # noqa: SLF001
+
+
+def test_signposting_with_incorrect_datacite(
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
+):
+    record_item = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "Test Record"},
+            "unknown": True,
+            "files": {
+                "enabled": True,
+            },
+        },
+    )
+
+    record_dict = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
+
+    signposting_linkset_json = create_linkset_json(datacite_dict=None, record_dict=record_dict)
+    signposting_linkset = create_linkset(datacite_dict=None, record_dict=record_dict)
+
+    assert signposting_linkset_json == {"linkset": []}
+    assert signposting_linkset == ""
