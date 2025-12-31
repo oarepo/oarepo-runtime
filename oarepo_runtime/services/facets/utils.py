@@ -47,7 +47,10 @@ def get_basic_facet(
 def _label_for_field(field: str) -> Any:
     """Create label for facet based on field name."""
     base = field.removesuffix(".keyword")
-    return _("%s.label") % base.replace(".", "/")
+    base = base.replace(".", "/")
+    return _(
+        f"{base}.label"  # noqa: INT001 # this is correct, we want to translate blah/abc.label
+    )
 
 
 def build_facet(specs: Iterable[dict[str, str | object]]) -> Any:
