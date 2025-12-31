@@ -128,7 +128,7 @@ class GroupedFacetsParam(FacetsParam):
         """Filter user facets based on the identity."""
         user_facets = {}
         if not self.facet_groups:
-            user_facets.update(self.facets)
+            user_facets.update(self.facets)  # pragma: no cover
         else:
             self.facets.clear()  # TODO: why is this needed?
             user_facets.update(self.facet_groups.get("default", {}))

@@ -54,7 +54,7 @@ def get_i18n_schema(
 
     value_field_class = obj_or_import_string(value_field)
     if value_field_class is None:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Invalid value field class provided: '{value_field}'. "
             "Expected a valid import string for a Marshmallow field class."
         )

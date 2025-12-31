@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock
 
 import pytest
+from flask_babel import LazyString
 from flask_principal import Identity, Need, UserNeed
 from invenio_access.permissions import system_user_id
 from invenio_records_resources.services.records.facets import TermsFacet
@@ -23,7 +24,11 @@ from invenio_search.engine import dsl
 
 from oarepo_runtime.services.facets.nested_facet import NestedLabeledFacet
 from oarepo_runtime.services.facets.params import GroupedFacetsParam
-from oarepo_runtime.services.facets.utils import build_facet, get_basic_facet
+from oarepo_runtime.services.facets.utils import (
+    _label_for_field,
+    build_facet,
+    get_basic_facet,
+)
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -184,7 +189,9 @@ def test_build_facet():
 
     assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
     assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
-    assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}  # noqa: SLF001
+    assert facet._inner._params == {  # noqa: SLF001
+        "field": "metadata.additionalTitles.title.lang"
+    }
     with pytest.raises(ValueError, match=r"Facet class can not be None\."):
         build_facet(
             [
@@ -345,3 +352,8 @@ def test_apply_respects_grouped_facets(identity_simple: Identity) -> None:
 
     # Selected values should still be reflected back
     assert params_dict.get("publication_status") == ["published"]
+
+
+def test_facet_label_translated():
+    assert isinstance(_label_for_field("metadata.test.field.keyword"), LazyString)
+    assert str(_label_for_field("metadata.test.field.keyword")) == "metadata/test/field.label"
