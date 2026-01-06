@@ -96,11 +96,12 @@ def test_facet_groups_property_present_and_absent() -> None:
 
 def test_facet_builder() -> None:
     facets = get_basic_facet(
-        {},
-        None,
-        "metadata.jej.c.keyword",
-        [],
-        "invenio_records_resources.services.records.facets.TermsFacet",
+        facets={},
+        facet_def=None,
+        facet_name="metadata.jej.c",
+        facet_path="metadata.jej.c.keyword",
+        content=[],
+        facet_class="invenio_records_resources.services.records.facets.TermsFacet",
     )
 
     assert "metadata.jej.c" in facets
@@ -112,15 +113,17 @@ def test_facet_builder() -> None:
         }
     ]
     facets = get_basic_facet(
-        {},
-        {
+        facets={},
+        facet_def={
             "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
             "field": "vlastni.cesta",
             "label": "jeeej",
         },
-        "metadata.jej.c.keyword",
-        [],
-        "invenio_records_resources.services.records.facets.TermsFacet",
+        facet_name="metadata.jej.c",
+        facet_path="metadata.jej.c.keyword",
+        content=[],
+        facet_class="invenio_records_resources.services.records.facets.TermsFacet",
+        facet_kwargs={"test": 123},
     )
     assert "metadata.jej.c" in facets
     assert facets["metadata.jej.c"] == [
@@ -128,6 +131,7 @@ def test_facet_builder() -> None:
             "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
             "field": "vlastni.cesta",
             "label": "jeeej",
+            "test": 123,
         }
     ]
 
