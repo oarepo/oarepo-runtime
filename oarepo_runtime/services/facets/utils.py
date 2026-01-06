@@ -20,25 +20,26 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def get_basic_facet(
+def get_basic_facet(  # noqa: PLR0913
     facets: dict,
     facet_def: dict | None,
-    path: str,
-    content: list,
     facet_name: str,
+    facet_path: str,
+    content: list,
+    facet_class: str,
+    facet_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, list]:
     """Get basic leaf facet definition."""
-    field_name = path
-    path = path.removesuffix(".keyword")
     if facet_def:
-        facets[path] = [*content, facet_def]
+        facets[facet_name] = [*content, {**(facet_kwargs or {}), **facet_def}]
     else:
-        facets[path] = [
+        facets[facet_name] = [
             *content,
             {
-                "facet": facet_name,
-                "field": field_name,
-                "label": _label_for_field(path),
+                "facet": facet_class,
+                "field": facet_path,
+                "label": _label_for_field(facet_name),
+                **(facet_kwargs or {}),
             },
         ]
     return facets
