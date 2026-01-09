@@ -14,13 +14,13 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
-from invenio_records_resources.services.errors import QuerystringValidationError
+from luqum.tree import Phrase
 from luqum.visitor import TreeTransformer
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from luqum.tree import Word
+    from luqum.tree import Term, Word
 
 ILLEGAL_ELASTICSEARCH_CHARACTERS = {
     "\\",
@@ -55,20 +55,22 @@ class SearchQueryValidator(TreeTransformer):
         _, _ = mapping, allow_list  # currently unused
         super().__init__(*args, **kwargs)
 
-    def visit_word(self, node: Word, context: Any) -> Generator[Word]:
+    def visit_word(self, node: Word, context: Any) -> Generator[Term]:
         """Visit a word term."""
         # unused context here but keeping the signature required by luqum visitor
         _ = context
 
-        # raise exception if the value contains an illegal elasticsearch character
-        # invenio catches this and runs multimatch fallback instead of passing the
-        # invalid query to opensearch
+        # convert to phrase if the value contains an illegal elasticsearch character
         if re.search(ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX, node.value):
-            raise QuerystringValidationError(f"Illegal character in search term: {node.value}")
+            val = node.value.replace('"', r"\"")
+            yield Phrase(f'"{val}"')
+            return
 
         # some characters are ok if they are not at the start of the term,
         # for example '-' is ok in 'e-mail' but not at the start as -mail
         if re.search(ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX, node.value):
-            raise QuerystringValidationError(f"Illegal character in search term: {node.value}")
+            val = node.value.replace('"', r"\"")
+            yield Phrase(f'"{val}"')
+            return
 
         yield node
