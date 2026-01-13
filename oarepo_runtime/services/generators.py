@@ -12,10 +12,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from itertools import chain
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any, Literal, override
 
 from invenio_records_permissions.generators import (
     ConditionalGenerator as InvenioConditionalGenerator,
+)
+from invenio_records_permissions.generators import (
+    Disable,
 )
 from invenio_records_permissions.generators import Generator as InvenioGenerator
 from invenio_search.engine import dsl
@@ -24,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
     from flask_principal import Need
+    from invenio_rdm_records.records.api import RDMRecord
     from invenio_records.api import Record
 
 
@@ -127,3 +131,69 @@ class AggregateGenerator(Generator, ABC):
         if ret is None:
             return dsl.Q("match_none")
         return ret
+
+
+class IfDraftType(ConditionalGenerator):
+    """Match if record is a draft of specified type(s)."""
+
+    def __init__(
+        self,
+        draft_types: (
+            Literal["initial", "metadata", "new_version"] | list[Literal["initial", "metadata", "new_version"]]
+        ),
+        then_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
+        else_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
+    ):
+        """Create the generator.
+
+        :param draft_types: One or more of 'initial', 'metadata', 'new_version'.
+        :param then_: Generators to use if condition matches.
+        :param else_: Generators to use if condition does not match.
+        """
+        if not isinstance(draft_types, (list, tuple)):
+            draft_types = [draft_types]
+        self._draft_types = draft_types
+        if not then_:
+            then_ = [Disable()]
+        if not else_:
+            else_ = [Disable()]
+        if not isinstance(then_, (list, tuple)):
+            then_ = [then_]
+        if not isinstance(else_, (list, tuple)):
+            else_ = [else_]
+        super().__init__(then_, else_)
+
+    @override
+    def _condition(self, record: RDMRecord | None = None, **kwargs: Any) -> bool:
+        """Check if record is draft of specified type."""
+        if not record:
+            return False
+
+        index = record.versions.index
+        is_latest = record.versions.is_latest
+        is_draft = record.is_draft
+
+        if not is_draft:
+            return False
+
+        if index == 1 and not is_latest:
+            draft_type = "initial"
+        elif index > 1 and not is_latest:
+            draft_type = "new_version"
+        else:
+            draft_type = "metadata"
+
+        return draft_type in self._draft_types
+
+    @override
+    def _query_instate(self, **_context: Any) -> dsl.query.Query:
+        queries = []
+        if "initial" in self._draft_types:
+            queries.append(dsl.Q("term", **{"versions.index": 1}) & dsl.Q("term", **{"metadata.is_latest_draft": True}))
+        if "metadata" in self._draft_types:
+            # unknown how the "edit_metadata" type of draft could be differentiated from new_version
+            queries.append(dsl.Q("match_none"))
+        if "new_version" in self._draft_types:
+            # unknown how the "new_version" type of draft could be differentiated from edit_metadata
+            queries.append(dsl.Q("match_none"))
+        return dsl.Q("bool", should=queries, minimum_should_match=1)
