@@ -196,4 +196,7 @@ class IfDraftType(ConditionalGenerator):
         if "new_version" in self._draft_types:
             # unknown how the "new_version" type of draft could be differentiated from edit_metadata
             queries.append(dsl.Q("match_none"))
+        if not queries:
+            # No recognized draft types; match no documents explicitly
+            queries.append(dsl.Q("match_none"))
         return dsl.Q("bool", should=queries, minimum_should_match=1)

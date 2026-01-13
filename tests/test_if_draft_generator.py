@@ -141,6 +141,10 @@ def create_query(qf):
             "new_version",
             create_query({"match_none": {}}),
         ),
+        (
+            "nomatch",
+            create_query({"match_none": {}}),
+        ),
     ],
 )
 def test_filter_matches(
@@ -161,3 +165,36 @@ def test_filter_matches(
     query = generator.query_filter().to_dict()
 
     assert query == generated_json
+
+
+def test_default_arguments():
+    """Test default arguments of IfDraftType."""
+    generator = IfDraftType("initial")
+
+    assert isinstance(generator.then_[0], Disable)
+    assert isinstance(generator.else_[0], Disable)
+
+
+def test_single_draft_type_as_list():
+    """Test that single draft type passed as list works."""
+    # as list
+    generator = IfDraftType(["initial"], then_=[SystemProcess()], else_=[Disable()])
+
+    assert generator._draft_types == ["initial"]  # noqa: SLF001
+
+    # as single value
+    generator = IfDraftType("initial", then_=[SystemProcess()], else_=[Disable()])
+
+    assert generator._draft_types == ["initial"]  # noqa: SLF001
+
+
+def test_single_then_else_branch():
+    """Test that single then/else branch works."""
+    g1 = SystemProcess()
+    g2 = SystemProcess()
+    generator = IfDraftType("initial", then_=g1, else_=g2)
+
+    assert isinstance(generator.then_, list)
+    assert generator.then_[0] is g1
+    assert isinstance(generator.else_, list)
+    assert generator.else_[0] is g2
