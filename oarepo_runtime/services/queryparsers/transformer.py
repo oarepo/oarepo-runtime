@@ -14,13 +14,15 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
-from luqum.tree import Phrase
+from luqum.auto_head_tail import auto_head_tail
+from luqum.parser import parser
+from luqum.tree import Phrase, Term, Word
 from luqum.visitor import TreeTransformer
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from luqum.tree import Term, Word
+    from luqum.tree import Item
 
 ILLEGAL_ELASTICSEARCH_CHARACTERS = {
     "\\",
@@ -42,9 +44,17 @@ ILLEGAL_ELASTICSEARCH_CHARACTERS = {
     "?",
     ":",
 }
+
 ILLEGAL_START_ELASTICSEARCH_CHARACTERS = {"-"}
 ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX = r'[\\\/\+\!\(\)\{\}\[\]\^"~\*\?:]|&&|\|\|'
 ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX = r"^\-"
+
+SEARCH_FIELD_PHRASE_REGEX = r"^https?:\/\/|^doi:|^handle:|^oai:https://"
+
+
+def _get_phrase(val: str) -> Phrase:
+    val = val.replace('"', '\\"').replace("'", "\\'")
+    return Phrase(f'"{val}"')
 
 
 class SearchQueryValidator(TreeTransformer):
@@ -55,22 +65,40 @@ class SearchQueryValidator(TreeTransformer):
         _, _ = mapping, allow_list  # currently unused
         super().__init__(*args, **kwargs)
 
+    def visit(self, tree: Item, context: dict[str, Any] | None = None) -> Item:
+        """Transform the tree."""
+        val = super().visit(tree, context=context)
+        new_tree = auto_head_tail(val)
+        query_str = str(new_tree)
+
+        if re.match(SEARCH_FIELD_PHRASE_REGEX, query_str):
+            new_words = []
+            words = query_str.split()
+
+            for word in words:
+                if re.match(SEARCH_FIELD_PHRASE_REGEX, word):
+                    # phrases can create quotes; assuming this part only deals with urls where they aren't allowed
+                    new_words.append(f'"{word.replace('"', "")}"')
+                else:
+                    new_words.append(word)
+
+            new_query_string = " ".join(new_words)
+            new_tree = parser.parse(new_query_string)
+            return super().visit(new_tree, context=context)
+        return val
+
     def visit_word(self, node: Word, context: Any) -> Generator[Term]:
-        """Visit a word term."""
+        """Transform the word node."""
         # unused context here but keeping the signature required by luqum visitor
         _ = context
+        val = node.value
 
         # convert to phrase if the value contains an illegal elasticsearch character
-        if re.search(ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX, node.value):
-            val = node.value.replace('"', r"\"")
-            yield Phrase(f'"{val}"')
-            return
-
-        # some characters are ok if they are not at the start of the term,
-        # for example '-' is ok in 'e-mail' but not at the start as -mail
-        if re.search(ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX, node.value):
-            val = node.value.replace('"', r"\"")
-            yield Phrase(f'"{val}"')
+        if re.search(ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX, val) or re.search(
+            ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX, val
+        ):
+            # Only \" is valid escape in ES phrases; single quotes don't need escaping
+            yield _get_phrase(val)
             return
 
         yield node
