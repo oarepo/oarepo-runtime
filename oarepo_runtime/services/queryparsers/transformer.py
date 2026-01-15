@@ -49,7 +49,7 @@ ILLEGAL_START_ELASTICSEARCH_CHARACTERS = {"-"}
 ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX = r'[\\\/\+\!\(\)\{\}\[\]\^"~\*\?:]|&&|\|\|'
 ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX = r"^\-"
 
-SEARCH_FIELD_PHRASE_REGEX = r"^https?:\/\/|^doi:|^handle:|^oai:https://"
+SEARCH_FIELD_PHRASE_REGEX = r"https?:\/\/|doi:|handle:|oai:https://"
 
 
 def _get_phrase(val: str) -> Phrase:
@@ -71,12 +71,15 @@ class SearchQueryValidator(TreeTransformer):
         new_tree = auto_head_tail(val)
         query_str = str(new_tree)
 
-        if re.match(SEARCH_FIELD_PHRASE_REGEX, query_str):
+        if re.search(SEARCH_FIELD_PHRASE_REGEX, query_str):
+            query_str = re.sub(
+                r"(https?://)\s", r"\1", query_str
+            )  # luqum breaks https://.+ into SearchField(http, Regex(//)) and Word/Phrase(.+);
             new_words = []
             words = query_str.split()
 
             for word in words:
-                if re.match(SEARCH_FIELD_PHRASE_REGEX, word):
+                if re.search(SEARCH_FIELD_PHRASE_REGEX, word):
                     # phrases can create quotes; assuming this part only deals with urls where they aren't allowed
                     new_words.append(f'"{word.replace('"', "")}"')
                 else:
