@@ -298,6 +298,29 @@ def export_format_signpost_links_list(record_dict: dict) -> list[Signpost]:
     ]
 
 
+def _valid_url(url: str) -> bool:
+    if not url:
+        return False
+    parsed = urlparse(url)
+    return bool(parsed.scheme and parsed.netloc)
+
+
+def _license_signposts(datacite_dict: dict) -> list[Signpost]:
+    signposting_links: list[Signpost] = []
+    for attribute in datacite_dict.get("rightsList", []):
+        # check for schemeUri, rightsIdentifier and 'rightsIdentifierScheme' == SPDX, fallback rightsUri, else nothing
+        license_url = attribute.get("rightsUri")
+        if (
+            attribute.get("schemeUri")
+            and attribute.get("rightsIdentifier")
+            and attribute.get("rightsIdentifierScheme") == "SPDX"
+        ):
+            license_url = urljoin(attribute["schemeUri"], attribute["rightsIdentifier"])
+        if _valid_url(license_url):
+            signposting_links.append(Signpost(rel=LinkRel.license, target=license_url))
+    return signposting_links
+
+
 def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, short: bool) -> list[Signpost]:
     """Create a list of signpost links for the landing page of the record item.
 
@@ -371,16 +394,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
         )
 
     # license
-    for attribute in datacite_dict.get("rightsList", []):
-        # check for schemeUri, rightsIdentifier and 'rightsIdentifierScheme' == SPDX, fallback rightsUri, else nothing
-        license_url = attribute.get("rightsUri")
-        if (
-            attribute.get("schemeUri")
-            and attribute.get("rightsIdentifier")
-            and attribute.get("rightsIdentifierScheme") == "SPDX"
-        ):
-            license_url = urljoin(attribute.get("schemeUri"), attribute.get("rightsIdentifier"))
-        signposting_links.append(Signpost(rel=LinkRel.license, target=license_url))
+    signposting_links.extend(_license_signposts(datacite_dict))
 
     # type
     schema_org = datacite_dict.get("types", {}).get("schemaOrg")
