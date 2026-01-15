@@ -49,7 +49,7 @@ ILLEGAL_START_ELASTICSEARCH_CHARACTERS = {"-"}
 ILLEGAL_ELASTICSEARCH_CHARACTERS_REGEX = r'[\\\/\+\!\(\)\{\}\[\]\^"~\*\?:]|&&|\|\|'
 ILLEGAL_START_ELASTICSEARCH_CHARACTERS_REGEX = r"^\-"
 
-SEARCH_FIELD_PHRASE_REGEX = r"https?:\/\/|doi:|handle:|oai:https://"
+SEARCH_FIELD_EDGE_CASES_REGEX = r"https?://|doi:|handle:|oai:https://"
 
 
 def _get_phrase(val: str) -> Phrase:
@@ -68,14 +68,14 @@ class SearchQueryValidator(TreeTransformer):
     def visit(self, tree: Item, context: dict[str, Any] | None = None) -> Item:
         """Transform the tree."""
         query_str = str(auto_head_tail(tree))
-        if re.search(SEARCH_FIELD_PHRASE_REGEX, query_str):
+        if re.search(SEARCH_FIELD_EDGE_CASES_REGEX, query_str):
             query_str = re.sub(
                 r"(https?://)\s", r"\1", query_str
             )  # luqum breaks https://.+ into SearchField(http, Regex(//)) and Word/Phrase(.+);
             new_words = []
             words = query_str.split()
             for word in words:
-                if re.search(SEARCH_FIELD_PHRASE_REGEX, word):
+                if re.search(SEARCH_FIELD_EDGE_CASES_REGEX, word):
                     new_words.append(f'"{word}"')
                 else:
                     new_words.append(word)
