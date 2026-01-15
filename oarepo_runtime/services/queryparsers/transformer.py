@@ -76,7 +76,7 @@ class SearchQueryValidator(TreeTransformer):
             words = query_str.split()
             for word in words:
                 if re.search(SEARCH_FIELD_EDGE_CASES_REGEX, word):
-                    new_words.append(f'"{word}"')
+                    new_words.append(_get_phrase(word).value)
                 else:
                     new_words.append(word)
             new_query_string = " ".join(new_words)
