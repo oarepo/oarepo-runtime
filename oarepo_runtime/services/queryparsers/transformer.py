@@ -67,28 +67,22 @@ class SearchQueryValidator(TreeTransformer):
 
     def visit(self, tree: Item, context: dict[str, Any] | None = None) -> Item:
         """Transform the tree."""
-        val = super().visit(tree, context=context)
-        new_tree = auto_head_tail(val)
+        new_tree = auto_head_tail(tree)
         query_str = str(new_tree)
-
         if re.search(SEARCH_FIELD_PHRASE_REGEX, query_str):
             query_str = re.sub(
                 r"(https?://)\s", r"\1", query_str
             )  # luqum breaks https://.+ into SearchField(http, Regex(//)) and Word/Phrase(.+);
             new_words = []
             words = query_str.split()
-
             for word in words:
                 if re.search(SEARCH_FIELD_PHRASE_REGEX, word):
-                    # phrases can create quotes; assuming this part only deals with urls where they aren't allowed
-                    new_words.append(f'"{word.replace('"', "")}"')
+                    new_words.append(f'"{word}"')
                 else:
                     new_words.append(word)
-
             new_query_string = " ".join(new_words)
-            new_tree = parser.parse(new_query_string)
-            return super().visit(new_tree, context=context)
-        return val
+            tree = parser.parse(new_query_string)
+        return super().visit(tree, context=context)
 
     def visit_word(self, node: Word, context: Any) -> Generator[Term]:
         """Transform the word node."""
