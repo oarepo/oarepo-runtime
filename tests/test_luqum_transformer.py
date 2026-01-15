@@ -170,7 +170,7 @@ def test_multi_word_query_with_url():
     assert visit(query) == result
 
 
-def test_more_urls(transformer):
+def test_more_urls():
     query = "lalala http://www.tralala.fyi http://doi.org/10.5281/zenodo.18184329 doi:10.5281/zenodo.18184329 falala"
 
     result = (
@@ -180,7 +180,7 @@ def test_more_urls(transformer):
     assert visit(query) == result
 
 
-def test_cut_http(transformer):
+def test_cut_http():
     query1 = "http:// www.tralala.fyi"
     query2 = "http://www.tralala.fyi"
 
@@ -189,3 +189,10 @@ def test_cut_http(transformer):
 
     assert visit(query1) == result
     assert visit(query2) == result2
+
+
+def test_url_with_quotes():
+    query1 = 'http://www.tralal"a.fyi'
+    result = '"http://www.tralal\\"a.fyi"'
+
+    assert visit(query1) == result
