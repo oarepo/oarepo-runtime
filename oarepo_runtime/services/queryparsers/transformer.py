@@ -67,8 +67,7 @@ class SearchQueryValidator(TreeTransformer):
 
     def visit(self, tree: Item, context: dict[str, Any] | None = None) -> Item:
         """Transform the tree."""
-        new_tree = auto_head_tail(tree)
-        query_str = str(new_tree)
+        query_str = str(auto_head_tail(tree))
         if re.search(SEARCH_FIELD_PHRASE_REGEX, query_str):
             query_str = re.sub(
                 r"(https?://)\s", r"\1", query_str
