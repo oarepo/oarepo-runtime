@@ -12,8 +12,9 @@
 from __future__ import annotations
 
 import pytest
-from invenio_records_resources.services.errors import QuerystringValidationError
-from luqum.tree import Word
+from luqum.auto_head_tail import auto_head_tail
+from luqum.parser import parser
+from luqum.tree import Phrase, Word
 
 from oarepo_runtime.services.queryparsers.transformer import (
     ILLEGAL_ELASTICSEARCH_CHARACTERS,
@@ -37,34 +38,33 @@ def transformer():
 )
 def test_word_with_illegal_character_at_start(illegal_char, transformer):
     """Test words starting with illegal characters raise error."""
-    word = Word(f"{illegal_char}test")
+    tested_str = f"{illegal_char}test"
+    word = Word(tested_str)
 
-    with pytest.raises(QuerystringValidationError) as exc_info:
-        list(transformer.visit_word(word, context=None))
-
-    assert "Illegal character in search term" in str(exc_info.value)
+    phrase_word = '"\\"test"' if illegal_char == '"' else f'"{tested_str}"'
+    assert list(transformer.visit_word(word, context=None)) == [Phrase(phrase_word)]
 
 
 @pytest.mark.parametrize("illegal_char", ILLEGAL_CHARS_LIST)
 def test_word_with_illegal_character_at_end(illegal_char, transformer):
     """Test words ending with illegal characters raise error."""
-    word = Word(f"test{illegal_char}")
+    tested_str = f"test{illegal_char}"
 
-    with pytest.raises(QuerystringValidationError) as exc_info:
-        list(transformer.visit_word(word, context=None))
+    word = Word(tested_str)
 
-    assert "Illegal character in search term" in str(exc_info.value)
+    phrase_word = '"test\\""' if illegal_char == '"' else f'"{tested_str}"'
+    assert list(transformer.visit_word(word, context=None)) == [Phrase(phrase_word)]
 
 
 @pytest.mark.parametrize("illegal_char", ILLEGAL_CHARS_LIST)
 def test_word_with_illegal_character_in_middle(illegal_char, transformer):
     """Test words with illegal characters in the middle raise error."""
-    word = Word(f"te{illegal_char}st")
+    tested_str = f"te{illegal_char}st"
 
-    with pytest.raises(QuerystringValidationError) as exc_info:
-        list(transformer.visit_word(word, context=None))
+    word = Word(tested_str)
 
-    assert "Illegal character in search term" in str(exc_info.value)
+    phrase_word = '"te\\"st"' if illegal_char == '"' else f'"{tested_str}"'
+    assert list(transformer.visit_word(word, context=None)) == [Phrase(phrase_word)]
 
 
 @pytest.mark.parametrize(
@@ -100,10 +100,7 @@ def test_word_with_multiple_illegal_characters(transformer):
     """Test words with multiple illegal characters raise error."""
     word = Word("test+value{123")
 
-    with pytest.raises(QuerystringValidationError) as exc_info:
-        list(transformer.visit_word(word, context=None))
-
-    assert "Illegal character in search term" in str(exc_info.value)
+    assert list(transformer.visit_word(word, context=None)) == [Phrase('"test+value{123"')]
 
 
 @pytest.mark.parametrize(
@@ -122,9 +119,7 @@ def test_matrix_illegal_vs_legal_characters(value, expected_contains_illegal, tr
 
     if expected_contains_illegal:
         # Should raise error
-        with pytest.raises(QuerystringValidationError) as exc_info:
-            list(transformer.visit_word(word, context=None))
-        assert "Illegal character in search term" in str(exc_info.value)
+        assert list(transformer.visit_word(word, context=None)) == [Phrase(f'"{value.replace('"', '\\"')}"')]
     else:
         # Should yield the node
         result = list(transformer.visit_word(word, context=None))
@@ -139,3 +134,53 @@ def test_empty_string_yields_node(transformer):
     result = list(transformer.visit_word(word, context=None))
     assert len(result) == 1
     assert result[0] == word
+
+
+def visit(query):
+    parsed = parser.parse(query)
+    transformed_tree = SearchQueryValidator(None, None).visit(parsed, context=None)
+    transformed_tree = auto_head_tail(transformed_tree)
+    return str(transformed_tree)
+
+
+def test_url_edge_cases():
+    urls = [
+        "https://doi.org/10.5281/zenodo.18184329",
+        "doi:10.5281/zenodo.18184329",
+        "handle:11372/LRT-707",
+        "https://127.0.0.1:5000/s/doi/10.5281/zenodo.18184329",
+        "oai:https://127.0.0.1:5000:doi/10.5281/zenodo.18184329",
+    ]
+
+    for url in urls:
+        assert visit(url) == f'"{url}"'
+
+
+def test_multi_word_query_with_url():
+    """Test empty string yields node (no illegal chars)."""
+    query = "lalala tralala https://doi.org/10.5281/zenodo.18184329 falala"
+
+    result = 'lalala tralala "https://doi.org/10.5281/zenodo.18184329" falala'
+
+    assert visit(query) == result
+
+
+def test_more_urls(transformer):
+    query = "lalala http://www.tralala.fyi http://doi.org/10.5281/zenodo.18184329 doi:10.5281/zenodo.18184329 falala"
+
+    result = (
+        'lalala "http://www.tralala.fyi" "http://doi.org/10.5281/zenodo.18184329" "doi:10.5281/zenodo.18184329" falala'
+    )
+
+    assert visit(query) == result
+
+
+def test_cut_http(transformer):
+    query1 = "http:// www.tralala.fyi"
+    query2 = "http://www.tralala.fyi"
+
+    result = '"http://" www.tralala.fyi'
+    result2 = '"http://www.tralala.fyi"'
+
+    assert visit(query1) == result
+    assert visit(query2) == result2
