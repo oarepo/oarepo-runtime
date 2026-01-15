@@ -143,6 +143,11 @@ def visit(query):
     return str(transformed_tree)
 
 
+def test_visit():
+    query = "lalala tralala"
+    assert visit(query) == "lalala tralala"
+
+
 def test_url_edge_cases():
     urls = [
         "https://doi.org/10.5281/zenodo.18184329",
