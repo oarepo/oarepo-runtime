@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from oarepo_runtime.api import Model
+from oarepo_runtime.api import ExportEngine, Model
 from oarepo_runtime.proxies import current_runtime
 from tests.conftest import DummySerializer
 
@@ -584,3 +584,18 @@ def test_namespace_present():
     )
 
     assert model.namespace is namespace
+
+
+def test_export_engine():
+    """Test ExportEngine cache decorator."""
+    export_engine = ExportEngine()
+    assert export_engine.export_cache_context.get() == ExportEngine.CACHE_NOT_INITIALIZED
+
+    @ExportEngine.cache
+    def decorator_test(*args: dict, **kwargs: dict) -> None:
+        assert kwargs["export_cache"] == {}
+        kwargs["export_cache"]["a"] = "b"
+        assert kwargs["export_cache"] == {"a": "b"}
+
+    decorator_test()
+    assert export_engine.export_cache_context.get() == ExportEngine.CACHE_NOT_INITIALIZED
