@@ -41,6 +41,7 @@ from oarepo_runtime.proxies import current_runtime
 
 LINK_PREFIX = "Link: "
 TEXT_HTML_TYPE = "text/html"
+MAX_NUMBER_OF_AUTHORS = 30
 
 
 def signpost_link_to_str(signpost_link: Signpost) -> str:
@@ -334,6 +335,8 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
     """
     signposting_links: list[Signpost] = []
     creators = datacite_dict.get("creators", [])
+    if len(creators) > MAX_NUMBER_OF_AUTHORS:
+        creators = creators[:MAX_NUMBER_OF_AUTHORS]
     record_files = record_dict.get("files", {}).get("entries", {})
     record_file_values = record_files.values()
     if short:
