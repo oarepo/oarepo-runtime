@@ -20,12 +20,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flask import Blueprint
 from flask_principal import Identity, Need, UserNeed
 from flask_resources import JSONDeserializer
 from flask_resources.serializers import BaseSerializer
+from invenio_accounts.proxies import current_datastore
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.proxies import current_service_registry
 from invenio_vocabularies.records.models import VocabularyType
@@ -34,7 +36,10 @@ from oarepo_runtime.api import Export, Import
 from oarepo_runtime.info.views import InfoResource, create_wellknown_blueprint
 from oarepo_runtime.services.records.mapping import update_all_records_mappings
 
-pytest_plugins = ("celery.contrib.pytest",)
+if TYPE_CHECKING:
+    from invenio_accounts.models import Role
+
+pytest_plugins = ("celery.contrib.pytest", "pytest_oarepo.users")
 
 
 class TestInfoComponent:
@@ -242,3 +247,66 @@ def app_with_mock_ui_bp(app):
 
     app.register_blueprint(bp)
     return app
+
+
+# --- move to pytest-oarepo
+# issue - role in requests
+
+
+def _create_role(id_, name, description, is_managed) -> Role:
+    """Create a Role/Group."""
+    r = current_datastore.create_role(id=id_, name=name, description=description, is_managed=is_managed)
+    current_datastore.commit()
+    return r
+
+
+@pytest.fixture
+def roles(db):
+    """Create roles."""
+    r1 = _create_role(
+        id_="it-dep",
+        name="it-dep",
+        description="IT Department",
+        is_managed=False,
+    )
+    return [r1]
+
+
+from invenio_access.models import ActionRoles, ActionUsers
+
+
+@pytest.fixture
+def user_with_administration_rights(app, db, UserFixture, password):  # noqa N803
+    """Set administration rights to the first user and return it."""
+    user = UserFixture(
+        email="admin@example.org",
+        password=password,
+        active=True,
+        confirmed=True,
+        user_profile={
+            "affiliations": "cesnet",
+        },
+        preferences={"locale": "en", "visibility": "public"},
+    )
+    user.create(app, db)
+    actions = app.extensions["invenio-access"].actions
+    act = ActionUsers.allow(actions["administration-access"], user_id=user.user.id)
+    db.session.add(act)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def role_with_administration_rights(app, db):
+    """Set administration rights to the first user and return it."""
+    role = _create_role(
+        id_="admin",
+        name="admin",
+        description="Administrator group.",
+        is_managed=False,
+    )
+    actions = app.extensions["invenio-access"].actions
+    act = ActionRoles.allow(actions["administration-access"], role_id=role.id)
+    db.session.add(act)
+    db.session.commit()
+    return role
