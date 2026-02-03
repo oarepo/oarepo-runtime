@@ -14,6 +14,11 @@ from abc import ABC, abstractmethod
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal, override
 
+from invenio_access.models import ActionRoles, ActionUsers
+from invenio_administration.generators import (
+    Administration,
+    administration_access_action,
+)
 from invenio_records_permissions.generators import (
     ConditionalGenerator as InvenioConditionalGenerator,
 )
@@ -200,3 +205,42 @@ class IfDraftType(ConditionalGenerator):
             # No recognized draft types; match no documents explicitly
             queries.append(dsl.Q("match_none"))
         return dsl.Q("bool", should=queries, minimum_should_match=1)
+
+
+class ActionQueryFilterMixin:
+    """Administration mixin that filters users based on action access."""
+
+    access_action: Any
+
+    def query_filter(self, **kwargs: Any) -> dsl.query.Query | list[dsl.query.Query] | None:
+        """Return search filter that allows all in case user (or one of the roles the user belongs to) has access."""
+        identity = kwargs["identity"]
+        user_ids = [need.value for need in identity.provides if need.method == "id"]
+
+        if user_ids:
+            has_direct_access = ActionUsers.query.filter(
+                ActionUsers.user_id == user_ids[0],
+                ActionUsers.action == self.access_action.value,
+                ActionUsers.exclude.is_(False),
+            ).count()
+            if has_direct_access:
+                return dsl.query.MatchAll()
+
+        user_roles = [need.value for need in identity.provides if need.method == "role"]
+        if user_roles:
+            has_access_through_roles = ActionRoles.query.filter(
+                ActionRoles.role_id.in_(user_roles),
+                ActionRoles.action == self.access_action.value,
+                ActionRoles.exclude.is_(False),
+            ).count()
+            if has_access_through_roles:
+                return dsl.query.MatchAll()
+
+        # If no direct access or roles, return no match
+        return dsl.query.MatchNone()
+
+
+class AdministrationWithQueryFilter(ActionQueryFilterMixin, Administration):
+    """Administration generator which matches people with administration-access permission."""
+
+    access_action = administration_access_action

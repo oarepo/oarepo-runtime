@@ -25,6 +25,7 @@ dev = [
 ]
 tests = [
     "pytest>=7.1.2",
+    "pytest-oarepo",
 ]
 oarepo14=[
     "oarepo[rdm]>=14,<15",
