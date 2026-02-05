@@ -64,7 +64,7 @@ def test_component_data_from_function_uses_underlying_class():
     class B(ServiceComponent):
         pass
 
-    cd = ComponentData(lambda svc: B(svc), service=mock_service)
+    cd = ComponentData(B, service=mock_service)
     assert cd.component_class is B
 
 

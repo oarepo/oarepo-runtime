@@ -84,7 +84,7 @@ class ArbitraryNestedListResult(RelationListResult):
             # before returning, but simpler to implement
             _for_each_deep(
                 values,
-                lambda v: self._validate_single_value(v),
+                self._validate_single_value,
                 levels=len(self.field.path_elements),
             )
         except KeyError:  # pragma: no cover
@@ -171,7 +171,7 @@ class ArbitraryNestedListRelation(ListRelation):
     @override
     def parse_value(self, value: list[Any] | tuple[Any]) -> list[Any]:  # type: ignore[override]
         """Parse a record (or ID) to the ID to be stored."""
-        return _for_each_deep(value, lambda v: self._parse_single_value(v), levels=len(self.path_elements))
+        return _for_each_deep(value, self._parse_single_value, levels=len(self.path_elements))
 
     def _parse_single_value(self, value: Any) -> Any:
         """Parse a single value using the parent class method.
