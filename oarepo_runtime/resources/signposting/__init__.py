@@ -342,17 +342,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
     model = current_runtime.models_by_schema[record_dict["$schema"]]
 
     # authors
-    for attribute in creators:
-        signposting_links.extend(
-            Signpost(rel=LinkRel.author, target=name_identifier["nameIdentifier"])
-            for name_identifier in attribute["nameIdentifiers"]
-            if all(
-                [
-                    urlparse(name_identifier["nameIdentifier"]).scheme,
-                    urlparse(name_identifier["nameIdentifier"]).netloc,
-                ]
-            )
-        )
+    signposting_links = resolve_creators(signposting_links, creators)
 
     # cite-as = DOI
     if datacite_dict.get("doi"):
@@ -426,3 +416,45 @@ def record_dict_to_json_linkset(
         export_mimetype="application/vnd.datacite.datacite+json",
     )
     return create_linkset_json(datacite_dict, record_dict, include_reverse_relations)
+
+
+NAME_IDENTIFIER_SCHEMES = {
+    "orcid": "https://orcid.org",
+    "ror": "https://ror.org",
+    "isni": "https://isni.org",
+    "viaf": "https://viaf.org/viaf",
+    "gnd": "https://d-nb.info/gnd",
+    # "scopus author id": "https://www.scopus.com/authid/detail.uri?authorId=",
+    "researcherid": "https://www.webofscience.com/wos/author/record",
+}
+
+def resolve_creators(signposting_links, creators):
+    for attribute in creators:
+        for creator_name_identifier in attribute["nameIdentifiers"]:
+
+
+            # ["nameIdentifiers"]["nameIdentifier"] is a complete URL
+            if all(
+                    [
+                        urlparse(creator_name_identifier["nameIdentifier"]).scheme,
+                        urlparse(creator_name_identifier["nameIdentifier"]).netloc,
+                    ]
+            ):
+                signposting_links.append(Signpost(rel=LinkRel.author, target=creator_name_identifier["nameIdentifier"]))
+
+
+            # ["nameIdentifiers"]["nameIdentifier"] is just the identifier
+            # try to construct author signpost based on schemeUri/nameIdentifierScheme and nameIdentifier
+            else:
+                scheme_uri = creator_name_identifier.get("schemeUri", NAME_IDENTIFIER_SCHEMES.get(creator_name_identifier.get("nameIdentifierScheme", "").lower()))
+                if scheme_uri:
+                    author_url = urljoin(scheme_uri, creator_name_identifier["nameIdentifier"])
+                    if all(
+                            [
+                                urlparse(author_url).scheme,
+                                urlparse(author_url).netloc,
+                            ]
+                    ):
+                        signposting_links.append(Signpost(rel=LinkRel.author, target=author_url))
+
+    return signposting_links
