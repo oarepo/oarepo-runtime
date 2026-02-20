@@ -51,6 +51,14 @@ class Condition:
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
 
+    def __invert__(self):
+        """Negate the condition using a logical NOT."""
+        return type(
+            "Not",
+            (Condition,),
+            {"__call__": lambda _, obj, ctx: not self(obj, ctx)},
+        )()
+
 
 class has_permission(Condition):  # noqa: N801
     """A condition to check if a user has the specified permission for a given record."""
@@ -121,3 +129,12 @@ class is_published_record(Condition):  # noqa: N801
         """Check if the given record is draft."""
         _ = ctx
         return not getattr(obj, "is_draft", False)
+
+
+class is_draft(Condition):  # noqa: N801
+    """Shortcut for links to determine if record is a draft."""
+
+    def __call__(self, obj: RecordBase, ctx: dict):
+        """Check if the given record is draft."""
+        _ = ctx
+        return getattr(obj, "is_draft", False)
