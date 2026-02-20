@@ -14,6 +14,7 @@ from oarepo_runtime.services.config.link_conditions import (
     has_draft_permission,
     has_permission,
     has_published_record,
+    is_draft,
     is_published_record,
 )
 
@@ -36,6 +37,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert has_permission("read")(draft, context)
     assert not has_published_record()(draft, context)
     assert not is_published_record()(draft, context)
+    assert is_draft()(draft, context)
 
     assert has_draft()(draft, context)
 
@@ -50,6 +52,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert has_permission("read")(record, context)
     assert has_published_record()(record, context)
     assert is_published_record()(record, context)
+    assert not is_draft()(record, context)
     assert not has_draft()(record, context)
 
     rec = service.edit(identity_simple, rec.id)

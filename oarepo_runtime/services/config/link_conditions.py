@@ -129,3 +129,12 @@ class is_published_record(Condition):  # noqa: N801
         """Check if the given record is draft."""
         _ = ctx
         return not getattr(obj, "is_draft", False)
+
+
+class is_draft(Condition):  # noqa: N801
+    """Shortcut for links to determine if record is a draft."""
+
+    def __call__(self, obj: RecordBase, ctx: dict):
+        """Check if the given record is draft."""
+        _ = ctx
+        return getattr(obj, "is_draft", False)
