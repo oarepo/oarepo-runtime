@@ -51,6 +51,14 @@ class Condition:
             {"__call__": lambda _, obj, ctx: self(obj, ctx) or other(obj, ctx)},
         )()
 
+    def __invert__(self):
+        """Negate the condition using a logical NOT."""
+        return type(
+            "Not",
+            (Condition,),
+            {"__call__": lambda _, obj, ctx: bool(not self(obj, ctx))},
+        )()
+
 
 class has_permission(Condition):  # noqa: N801
     """A condition to check if a user has the specified permission for a given record."""

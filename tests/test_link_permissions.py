@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from oarepo_runtime.services.config.link_conditions import (
+    Condition,
     has_draft,
     has_draft_permission,
     has_permission,
@@ -68,6 +69,11 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert has_published_record()(record, context)
     assert is_published_record()(record, context)
     assert has_draft()(record, context)
+
+    assert isinstance(~is_published_record(), Condition)
+    assert (~is_published_record())(draft, context)
+    assert not (~is_published_record())(record, context)
+    assert not (~(has_draft_permission("read")) & has_permission("read"))(draft, context)
 
 
 # TODO: test link conditions with file record
