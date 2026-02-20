@@ -73,7 +73,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert isinstance(~is_published_record(), Condition)
     assert (~is_published_record())(draft, context)
     assert not (~is_published_record())(record, context)
-    assert not (~(has_draft_permission("read")) & has_permission("read"))(draft, context)
+    assert not (~has_draft_permission("read") & has_permission("read"))(draft, context)
 
 
 # TODO: test link conditions with file record

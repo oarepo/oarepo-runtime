@@ -56,7 +56,7 @@ class Condition:
         return type(
             "Not",
             (Condition,),
-            {"__call__": lambda _, obj, ctx: bool(not self(obj, ctx))},
+            {"__call__": lambda _, obj, ctx: not self(obj, ctx)},
         )()
 
 
