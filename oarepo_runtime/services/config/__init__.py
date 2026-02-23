@@ -15,6 +15,7 @@ from .link_conditions import (
     has_draft_permission,
     has_permission,
     has_published_record,
+    is_draft,
     is_published_record,
 )
 from .permissions import EveryonePermissionPolicy
@@ -25,5 +26,6 @@ __all__ = (
     "has_draft_permission",
     "has_permission",
     "has_published_record",
+    "is_draft",
     "is_published_record",
 )
