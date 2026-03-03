@@ -563,12 +563,14 @@ def test_model_exports(
         record_dict=record_dict, export_mimetype="application/vnd.datacite.datacite+json"
     )
     assert export_by_mimetype == export_as_dict_from_preinitialized_export_engine
+    assert export_as_dict_from_export_engine is not export_as_dict_from_preinitialized_export_engine
 
     # get cached export from ExportEngine
     export_from_cache = export_engine.export(
         record_dict=record_dict, export_mimetype="application/vnd.datacite.datacite+json"
     )
     assert export_by_mimetype == export_from_cache
+    assert export_as_dict_from_preinitialized_export_engine is export_from_cache
 
     assert isinstance(export_as_xml, Element)
 

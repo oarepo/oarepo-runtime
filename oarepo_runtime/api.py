@@ -485,31 +485,38 @@ class ExportEngine:
 
     CACHE_NOT_INITIALIZED = object()
 
-    export_cache_context: ContextVar[dict | Any] = ContextVar("exports", default=CACHE_NOT_INITIALIZED)
+    export_cache_context: ContextVar[dict[str, dict] | object] = ContextVar("exports", default=CACHE_NOT_INITIALIZED)
 
     @classmethod
     def cache(cls, f: Callable[P, R]) -> Callable[P, R]:
         """Associate a caching context with an operation using a decorator."""
 
         @wraps(f)
-        def view(*args: P.args, **kwargs: P.kwargs) -> Any:
+        def view(*args: P.args, **kwargs: P.kwargs) -> R:
             reset_token = cls.export_cache_context.set({})
             kwargs["export_cache_context"] = cls.export_cache_context
             kwargs["export_cache"] = cls.export_cache_context.get()
             try:
-                f(*args, **kwargs)
+                return f(*args, **kwargs)
             finally:
                 cls.export_cache_context.reset(reset_token)
 
-        return cast("Callable[P, R]", view)
+        return view
 
     def export(
         self, record_dict: dict, export_code: str | None = None, export_mimetype: str | None = None
     ) -> dict | None:
         """Get serialized export of a record based on provided criteria."""
+        export_key = export_code
+        if export_code is None:
+            export_key = export_mimetype
+        export_key = cast("str", export_key)
+
         exports_cache = self.export_cache_context.get()
-        if exports_cache is not self.CACHE_NOT_INITIALIZED and export_code in exports_cache:
-            return exports_cache.get(export_code)
+        exports_cache = cast("dict[str, dict[str, Any]]", exports_cache)
+
+        if exports_cache is not self.CACHE_NOT_INITIALIZED and export_key in exports_cache:
+            return exports_cache[export_key]
 
         serialized_export = current_runtime.get_export_from_serialized_record(
             record_dict=record_dict,
@@ -519,7 +526,7 @@ class ExportEngine:
         )
 
         if exports_cache is not self.CACHE_NOT_INITIALIZED:
-            exports_cache[export_code] = serialized_export
+            exports_cache[export_key] = serialized_export
 
         return serialized_export
 
