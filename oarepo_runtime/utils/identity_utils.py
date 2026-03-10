@@ -2,6 +2,8 @@ from flask import current_app
 from flask_principal import Identity, UserNeed, identity_loaded
 from invenio_access.models import User
 
+from oarepo_runtime.utils.wsgi import get_api_app
+
 
 def get_user_and_identity(user_id=None, username=None, email=None):
     def lookup_user():
@@ -20,15 +22,7 @@ def get_user_and_identity(user_id=None, username=None, email=None):
 
     identity = Identity(user.id)
     identity.provides.add(UserNeed(user.id))
-    if (
-        hasattr(current_app.wsgi_app, "mounts")
-        and "/api" in current_app.wsgi_app.mounts
-    ):
-        # called from UI
-        api_app = current_app.wsgi_app.mounts["/api"]
-    else:
-        # called from API
-        api_app = current_app
+    api_app = get_api_app()
     with api_app.app_context():
         with current_app.test_request_context("/api"):
             identity_loaded.send(api_app, identity=identity)

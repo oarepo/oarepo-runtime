@@ -2,6 +2,8 @@ from flask import current_app
 from flask_principal import Identity, UserNeed, identity_loaded
 from invenio_access.models import User
 
+from oarepo_runtime.utils.wsgi import get_api_app
+
 from ..base import oarepo
 
 
@@ -19,7 +21,7 @@ def get_user_and_identity(user_id_or_email):
 
     identity = Identity(user.id)
     identity.provides.add(UserNeed(str(user.id)))
-    api_app = current_app.wsgi_app.mounts["/api"]
+    api_app = get_api_app()
     with api_app.app_context():
         with current_app.test_request_context("/api"):
             identity_loaded.send(api_app, identity=identity)
