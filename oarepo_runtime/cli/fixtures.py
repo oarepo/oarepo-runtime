@@ -1,12 +1,12 @@
 import click
 import tqdm
-from flask import current_app
 from flask.cli import with_appcontext
 from flask_principal import Identity, RoleNeed, UserNeed
 from invenio_access.permissions import any_user, authenticated_user, system_identity
 from invenio_accounts.models import User
 
 from oarepo_runtime.cli import oarepo
+from oarepo_runtime.utils.wsgi import get_api_app
 from oarepo_runtime.datastreams import SynchronousDataStream
 from oarepo_runtime.datastreams.asynchronous import AsynchronousDataStream
 from oarepo_runtime.datastreams.fixtures import (
@@ -82,7 +82,7 @@ def load(
             identity.provides.add(RoleNeed(role.name))
         # TODO: community roles ...
 
-    with current_app.wsgi_app.mounts["/api"].app_context():
+    with get_api_app().app_context():
         load_fixtures(
             fixture_dir_or_catalogue,
             _make_list(include),
@@ -109,7 +109,7 @@ def dump(fixture_dir, include, exclude, verbose):
     """Dump fixtures"""
     callback = TQDMCallback(verbose=verbose)
 
-    with current_app.wsgi_app.mounts["/api"].app_context():
+    with get_api_app().app_context():
         dump_fixtures(
             fixture_dir,
             _make_list(include),

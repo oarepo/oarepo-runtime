@@ -534,10 +534,9 @@ def get_package_version(package_name):
 
 def api_url_for(endpoint, _external=True, **values):
     """API url_for."""
-    try:
-        api_app = current_app.wsgi_app.mounts["/api"]
-    except:
-        api_app = current_app
+    from oarepo_runtime.utils.wsgi import get_api_app
+
+    api_app = get_api_app()
 
     site_api_url = current_app.config["SITE_API_URL"]
     site_url = current_app.config["SITE_UI_URL"]
