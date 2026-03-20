@@ -57,10 +57,10 @@ def test_info_repository_endpoint(client, lang_type, info_blueprint):
     assert mock_model["metadata"]
     assert mock_model["version"] == "1.0.0"
     assert mock_model["links"] == {
-        "deposit": "https://127.0.0.1:5000/api/mocks?type=mocks&_external=True",
+        "deposit": "https://127.0.0.1:5000/api/mocks?type=mocks",
         "drafts": None,
         "html": "https://127.0.0.1:5000/mocks",
-        "records": "https://127.0.0.1:5000/api/mocks?type=mocks&_external=True",
+        "records": "https://127.0.0.1:5000/api/mocks?type=mocks",
     }
 
     model_names = [model_dict["name"] for model_dict in models_info]

@@ -189,7 +189,7 @@ class InfoResource(BaseResource):
     def _get_model_api_endpoint(self, model: Model) -> str | None:
         try:
             alias = model.api_blueprint_name
-            return model.api_url("search", type=alias, _external=True)
+            return model.api_url("search", type=alias)
         except BuildError:  # pragma: no cover
             logger.exception("Failed to get model api endpoint")
             return None
@@ -197,7 +197,7 @@ class InfoResource(BaseResource):
     def _get_model_draft_endpoint(self, model: Model) -> str | None:
         try:
             alias = model.api_blueprint_name
-            return model.api_url("search_user_records", type=alias, _external=True)
+            return model.api_url("search_user_records", type=alias)
         except BuildError:
             logger.exception("Failed to get model draft endpoint")
             return None
@@ -304,7 +304,7 @@ class InfoResource(BaseResource):
                 "metadata": False,
             }
 
-        base_url = invenio_url_for("vocabularies.search", type="languages", _external=True)
+        base_url = invenio_url_for("vocabularies.search", type="languages")
         base_url = replace_path_in_url(base_url, "/")
         ret = [
             _generate_rdm_vocabulary(base_url, Affiliation, "affiliations", "Affiliations", "", special=True),
