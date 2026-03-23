@@ -377,10 +377,14 @@ class Model[
 
     def api_url(self, view_name: str, **kwargs: Any) -> str:
         """Get the API URL for the model."""
+        if "_external" in kwargs:
+            raise ValueError("_external should not be passed, invenio_url_for always creates external links")
         return cast("str", invenio_url_for(f"{self.api_blueprint_name}.{view_name}", **kwargs))
 
     def ui_url(self, view_name: str, **kwargs: Any) -> str | None:
         """Get the UI URL for the model."""
+        if "_external" in kwargs:
+            raise ValueError("_external should not be passed, invenio_url_for always creates external links")
         if self.ui_blueprint_name is None:
             return None
         return cast("str", invenio_url_for(f"{self.ui_blueprint_name}.{view_name}", **kwargs))
