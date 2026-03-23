@@ -118,6 +118,16 @@ def test_api_url(app):
     search_url = model.api_url("search", type="languages")
     assert search_url.endswith("/api/vocabularies/languages")
 
+    with pytest.raises(ValueError, match="_external should not be passed"):
+        model.api_url("search", type="languages", _external=True)
+
+
+def test_ui_url_external_raises(app):
+    """Test ui_url raises ValueError when _external is passed."""
+    model = current_runtime.models["vocabularies"]
+    with pytest.raises(ValueError, match="_external should not be passed"):
+        model.ui_url("search", type="languages", _external=True)
+
 
 def test_model_without_ui_blueprint_name(app):
     """Test api_url method."""
