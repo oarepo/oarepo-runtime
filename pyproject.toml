@@ -4,18 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "oarepo-runtime"
-dynamic = ["version"]
+version = "3.0.0"
 description = "A set of runtime extensions of Invenio repository"
 readme = "README.md"
 license = "MIT"
 dependencies = [
     "setuptools<82.0.0",
-    "oarepo[rdm,tests]>=14,<15",
+    "oarepo>=14.2.1b9.dev0,<15",
     "langcodes>=3.5.0",
     "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
     "signposting>=0.9.9"    # signposting support
 ]
-requires-python = ">=3.13,<3.15"
+requires-python = ">=3.14,<3.15"
 
 [project.urls]
 Homepage = "https://github.com/oarepo/oarepo-runtime"
@@ -25,8 +25,9 @@ dev = [
     "pytest>=7.1.2",
 ]
 tests = [
+    "oarepo[tests]>=14.2.1b9.dev0,<15",
     "pytest>=7.1.2",
-    "pytest-oarepo",
+    "pytest-oarepo>=3.0.0,<4.0.0",
 ]
 oarepo14=[
     "oarepo[rdm]>=14,<15",
