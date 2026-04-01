@@ -13,7 +13,12 @@ dependencies = [
     "oarepo>=14.2.1b9.dev0,<15",
     "langcodes>=3.5.0",
     "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
-    "signposting>=0.9.9"    # signposting support
+    "signposting>=0.9.9",    # signposting support
+
+    # invenio dependencies for tracking major version
+    "invenio-app>=3.0.0,<4.0.0",
+    "invenio-rdm-records>=27.0.0,<28.0.0",
+    "invenio-search>=3.0.0,<4.0.0",
 ]
 requires-python = ">=3.14,<3.15"
 
