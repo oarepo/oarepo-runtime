@@ -15,10 +15,15 @@ initialization tool for customfields.
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .api import Model
 from .ext import OARepoRuntime
 from .proxies import current_runtime
 
-__version__ = "2.0.0dev59"
+try:
+    __version__ = version("oarepo-runtime")
+except PackageNotFoundError:
+    __version__ = "0.0.0dev0+unknown"
 
 __all__ = ("Model", "OARepoRuntime", "__version__", "current_runtime")
