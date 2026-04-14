@@ -451,13 +451,6 @@ class Model[
         return self._imports
 
     @property
-    def entity_type(self) -> str:
-        """Get the entity type."""
-        if self.records_alias_enabled:
-            return cast("str", self.service.id)
-        raise TypeError("This model does not have associated entity type.")
-
-    @property
     def namespace(self) -> SimpleNamespace | None:
         """Get the namespace where the model is being created."""
         return self._namespace

@@ -548,37 +548,6 @@ def test_imports_property_with_value():
     assert model.imports == imports_list
 
 
-def test_entity_type():
-    """Test imports property with custom value."""
-    service = MockService()
-    model = Model(
-        code="test",
-        name="test",
-        version="1.0.0",
-        service=service,  # type: ignore[arg-type]
-        resource_config=MagicMock(),
-        records_alias_enabled=True,
-    )
-
-    assert model.entity_type == "test"
-
-
-def test_entity_type_without_entity():
-    """Test imports property with custom value."""
-    service = MockService()
-    model = Model(
-        code="test",
-        name="test",
-        version="1.0.0",
-        service=service,  # type: ignore[arg-type]
-        resource_config=MagicMock(),
-        records_alias_enabled=False,
-    )
-
-    with pytest.raises(TypeError):
-        model.entity_type  # noqa B018
-
-
 def test_namespace_present():
     """Test imports property with custom value."""
     service = MockService()
