@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import json
-from enum import Enum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
@@ -25,6 +24,7 @@ from invenio_records_resources.proxies import current_service_registry
 from lxml.etree import fromstring
 
 from . import config
+from .api import ExportRepresentation
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
@@ -40,14 +40,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from lxml.etree import Element
 
     from .api import Model
-
-
-class ExportRepresentation(Enum):
-    """Representation of the export, which can be response, dictionary or XML."""
-
-    RESPONSE = ("response",)  # Response
-    DICTIONARY = ("dictionary",)  # python dictionary
-    XML = ("xml",)  # XML Element
 
 
 class OARepoRuntime:

@@ -12,17 +12,21 @@
 from __future__ import annotations
 
 import dataclasses
-from functools import cached_property
+from contextvars import ContextVar
+from enum import Enum
+from functools import cached_property, wraps
 from mimetypes import guess_extension
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
 
 from flask import current_app
 from invenio_base import invenio_url_for
 from invenio_base.utils import obj_or_import_string
 from invenio_records_resources.proxies import current_service_registry
 
+from oarepo_runtime.proxies import current_runtime
+
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
     from types import SimpleNamespace
 
     from flask_babel.speaklater import LazyString
@@ -454,3 +458,79 @@ class Model[
     def namespace(self) -> SimpleNamespace | None:
         """Get the namespace where the model is being created."""
         return self._namespace
+
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+class ExportEngine:
+    """Handles the export functionality with caching mechanisms for serialized data.
+
+    This class provides tools to associate caching contexts with individual
+    operations and retrieve serialized exports of records based on provided
+    criteria. It serves the purpose of optimizing the export process by leveraging
+    caching for repeated queries during the same context.
+
+    Attributes:
+        CACHE_NOT_INITIALIZED (object): Sentinel object indicating that the cache
+            has not been initialized for an operation.
+        export_cache_context (ContextVar[dict]): Context variable to maintain the
+            cache state for serialized exports during runtime.
+
+    """
+
+    CACHE_NOT_INITIALIZED = object()
+
+    export_cache_context: ContextVar[dict[str, dict] | object] = ContextVar("exports", default=CACHE_NOT_INITIALIZED)
+
+    @classmethod
+    def cache(cls, f: Callable[P, R]) -> Callable[P, R]:
+        """Associate a caching context with an operation using a decorator."""
+
+        @wraps(f)
+        def view(*args: P.args, **kwargs: P.kwargs) -> R:
+            reset_token = cls.export_cache_context.set({})
+            kwargs["export_cache_context"] = cls.export_cache_context
+            kwargs["export_cache"] = cls.export_cache_context.get()
+            try:
+                return f(*args, **kwargs)
+            finally:
+                cls.export_cache_context.reset(reset_token)
+
+        return view
+
+    def export(
+        self, record_dict: dict, export_code: str | None = None, export_mimetype: str | None = None
+    ) -> dict | None:
+        """Get serialized export of a record based on provided criteria."""
+        export_key = export_code
+        if export_code is None:
+            export_key = export_mimetype
+        export_key = cast("str", export_key)
+
+        exports_cache = self.export_cache_context.get()
+        exports_cache = cast("dict[str, dict[str, Any]]", exports_cache)
+
+        if exports_cache is not self.CACHE_NOT_INITIALIZED and export_key in exports_cache:
+            return exports_cache[export_key]
+
+        serialized_export = current_runtime.get_export_from_serialized_record(
+            record_dict=record_dict,
+            export_code=export_code,
+            export_mimetype=export_mimetype,
+            representation=ExportRepresentation.DICTIONARY,
+        )
+
+        if exports_cache is not self.CACHE_NOT_INITIALIZED:
+            exports_cache[export_key] = serialized_export
+
+        return serialized_export
+
+
+class ExportRepresentation(Enum):
+    """Representation of the export, which can be response, dictionary or XML."""
+
+    RESPONSE = ("response",)  # Response
+    DICTIONARY = ("dictionary",)  # python dictionary
+    XML = ("xml",)  # XML Element

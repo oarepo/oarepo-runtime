@@ -14,8 +14,9 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+from flask import Response
 
-from oarepo_runtime.api import Model
+from oarepo_runtime.api import ExportEngine, Model
 from oarepo_runtime.proxies import current_runtime
 from tests.conftest import DummySerializer
 
@@ -563,3 +564,36 @@ def test_namespace_present():
     )
 
     assert model.namespace is namespace
+
+
+def test_export_engine():
+    """Test ExportEngine cache decorator."""
+    export_engine = ExportEngine()
+    assert export_engine.export_cache_context.get() == ExportEngine.CACHE_NOT_INITIALIZED
+
+    @ExportEngine.cache
+    def decorator_test(*args: dict, **kwargs: dict) -> Response:
+        assert kwargs["export_cache"] == {}
+        kwargs["export_cache"]["a"] = "b"
+        assert kwargs["export_cache"] == {"a": "b"}
+        return Response("ok", mimetype="text/html")
+
+    resp = decorator_test()
+    assert resp.status_code == 200
+    assert resp.get_data(as_text=True) == "ok"
+    assert export_engine.export_cache_context.get() == ExportEngine.CACHE_NOT_INITIALIZED
+
+
+def test_export_engine_cache_decorator_resets_on_exception():
+    """Test ExportEngine cache decorator being reset if exception is raised."""
+    export_engine = ExportEngine()
+
+    @ExportEngine.cache
+    def decorator_test(*args: dict, **kwargs: dict) -> str:
+        kwargs["export_cache"]["a"] = "b"
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        decorator_test()
+
+    assert export_engine.export_cache_context.get() == ExportEngine.CACHE_NOT_INITIALIZED
