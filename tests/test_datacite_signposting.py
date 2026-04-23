@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from lxml.etree import Element
 from oarepo_runtime.ext import ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.resources.signposting import (
+    MAX_NUMBER_OF_AUTHORS,
     create_linkset,
     create_linkset_json,
     export_format_signpost_links_list,
@@ -582,3 +584,41 @@ def test_signposting_with_incorrect_datacite(
 
     assert signposting_linkset_json == {"linkset": []}
     assert signposting_linkset == ""
+
+
+def test_signposting_max_number_of_creators(
+    app_with_mock_ui_bp,
+    db,
+    search_with_field_mapping,
+    service,
+    search_clear,
+    identity_simple,
+    location,
+):
+    record_item = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "Test Record"},
+            "unknown": True,
+            "files": {
+                "enabled": True,
+            },
+        },
+    )
+
+    record_dict = service.read_draft(identity_simple, record_item.id, expand=True).to_dict()
+    with (Path(__file__).parent / "data/datacite_export.json").open() as f:
+        datacite_file = json.load(f)
+    datacite_dict = datacite_file["data"]["attributes"]
+    datacite_dict["creators"] = [deepcopy(datacite_dict["creators"][0]) for _ in range(40)]
+
+    signposting_linkset_json = create_linkset_json(datacite_dict=datacite_dict, record_dict=record_dict)
+    assert len(signposting_linkset_json["linkset"][0]["author"]) == MAX_NUMBER_OF_AUTHORS
+    signposting_linkset = create_linkset(datacite_dict=datacite_dict, record_dict=record_dict)
+    author_str = "rel=author"
+    number_of_authors = sum(
+        1
+        for i in range(len(signposting_linkset) - len(author_str) + 1)
+        if signposting_linkset.startswith(author_str, i)
+    )
+    assert number_of_authors == MAX_NUMBER_OF_AUTHORS
