@@ -20,6 +20,21 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
+class I18nLabel:
+    """Lazy multilingual label that resolves to the current locale at str() time."""
+
+    def __init__(self, labels: dict[str, str]) -> None:
+        """Initialize with a dict of locale -> label mappings."""
+        self._labels = labels
+
+    def __str__(self) -> str:
+        """Resolve label for the current locale."""
+        from invenio_i18n.proxies import current_i18n
+
+        locale = current_i18n.language
+        return self._labels.get(locale, self._labels.get("en", next(iter(self._labels.values()), "")))
+
+
 def get_basic_facet(  # noqa: PLR0913
     facets: dict,
     facet_def: dict | None,
@@ -28,17 +43,25 @@ def get_basic_facet(  # noqa: PLR0913
     content: list,
     facet_class: str,
     facet_kwargs: dict[str, Any] | None = None,
+    label: dict[str, str] | str | None = None,
 ) -> dict[str, list]:
     """Get basic leaf facet definition."""
-    if facet_def:
+    if facet_def is not None:
+        if isinstance(facet_def.get("label"), dict):
+            facet_def = {**facet_def, "label": I18nLabel(facet_def["label"])}
         facets[facet_name] = [*content, {**(facet_kwargs or {}), **facet_def}]
     else:
+        if label:
+            resolved_label = I18nLabel(label) if isinstance(label, dict) else label
+        else:
+            resolved_label = _label_for_field(facet_name)
+
         facets[facet_name] = [
             *content,
             {
                 "facet": facet_class,
                 "field": facet_path,
-                "label": _label_for_field(facet_name),
+                "label": resolved_label,
                 **(facet_kwargs or {}),
             },
         ]

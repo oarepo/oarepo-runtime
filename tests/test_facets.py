@@ -25,6 +25,7 @@ from invenio_search.engine import dsl
 from oarepo_runtime.services.facets.nested_facet import NestedLabeledFacet
 from oarepo_runtime.services.facets.params import GroupedFacetsParam
 from oarepo_runtime.services.facets.utils import (
+    I18nLabel,
     _label_for_field,
     build_facet,
     get_basic_facet,
@@ -134,6 +135,36 @@ def test_facet_builder() -> None:
             "test": 123,
         }
     ]
+
+
+def test_get_basic_facet_with_i18n_label_in_facet_def(app):
+    """get_basic_facet wraps dict labels in facet_def with I18nLabel."""
+    from babel import Locale
+    from flask import g
+
+    facets = get_basic_facet(
+        facets={},
+        facet_def={
+            "facet": "oarepo_runtime.services.facets.date.EDTFIntervalFacet",
+            "field": "vlastni.cesta",
+            "label": {"en": "Custom", "cs": "Vlastní"},
+        },
+        facet_name="metadata.jej.c",
+        facet_path="metadata.jej.c.keyword",
+        content=[],
+        facet_class="invenio_records_resources.services.records.facets.TermsFacet",
+    )
+
+    result = facets["metadata.jej.c"][0]
+    assert isinstance(result["label"], I18nLabel)
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        assert str(result["label"]) == "Vlastní"
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        assert str(result["label"]) == "Custom"
 
 
 def test_labelled_facet():
@@ -361,3 +392,73 @@ def test_apply_respects_grouped_facets(identity_simple: Identity) -> None:
 def test_facet_label_translated():
     assert isinstance(_label_for_field("metadata.test.field.keyword"), LazyString)
     assert str(_label_for_field("metadata.test.field.keyword")) == "metadata/test/field.label"
+
+
+def test_get_basic_facet_with_i18n_label(app):
+    """get_basic_facet wraps dict labels in I18nLabel and resolves at str() time."""
+    from babel import Locale
+    from flask import g
+
+    facets = get_basic_facet(
+        facets={},
+        facet_def=None,
+        facet_name="metadata.status",
+        facet_path="metadata.status.keyword",
+        content=[],
+        facet_class="invenio_records_resources.services.records.facets.TermsFacet",
+        label={"en": "Status", "cs": "Stav"},
+    )
+
+    result = facets["metadata.status"][0]
+    assert isinstance(result["label"], I18nLabel)
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        assert str(result["label"]) == "Stav"
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        assert str(result["label"]) == "Status"
+
+
+def test_i18n_label_resolves_current_locale(app):
+    """I18nLabel resolves to the current locale at str() time."""
+    from babel import Locale
+    from flask import g
+
+    labels = {"en": "Status", "cs": "Stav"}
+    label = I18nLabel(labels)
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        assert str(label) == "Stav"
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        assert str(label) == "Status"
+
+
+def test_i18n_label_falls_back_to_en(app):
+    """I18nLabel falls back to 'en' when locale is not found."""
+    from babel import Locale
+    from flask import g
+
+    labels = {"en": "Status", "cs": "Stav"}
+    label = I18nLabel(labels)
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("de"))  # noqa: SLF001
+        assert str(label) == "Status"
+
+
+def test_i18n_label_falls_back_to_first_value(app):
+    """I18nLabel falls back to first value when neither locale nor 'en' is found."""
+    from babel import Locale
+    from flask import g
+
+    labels = {"cs": "Stav", "de": "Zustand"}
+    label = I18nLabel(labels)
+
+    with app.test_request_context():
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))  # noqa: SLF001
+        assert str(label) == "Stav"
