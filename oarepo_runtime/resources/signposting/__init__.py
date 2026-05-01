@@ -408,11 +408,14 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
 
 def record_dict_to_linkset(record_dict: dict, include_reverse_relations: bool = True) -> str:
     """Create a linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
-    datacite_dict = current_runtime.get_export_from_serialized_record(
-        record_dict=record_dict,
-        representation=ExportRepresentation.DICTIONARY,
-        export_mimetype="application/vnd.datacite.datacite+json",
-    )
+    try:
+        datacite_dict = current_runtime.get_export_from_serialized_record(
+            record_dict=record_dict,
+            representation=ExportRepresentation.DICTIONARY,
+            export_mimetype="application/vnd.datacite.datacite+json",
+        )
+    except (ValueError, KeyError):
+        return ""
     return create_linkset(datacite_dict, record_dict, include_reverse_relations)
 
 
@@ -420,9 +423,12 @@ def record_dict_to_json_linkset(
     record_dict: dict, include_reverse_relations: bool = True
 ) -> dict[str, list[dict[str, Any]]]:
     """Create a JSON linkset from the dictionary of a record item. Get datacite to build linkset from model exports."""
-    datacite_dict = current_runtime.get_export_from_serialized_record(
-        record_dict=record_dict,
-        representation=ExportRepresentation.DICTIONARY,
-        export_mimetype="application/vnd.datacite.datacite+json",
-    )
+    try:
+        datacite_dict = current_runtime.get_export_from_serialized_record(
+            record_dict=record_dict,
+            representation=ExportRepresentation.DICTIONARY,
+            export_mimetype="application/vnd.datacite.datacite+json",
+        )
+    except (ValueError, KeyError):
+        return {}
     return create_linkset_json(datacite_dict, record_dict, include_reverse_relations)
