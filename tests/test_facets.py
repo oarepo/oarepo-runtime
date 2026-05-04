@@ -462,3 +462,14 @@ def test_i18n_label_falls_back_to_first_value(app):
     with app.test_request_context():
         g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))  # noqa: SLF001
         assert str(label) == "Stav"
+
+
+def test_i18n_label_falls_back_to_en_when_no_locale(app):
+    """I18nLabel falls back to 'en' when get_locale() returns None (no request context)."""
+    from unittest.mock import patch
+
+    labels = {"en": "Status", "cs": "Stav"}
+    label = I18nLabel(labels)
+
+    with app.test_request_context(), patch("flask_babel.get_locale", return_value=None):
+        assert str(label) == "Status"
