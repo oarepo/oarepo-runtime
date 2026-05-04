@@ -86,9 +86,12 @@ def build_facet(specs: Iterable[dict[str, str | object]]) -> Any:
     leaf_facet_cls = obj_or_import_string(leaf_facet_definition["facet"])
     if leaf_facet_cls is None:
         raise ValueError("Facet class can not be None.")
-    params = {k: v for k, v in leaf_facet_definition.items() if k != "facet"}
+    ui_config = leaf_facet_definition.get("ui")
+    params = {k: v for k, v in leaf_facet_definition.items() if k not in ("facet", "ui")}
 
     terms = leaf_facet_cls(**params)  # type: ignore[reportCallIssue]
+    if ui_config:
+        terms._ui_config = ui_config  # type: ignore[attr-defined]
 
     current = terms
     for entry in reversed(items[:-1]):
