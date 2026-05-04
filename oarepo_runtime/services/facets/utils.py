@@ -29,9 +29,10 @@ class I18nLabel:
 
     def __str__(self) -> str:
         """Resolve label for the current locale."""
-        from invenio_i18n.proxies import current_i18n
+        from flask_babel import get_locale
 
-        locale = current_i18n.language
+        babel_locale = get_locale()
+        locale = babel_locale.language if babel_locale else "en"
         return self._labels.get(locale, self._labels.get("en", next(iter(self._labels.values()), "")))
 
 
