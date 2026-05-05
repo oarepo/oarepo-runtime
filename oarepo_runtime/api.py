@@ -79,6 +79,9 @@ class Export:
     serializer: BaseSerializer
     """Serializer used to serialize the record into the export format."""
 
+    about_serializer: Any | None = None
+    """Serializer used to serialize the record's about section into the export format."""
+
     display: bool = True
     """Whether the export format is displayed in the UI."""
 
