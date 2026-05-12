@@ -117,7 +117,7 @@ class has_published_record(Condition):  # noqa: N801
         service = current_runtime.get_record_service_for_record(obj)
         try:
             service.record_cls.pid.resolve(obj["id"])
-        except (PIDUnregistered, PIDDoesNotExistError):
+        except PIDUnregistered, PIDDoesNotExistError:
             return False
         return True
 
