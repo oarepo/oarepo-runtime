@@ -477,7 +477,7 @@ class ExportRepresentation(Enum):
 P = ParamSpec("P")
 R = TypeVar("R")
 type ExportCacheKey = tuple[str | None, str, ExportRepresentation]
-type ExportedValue = dict | lxml.etree._Element | tuple[str, int, dict[str, str]] | None  # noqa: SLF001
+type ExportedValue = dict | lxml.etree._Element | tuple[str, int, dict[str, str]]  # noqa: SLF001
 type ExportCache = OrderedDict[ExportCacheKey, ExportedValue]
 
 
@@ -553,7 +553,7 @@ class ExportEngine:
         export_code: str | None = None,
         export_mimetype: str | None = None,
         representation: Literal[ExportRepresentation.DICTIONARY] = ExportRepresentation.DICTIONARY,
-    ) -> dict | None: ...
+    ) -> dict: ...
 
     @overload
     @classmethod
@@ -563,7 +563,7 @@ class ExportEngine:
         export_code: str | None = None,
         export_mimetype: str | None = None,
         representation: Literal[ExportRepresentation.XML] = ExportRepresentation.XML,
-    ) -> lxml.etree._Element | None: ...
+    ) -> lxml.etree._Element: ...
 
     @overload
     @classmethod
@@ -573,7 +573,8 @@ class ExportEngine:
         export_code: str | None = None,
         export_mimetype: str | None = None,
         representation: Literal[ExportRepresentation.RESPONSE] = ExportRepresentation.RESPONSE,
-    ) -> tuple[str, int, dict[str, str]] | None: ...
+    ) -> tuple[str, int, dict[str, str]]: ...
+
     @classmethod
     def export(
         cls,
