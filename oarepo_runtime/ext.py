@@ -238,7 +238,7 @@ class OARepoRuntime:
         representation: Literal[ExportRepresentation.RESPONSE],
         export_code: str | None = None,
         export_mimetype: str | None = None,
-    ) -> tuple[Any, int, dict[str, str]] | None: ...
+    ) -> tuple[Any, int, dict[str, str]]: ...
 
     @overload
     def get_export_from_serialized_record(
@@ -337,3 +337,6 @@ class OARepoRuntime:
 
             case ExportRepresentation.XML:
                 return fromstring(exported_record)
+
+            case _:
+                raise ValueError(f"Unknown export representation: {representation}")
