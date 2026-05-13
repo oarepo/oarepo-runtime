@@ -18,7 +18,7 @@ from contextvars import ContextVar
 from enum import Enum
 from functools import cached_property, wraps
 from mimetypes import guess_extension
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, ParamSpec, TypeVar, cast, overload
 
 from flask import current_app
 from invenio_base import invenio_url_for
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Mapping
     from types import SimpleNamespace
 
+    import lxml.etree
     from flask_babel.speaklater import LazyString
     from flask_resources.deserializers import DeserializerMixin
     from flask_resources.responses import ResponseHandler
@@ -465,11 +466,19 @@ class Model[
         return self._namespace
 
 
+class ExportRepresentation(Enum):
+    """Representation of the export, which can be response, dictionary or XML."""
+
+    RESPONSE = ("response",)  # Response
+    DICTIONARY = ("dictionary",)  # python dictionary
+    XML = ("xml",)  # XML Element
+
+
 P = ParamSpec("P")
 R = TypeVar("R")
-type ExportCacheKey = tuple[str | None, str]
-type ExportCacheValue = dict[Any, Any] | None
-type ExportCache = OrderedDict[ExportCacheKey, ExportCacheValue]
+type ExportCacheKey = tuple[str | None, str, ExportRepresentation]
+type ExportedValue = dict | lxml.etree._Element | tuple[str, int, dict[str, str]] | None  # noqa: SLF001
+type ExportCache = OrderedDict[ExportCacheKey, ExportedValue]
 
 
 class ExportEngine:
@@ -536,14 +545,53 @@ class ExportEngine:
         finally:
             cls.export_cache_context.reset(reset_token)
 
+    @overload
+    @classmethod
+    def export(  # type: ignore[reportOverlappingOverload]
+        cls,
+        record_dict: dict,
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+        representation: Literal[ExportRepresentation.DICTIONARY] = ExportRepresentation.DICTIONARY,
+    ) -> dict | None: ...
+
+    @overload
     @classmethod
     def export(
-        cls, record_dict: dict, export_code: str | None = None, export_mimetype: str | None = None
-    ) -> dict | None:
+        cls,
+        record_dict: dict,
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+        representation: Literal[ExportRepresentation.XML] = ExportRepresentation.XML,
+    ) -> lxml.etree._Element | None: ...
+
+    @overload
+    @classmethod
+    def export(
+        cls,
+        record_dict: dict,
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+        representation: Literal[ExportRepresentation.RESPONSE] = ExportRepresentation.RESPONSE,
+    ) -> tuple[str, int, dict[str, str]] | None: ...
+    @classmethod
+    def export(
+        cls,
+        record_dict: dict,
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+        representation: Literal[
+            ExportRepresentation.RESPONSE,
+            ExportRepresentation.DICTIONARY,
+            ExportRepresentation.XML,
+        ] = ExportRepresentation.DICTIONARY,
+    ) -> ExportedValue:
         """Get serialized export of a record based on provided criteria."""
         record_id = record_dict["id"]
         export_key: ExportCacheKey = (
-            (export_code, record_id) if export_code is not None else (export_mimetype, record_id)
+            (export_code, record_id, representation)
+            if export_code is not None
+            else (export_mimetype, record_id, representation)
         )
 
         exports_cache = cls.export_cache_context.get()
@@ -556,7 +604,7 @@ class ExportEngine:
             record_dict=record_dict,
             export_code=export_code,
             export_mimetype=export_mimetype,
-            representation=ExportRepresentation.DICTIONARY,
+            representation=representation,
         )
 
         if exports_cache is not None:
@@ -565,11 +613,3 @@ class ExportEngine:
             exports_cache[export_key] = serialized_export
 
         return serialized_export
-
-
-class ExportRepresentation(Enum):
-    """Representation of the export, which can be response, dictionary or XML."""
-
-    RESPONSE = ("response",)  # Response
-    DICTIONARY = ("dictionary",)  # python dictionary
-    XML = ("xml",)  # XML Element
