@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "oarepo-runtime"
-version = "4.5.0"
+version = "5.0.0"
 description = "A set of runtime extensions of Invenio repository"
 readme = "README.md"
 license = "MIT"
@@ -30,9 +30,9 @@ dev = [
     "pytest>=7.1.2",
 ]
 tests = [
-    "oarepo[tests]>=14.2.1b9.dev0,<15",
+    "oarepo[tests]>=14.2.1b11.dev1,<15",
     "pytest>=7.1.2",
-    "pytest-oarepo>=3.0.0,<4.0.0",
+    "pytest-oarepo>=4.0.0,<5.0.0",
 ]
 oarepo14=[
     "oarepo[rdm]>=14,<15",
