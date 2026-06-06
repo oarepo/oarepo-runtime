@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Any, override
 
+import pytest
 from flask_principal import Need
 from invenio_records_permissions.generators import (
     ConditionalGenerator as InvenioConditionalGenerator,
@@ -363,3 +364,15 @@ def test_aggregate_generator():
     assert aggregate.needs() == []
     assert aggregate.excludes() == []
     assert aggregate.query_filter() == dsl.Q("match_none")
+
+
+def test_aggregate_generator_deprecation_warning():
+    """Instantiating AggregateGenerator should emit a DeprecationWarning."""
+
+    class ConcreteAggregateGenerator(AggregateGenerator):
+        @override
+        def _generators(self, **context: Any) -> list:
+            return []
+
+    with pytest.warns(DeprecationWarning, match="AggregateGenerator is deprecated"):
+        ConcreteAggregateGenerator()
