@@ -92,7 +92,7 @@ def build_facet(specs: Iterable[dict[str, str | object]]) -> Any:
 
     terms = leaf_facet_cls(**params)  # type: ignore[reportCallIssue]
     if ui_config:
-        terms._ui_config = ui_config  # type: ignore[attr-defined]
+        terms._ui_config = ui_config  # type: ignore[attr-defined]  # noqa: SLF001
 
     current = terms
     for entry in reversed(items[:-1]):
