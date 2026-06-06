@@ -62,9 +62,7 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
     This class will be removed when invenio has proper type stubs.
     """
 
-    def __init__(
-        self, then_: Sequence[InvenioGenerator], else_: Sequence[InvenioGenerator]
-    ) -> None:
+    def __init__(self, then_: Sequence[InvenioGenerator], else_: Sequence[InvenioGenerator]) -> None:
         """Initialize the conditional generator."""
         super().__init__(then_=then_, else_=else_)
 
@@ -73,9 +71,7 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
         """Condition to choose generators set."""
         raise NotImplementedError  # pragma: no cover
 
-    def _generators(
-        self, record: Record | None = None, **kwargs: Any
-    ) -> Sequence[InvenioGenerator]:
+    def _generators(self, record: Record | None = None, **kwargs: Any) -> Sequence[InvenioGenerator]:
         """Get the "then" or "else" generators."""
         return super()._generators(record=record, **kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
@@ -135,15 +131,10 @@ class IfDraftType(ConditionalGenerator):
     def __init__(
         self,
         draft_types: (
-            Literal["initial", "metadata", "new_version"]
-            | list[Literal["initial", "metadata", "new_version"]]
+            Literal["initial", "metadata", "new_version"] | list[Literal["initial", "metadata", "new_version"]]
         ),
-        then_: (
-            InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None
-        ) = None,
-        else_: (
-            InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None
-        ) = None,
+        then_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
+        else_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
     ):
         """Create the generator.
 
@@ -190,10 +181,7 @@ class IfDraftType(ConditionalGenerator):
     def _query_instate(self, **_context: Any) -> dsl.query.Query:
         queries = []
         if "initial" in self._draft_types:
-            queries.append(
-                dsl.Q("term", **{"versions.index": 1})
-                & dsl.Q("term", **{"metadata.is_latest_draft": True})
-            )
+            queries.append(dsl.Q("term", **{"versions.index": 1}) & dsl.Q("term", **{"metadata.is_latest_draft": True}))
         if "metadata" in self._draft_types:
             # unknown how the "edit_metadata" type of draft could be differentiated from new_version
             queries.append(dsl.Q("match_none"))
@@ -211,9 +199,7 @@ class ActionQueryFilterMixin:
 
     access_action: Any
 
-    def query_filter(
-        self, **kwargs: Any
-    ) -> dsl.query.Query | list[dsl.query.Query] | None:
+    def query_filter(self, **kwargs: Any) -> dsl.query.Query | list[dsl.query.Query] | None:
         """Return search filter that allows all in case user (or one of the roles the user belongs to) has access."""
         identity = kwargs["identity"]
         user_ids = [need.value for need in identity.provides if need.method == "id"]
