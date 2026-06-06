@@ -53,8 +53,7 @@ def test_generator_delegates_methods(monkeypatch):
     monkeypatch.setattr(InvenioGenerator, "excludes", fake_excludes, raising=True)
     monkeypatch.setattr(InvenioGenerator, "query_filter", fake_query_filter, raising=True)
 
-    with pytest.warns(DeprecationWarning, match="Generator is deprecated"):
-        gen = Generator()
+    gen = Generator()
 
     n = list(gen.needs(identity="id"))
     e = list(gen.excludes(identity="id"))
@@ -320,13 +319,15 @@ def test_aggregate_generator():
         def query_filter(self, **kwargs: Any) -> dsl.query.Query:
             return self._query
 
-    class TestAggregateGenerator(AggregateGenerator):
-        def __init__(self, generators):
-            self._gen_list = generators
+    with pytest.warns(DeprecationWarning, match="AggregateGenerator is deprecated"):
 
-        @override
-        def _generators(self, **context: Any) -> list[InvenioGenerator]:
-            return self._gen_list
+        class TestAggregateGenerator(AggregateGenerator):
+            def __init__(self, generators):
+                self._gen_list = generators
+
+            @override
+            def _generators(self, **context: Any) -> list[InvenioGenerator]:
+                return self._gen_list
 
     # Create mock generators with different needs/excludes/queries
     gen1 = MockGenerator(
@@ -368,18 +369,22 @@ def test_aggregate_generator():
 
 
 def test_aggregate_generator_deprecation_warning():
-    """Instantiating AggregateGenerator should emit a DeprecationWarning."""
-
-    class ConcreteAggregateGenerator(AggregateGenerator):
-        @override
-        def _generators(self, **context: Any) -> list:
-            return []
-
+    """Subclassing AggregateGenerator should emit a DeprecationWarning."""
     with pytest.warns(DeprecationWarning, match="AggregateGenerator is deprecated"):
-        ConcreteAggregateGenerator()
+
+        class ConcreteAggregateGenerator(AggregateGenerator):
+            @override
+            def _generators(self, **context: Any) -> list:
+                return []
+
+    ConcreteAggregateGenerator()
 
 
 def test_generator_deprecation_warning():
-    """Instantiating Generator should emit a DeprecationWarning."""
+    """Subclassing Generator should emit a DeprecationWarning."""
     with pytest.warns(DeprecationWarning, match="Generator is deprecated"):
-        Generator()
+
+        class ConcreteGenerator(Generator):
+            pass
+
+    ConcreteGenerator()

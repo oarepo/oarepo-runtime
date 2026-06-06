@@ -43,8 +43,8 @@ class Generator(InvenioGenerator):
     Use :class:`invenio_records_permissions.generators.Generator` directly instead.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialize and emit a deprecation warning."""
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Warn whenever this deprecated class is subclassed."""
         warnings.warn(
             "oarepo_runtime.services.generators.Generator is deprecated and will be "
             "removed in a future version. "
@@ -52,7 +52,7 @@ class Generator(InvenioGenerator):
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        super().__init_subclass__(**kwargs)
 
     @override
     def needs(self, **kwargs: Any) -> Collection[Need]:
@@ -125,15 +125,15 @@ class AggregateGenerator(CompositeGenerator):
     Use :class:`invenio_records_permissions.generators.CompositeGenerator` instead.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialize and emit a deprecation warning."""
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Warn whenever this deprecated class is subclassed."""
         warnings.warn(
             "AggregateGenerator is deprecated and will be removed in a future version. "
             "Use invenio_records_permissions.generators.CompositeGenerator instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        super().__init_subclass__(**kwargs)
 
 
 class IfDraftType(ConditionalGenerator):
