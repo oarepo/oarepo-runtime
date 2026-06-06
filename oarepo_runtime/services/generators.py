@@ -10,8 +10,8 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
-from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal, override
 
 from invenio_access.models import ActionRoles, ActionUsers
@@ -19,11 +19,12 @@ from invenio_administration.generators import (
     Administration,
     administration_access_action,
 )
-from invenio_records_permissions.generators import (
-    ConditionalGenerator as InvenioConditionalGenerator,
+from invenio_records_permissions.generators import (  # type: ignore[attr-defined]
+    CompositeGenerator,
+    Disable,
 )
 from invenio_records_permissions.generators import (
-    Disable,
+    ConditionalGenerator as InvenioConditionalGenerator,
 )
 from invenio_records_permissions.generators import Generator as InvenioGenerator
 from invenio_search.engine import dsl
@@ -61,7 +62,9 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
     This class will be removed when invenio has proper type stubs.
     """
 
-    def __init__(self, then_: Sequence[InvenioGenerator], else_: Sequence[InvenioGenerator]) -> None:
+    def __init__(
+        self, then_: Sequence[InvenioGenerator], else_: Sequence[InvenioGenerator]
+    ) -> None:
         """Initialize the conditional generator."""
         super().__init__(then_=then_, else_=else_)
 
@@ -70,7 +73,9 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
         """Condition to choose generators set."""
         raise NotImplementedError  # pragma: no cover
 
-    def _generators(self, record: Record | None = None, **kwargs: Any) -> Sequence[InvenioGenerator]:
+    def _generators(
+        self, record: Record | None = None, **kwargs: Any
+    ) -> Sequence[InvenioGenerator]:
         """Get the "then" or "else" generators."""
         return super()._generators(record=record, **kwargs)  # type: ignore[no-any-return]  # mypy bug ?
 
@@ -107,35 +112,21 @@ class ConditionalGenerator(InvenioConditionalGenerator, ABC):
         return ret
 
 
-class AggregateGenerator(Generator, ABC):
-    """Superclass for generators aggregating multiple generators."""
+class AggregateGenerator(CompositeGenerator):
+    """Deprecated superclass for generators aggregating multiple generators.
 
-    @abstractmethod
-    def _generators(self, **context: Any) -> Sequence[InvenioGenerator]:
-        """Return the generators."""
-        raise NotImplementedError  # pragma: no cover
+    Use :class:`invenio_records_permissions.generators.CompositeGenerator` instead.
+    """
 
-    @override
-    def needs(self, **context: Any) -> Collection[Need]:
-        """Get the needs from the policy."""
-        needs = [generator.needs(**context) for generator in self._generators(**context)]
-        return list(chain.from_iterable(needs))
-
-    @override
-    def excludes(self, **context: Any) -> Collection[Need]:
-        """Get the excludes from the policy."""
-        excludes = [generator.excludes(**context) for generator in self._generators(**context)]
-        return list(chain.from_iterable(excludes))
-
-    @override
-    def query_filter(self, **context: Any) -> dsl.query.Query:
-        """Search filters."""
-        ret = ConditionalGenerator._make_query(  # noqa: SLF001
-            self._generators(**context), **context
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize and emit a deprecation warning."""
+        warnings.warn(
+            "AggregateGenerator is deprecated and will be removed in a future version. "
+            "Use invenio_records_permissions.generators.CompositeGenerator instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        if ret is None:
-            return dsl.Q("match_none")
-        return ret
+        super().__init__(*args, **kwargs)
 
 
 class IfDraftType(ConditionalGenerator):
@@ -144,10 +135,15 @@ class IfDraftType(ConditionalGenerator):
     def __init__(
         self,
         draft_types: (
-            Literal["initial", "metadata", "new_version"] | list[Literal["initial", "metadata", "new_version"]]
+            Literal["initial", "metadata", "new_version"]
+            | list[Literal["initial", "metadata", "new_version"]]
         ),
-        then_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
-        else_: (InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None) = None,
+        then_: (
+            InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None
+        ) = None,
+        else_: (
+            InvenioGenerator | list[InvenioGenerator] | tuple[InvenioGenerator] | None
+        ) = None,
     ):
         """Create the generator.
 
@@ -194,7 +190,10 @@ class IfDraftType(ConditionalGenerator):
     def _query_instate(self, **_context: Any) -> dsl.query.Query:
         queries = []
         if "initial" in self._draft_types:
-            queries.append(dsl.Q("term", **{"versions.index": 1}) & dsl.Q("term", **{"metadata.is_latest_draft": True}))
+            queries.append(
+                dsl.Q("term", **{"versions.index": 1})
+                & dsl.Q("term", **{"metadata.is_latest_draft": True})
+            )
         if "metadata" in self._draft_types:
             # unknown how the "edit_metadata" type of draft could be differentiated from new_version
             queries.append(dsl.Q("match_none"))
@@ -212,7 +211,9 @@ class ActionQueryFilterMixin:
 
     access_action: Any
 
-    def query_filter(self, **kwargs: Any) -> dsl.query.Query | list[dsl.query.Query] | None:
+    def query_filter(
+        self, **kwargs: Any
+    ) -> dsl.query.Query | list[dsl.query.Query] | None:
         """Return search filter that allows all in case user (or one of the roles the user belongs to) has access."""
         identity = kwargs["identity"]
         user_ids = [need.value for need in identity.provides if need.method == "id"]
