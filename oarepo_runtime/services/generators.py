@@ -38,10 +38,21 @@ if TYPE_CHECKING:
 
 
 class Generator(InvenioGenerator):
-    """Custom generator for the service.
+    """Deprecated typed wrapper around the Invenio Generator.
 
-    This class will be removed when invenio has proper type stubs.
+    Use :class:`invenio_records_permissions.generators.Generator` directly instead.
     """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize and emit a deprecation warning."""
+        warnings.warn(
+            "oarepo_runtime.services.generators.Generator is deprecated and will be "
+            "removed in a future version. "
+            "Use invenio_records_permissions.generators.Generator instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
 
     @override
     def needs(self, **kwargs: Any) -> Collection[Need]:

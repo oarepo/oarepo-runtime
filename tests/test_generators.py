@@ -53,7 +53,8 @@ def test_generator_delegates_methods(monkeypatch):
     monkeypatch.setattr(InvenioGenerator, "excludes", fake_excludes, raising=True)
     monkeypatch.setattr(InvenioGenerator, "query_filter", fake_query_filter, raising=True)
 
-    gen = Generator()
+    with pytest.warns(DeprecationWarning, match="Generator is deprecated"):
+        gen = Generator()
 
     n = list(gen.needs(identity="id"))
     e = list(gen.excludes(identity="id"))
@@ -376,3 +377,9 @@ def test_aggregate_generator_deprecation_warning():
 
     with pytest.warns(DeprecationWarning, match="AggregateGenerator is deprecated"):
         ConcreteAggregateGenerator()
+
+
+def test_generator_deprecation_warning():
+    """Instantiating Generator should emit a DeprecationWarning."""
+    with pytest.warns(DeprecationWarning, match="Generator is deprecated"):
+        Generator()
