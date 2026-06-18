@@ -98,7 +98,7 @@ class MultilayerFormatEDTF(BabelFormatField):
 
     def format_value(self, value: str) -> Any:
         """Format date value."""
-        if re.match(r"^\d{4}$", value): # Year
+        if re.match(r"^\d{4}$", value):  # Year
             return value
         try:
             return format_date(self.parse(value, as_date=True), format=self._format, locale=self.locale)
