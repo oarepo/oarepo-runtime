@@ -12,10 +12,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
-from flask import current_app
+from flask import Response, current_app
+from invenio_base.utils import entry_points
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
@@ -25,6 +27,7 @@ from lxml.etree import fromstring
 
 from . import config
 from .api import ExportRepresentation
+from .errors import AuthExceptionGroup
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
@@ -41,6 +44,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from .api import Model
 
+log = logging.getLogger("oarepo_model")
+
+
+class AuthProvider(Protocol):
+    """Protocol for registering authentication methods."""
+
+    def before_request(self) -> str | None:
+        """Attempt to authenticate the user. Return the username if successful, None otherwise."""
+        ...
+
+    def after_request(self, response: Response) -> Response:
+        """Perform any post-request actions. Returns the response object."""
+        ...
+
 
 class OARepoRuntime:
     """OARepo base of invenio oarepo client."""
@@ -55,6 +72,9 @@ class OARepoRuntime:
         self.app = app
         self.init_config(app)
         app.extensions["oarepo-runtime"] = self
+
+        app.before_request(self.auth_before_request)
+        app.after_request(self.auth_after_request)
 
     def init_config(self, app: Flask) -> None:
         """Initialize the configuration for the extension."""
@@ -340,3 +360,74 @@ class OARepoRuntime:
 
             case _:
                 raise ValueError(f"Unknown export representation: {representation}")
+
+    @cached_property
+    def auth_providers(self) -> list[AuthProvider]:
+        """Return the entity resolvers registered in the extension."""
+        return [ep.load()() for ep in sorted(entry_points(group="oarepo.auth_providers"), key=lambda ep: ep.name)]
+
+    def auth_before_request(self) -> None:
+        """Before request hook."""
+        exceptions = []
+        for auth_provider in self.auth_providers:
+            try:
+                username = auth_provider.before_request()
+                if username:
+                    return
+            except Exception as exc:  # noqa BLE001
+                log.debug(
+                    "Exception encountered during during before request authentication, provider: %s, exc: %s",
+                    auth_provider,
+                    exc,
+                )
+                exceptions.append(exc)
+        if exceptions:
+            raise AuthExceptionGroup("Exception(s) happened during the authentication process", exceptions)
+
+    def auth_after_request(self, response: Response) -> Response:
+        """Before request hook."""
+        for auth_provider in self.auth_providers:
+            response = auth_provider.after_request(response)
+            if response:
+                return response
+        return response
+
+
+def _is_runtime_auth_before_after_request(func: Any) -> bool:
+    return (
+        hasattr(func, "__qualname__")  # functools.partial issue
+        and func.__qualname__ in ("OARepoRuntime.auth_after_request", "OARepoRuntime.auth_before_request")
+    )
+
+
+def api_finalize_app(app: Flask) -> None:
+    """Finalize app.
+
+    Args:
+        app (Flask): The Flask application instance.
+
+    """
+    finalize_app(app)
+
+
+def finalize_app(app: Flask) -> None:
+    """Finalize app.
+
+    Reordering of after/before requests functions are needed, because initialization is not deterministic.
+
+    Done because we want to run this before invenio_oauth2server.ext.verify_oauth_token_and_set_current_user.
+
+    Args:
+        app (Flask): The Flask application instance.
+
+    """
+    if app.after_request_funcs.get(None):
+        app.after_request_funcs[None] = sorted(
+            app.after_request_funcs[None],
+            key=lambda func: 0 if _is_runtime_auth_before_after_request(func) else 1,
+        )
+    if app.before_request_funcs.get(None):
+        app.before_request_funcs[None] = sorted(
+            app.before_request_funcs[None],
+            key=lambda func: 0 if _is_runtime_auth_before_after_request(func) else 1,
+        )
