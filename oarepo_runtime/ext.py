@@ -44,7 +44,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from .api import Model
 
-log = logging.getLogger("oarepo_model")
+log = logging.getLogger(__name__)
 
 
 class AuthProvider(Protocol):
@@ -54,7 +54,7 @@ class AuthProvider(Protocol):
         """Attempt to authenticate the user. Return the username if successful, None otherwise."""
         ...
 
-    def after_request(self, response: Response) -> Response:
+    def after_request(self, response: Response) -> Response | None:
         """Perform any post-request actions. Returns the response object."""
         ...
 
@@ -363,11 +363,11 @@ class OARepoRuntime:
 
     @cached_property
     def auth_providers(self) -> list[AuthProvider]:
-        """Return the entity resolvers registered in the extension."""
+        """Return the authentication providers registered in the extension."""
         return [ep.load()() for ep in sorted(entry_points(group="oarepo.auth_providers"), key=lambda ep: ep.name)]
 
     def auth_before_request(self) -> None:
-        """Before request hook."""
+        """Before request authentication hook."""
         exceptions = []
         for auth_provider in self.auth_providers:
             try:
@@ -376,7 +376,7 @@ class OARepoRuntime:
                     return
             except Exception as exc:  # noqa BLE001
                 log.debug(
-                    "Exception encountered during during before request authentication, provider: %s, exc: %s",
+                    "Exception encountered during before request authentication, provider: %s, exc: %s",
                     auth_provider,
                     exc,
                 )
@@ -385,11 +385,11 @@ class OARepoRuntime:
             raise AuthExceptionGroup("Exception(s) happened during the authentication process", exceptions)
 
     def auth_after_request(self, response: Response) -> Response:
-        """Before request hook."""
+        """After request authentication hook."""
         for auth_provider in self.auth_providers:
-            response = auth_provider.after_request(response)
-            if response:
-                return response
+            result = auth_provider.after_request(response)
+            if result is not None:
+                return result
         return response
 
 

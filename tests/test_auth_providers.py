@@ -43,7 +43,7 @@ class RecordingAuthProvider:
         self.before_request_calls += 1
         return self.username
 
-    def after_request(self, response: Response) -> Response:
+    def after_request(self, response: Response) -> Response | None:
         """Record the response and mark it with a header."""
         self.after_request_responses.append(response)
         response.headers.add("X-Auth-After-Request", str(id(self)))
