@@ -242,3 +242,14 @@ def test_auth_hooks_registered_on_invenio_app(app):
 
     assert "OARepoRuntime.auth_before_request" in before_qualnames
     assert "OARepoRuntime.auth_after_request" in after_qualnames
+
+
+def test_error_handler(app, monkeypatch, client, users):
+    monkeypatch.setitem(
+        app.extensions["oarepo-runtime"].__dict__,
+        "auth_providers",
+        [RecordingAuthProvider(exc=ValueError("tralala"))],
+    )
+    res = client.get("/")
+    assert res.status_code == 401
+    assert res.json["message"] == "Authentication failed."
