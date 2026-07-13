@@ -17,6 +17,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
 from flask import Response, current_app
+from flask_resources import HTTPJSONException, create_error_handler
 from invenio_base.utils import entry_points
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -75,6 +76,15 @@ class OARepoRuntime:
 
         app.before_request(self.auth_before_request)
         app.after_request(self.auth_after_request)
+        app.register_error_handler(
+            AuthExceptionGroup,
+            create_error_handler(
+                lambda exc: HTTPJSONException(  # noqa ARG005
+                    code=401,
+                    description="Authentication failed.",
+                )
+            ),
+        )
 
     def init_config(self, app: Flask) -> None:
         """Initialize the configuration for the extension."""
