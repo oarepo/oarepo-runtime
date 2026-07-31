@@ -257,7 +257,7 @@ class InfoResource(BaseResource):
         except ImportError:  # pragma: no cover
             return ret
 
-        def _generate_rdm_vocabulary(  # noqa: PLR0913 more attributes
+        def _generate_rdm_vocabulary(  # noqa: PLR0913 PLR0917 more attributes
             base_url: str,
             record: type[Record],
             vocabulary_type: str,

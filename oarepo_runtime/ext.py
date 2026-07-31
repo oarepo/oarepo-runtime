@@ -17,7 +17,9 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
 from flask import Response, current_app
+from flask_principal import PermissionDenied
 from flask_resources import HTTPJSONException, create_error_handler
+from flask_security.utils import login_user
 from invenio_base.utils import entry_points
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -25,6 +27,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
 from lxml.etree import fromstring
+from werkzeug.exceptions import HTTPException
 
 from . import config
 from .api import ExportRepresentation
@@ -35,6 +38,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from uuid import UUID
 
     from flask import Flask
+    from invenio_accounts.models import User
     from invenio_drafts_resources.records.api import Draft
     from invenio_records_resources.records.api import Record
     from invenio_records_resources.records.systemfields import IndexField
@@ -51,8 +55,8 @@ log = logging.getLogger(__name__)
 class AuthProvider(Protocol):
     """Protocol for registering authentication methods."""
 
-    def before_request(self) -> str | None:
-        """Attempt to authenticate the user. Return the username if successful, None otherwise."""
+    def before_request(self) -> User | None:
+        """Attempt to authenticate the user. Return the user if successful, None otherwise."""
         ...
 
     def after_request(self, response: Response) -> Response | None:
@@ -381,9 +385,14 @@ class OARepoRuntime:
         exceptions = []
         for auth_provider in self.auth_providers:
             try:
-                username = auth_provider.before_request()
-                if username:
-                    return
+                user = auth_provider.before_request()
+                if user is not None:
+                    if login_user(user):
+                        return
+                    raise PermissionDenied
+
+            except HTTPException:
+                raise
             except Exception as exc:  # noqa BLE001
                 log.debug(
                     "Exception encountered during before request authentication, provider: %s, exc: %s",
