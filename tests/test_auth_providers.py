@@ -106,7 +106,7 @@ def test_auth_providers_sorted_by_entry_point_name(monkeypatch):
 
 
 def test_before_request_stops_after_first_successful_provider(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
     first = RecordingAuthProvider(username=object())
     second = RecordingAuthProvider(username=object())
     app = _make_app(first, second)
@@ -130,7 +130,7 @@ def test_before_request_allows_anonymous_when_no_provider_matches():
 
 
 def test_before_request_failure_followed_by_success_does_not_raise(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
     failing = RecordingAuthProvider(exc=ValueError("bad token"))
     succeeding = RecordingAuthProvider(username=object())
     app = _make_app(failing, succeeding)
@@ -157,7 +157,7 @@ def test_before_request_raises_group_with_all_collected_exceptions():
 
 
 def test_after_request_called_on_first_response_only(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
     # the second provider is not consulted during authentication ...
     first = RecordingAuthProvider(username=object())
     second = RecordingAuthProvider()
