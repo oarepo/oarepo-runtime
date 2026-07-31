@@ -29,14 +29,14 @@ if TYPE_CHECKING:
 class RecordingAuthProvider:
     """Auth provider that returns a preconfigured result and records calls."""
 
-    def __init__(self, username: str | None = None, exc: Exception | None = None) -> None:
+    def __init__(self, username: object | None = None, exc: Exception | None = None) -> None:
         """Create the provider with a fixed authentication result."""
         self.username = username
         self.exc = exc
         self.before_request_calls = 0
         self.after_request_responses: list[Response] = []
 
-    def before_request(self) -> str | None:
+    def before_request(self) -> object | None:
         """Return the preconfigured username/exception pair."""
         if self.exc:
             raise self.exc
@@ -105,9 +105,10 @@ def test_auth_providers_sorted_by_entry_point_name(monkeypatch):
     assert [provider.username for provider in providers] == ["10-first", "20-second", "30-third"]
 
 
-def test_before_request_stops_after_first_successful_provider():
-    first = RecordingAuthProvider(username="alice")
-    second = RecordingAuthProvider(username="bob")
+def test_before_request_stops_after_first_successful_provider(monkeypatch):
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
+    first = RecordingAuthProvider(username=object())
+    second = RecordingAuthProvider(username=object())
     app = _make_app(first, second)
 
     response = app.test_client().get("/ping")
@@ -128,9 +129,10 @@ def test_before_request_allows_anonymous_when_no_provider_matches():
     assert response.text == "pong"
 
 
-def test_before_request_failure_followed_by_success_does_not_raise():
+def test_before_request_failure_followed_by_success_does_not_raise(monkeypatch):
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
     failing = RecordingAuthProvider(exc=ValueError("bad token"))
-    succeeding = RecordingAuthProvider(username="alice")
+    succeeding = RecordingAuthProvider(username=object())
     app = _make_app(failing, succeeding)
 
     response = app.test_client().get("/ping")
@@ -154,9 +156,10 @@ def test_before_request_raises_group_with_all_collected_exceptions():
     assert exc_info.value.exceptions == (exc1, exc2)
 
 
-def test_after_request_called_on_first_response_only():
+def test_after_request_called_on_first_response_only(monkeypatch):
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
     # the second provider is not consulted during authentication ...
-    first = RecordingAuthProvider(username="alice")
+    first = RecordingAuthProvider(username=object())
     second = RecordingAuthProvider()
     app = _make_app(first, second)
 

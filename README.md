@@ -52,10 +52,10 @@ model = Model(
             code="datacite",
             name=_("DataCite JSON"),
             mimetype="application/vnd.datacite.datacite+json",
-            serializer=DataCiteSerializer()
+            serializer=DataCiteSerializer(),
         )
     ],
-    records_alias_enabled=True
+    records_alias_enabled=True,
 )
 ```
 
@@ -99,6 +99,7 @@ Base class for system fields with type hints and proper typing support:
 ```python
 from oarepo_runtime.records.systemfields import TypedSystemField
 
+
 class MyCustomField(TypedSystemField[MyRecord, str]):
     def obj_get(self, record: MyRecord) -> str:
         # Implementation
@@ -112,12 +113,10 @@ Dynamic OpenSearch mapping support for system fields that need custom indexing:
 ```python
 from oarepo_runtime.records.systemfields import MappingSystemFieldMixin
 
+
 class DynamicField(MappingSystemFieldMixin, TypedSystemField):
     def mapping_settings(self, record_class):
-        return {
-            "type": "keyword",
-            "eager_global_ordinals": True
-        }
+        return {"type": "keyword", "eager_global_ordinals": True}
 ```
 
 #### Publication Status System Field
@@ -126,6 +125,7 @@ Built-in field for tracking record publication status:
 
 ```python
 from oarepo_runtime.records.systemfields import PublicationStatusSystemField
+
 
 class MyRecord(Record):
     publication_status = PublicationStatusSystemField()
@@ -142,13 +142,7 @@ Support for date-based faceting with configurable intervals:
 ```python
 from oarepo_runtime.services.facets.date import DateRangeFacet
 
-facets = {
-    "created": DateRangeFacet(
-        field="created",
-        label="Created Date",
-        interval="year"
-    )
-}
+facets = {"created": DateRangeFacet(field="created", label="Created Date", interval="year")}
 ```
 
 #### Nested Facets
@@ -162,9 +156,7 @@ facets = {
     "contributors": NestedLabeledFacet(
         field="metadata.contributors.person.id",
         nested_path="metadata.contributors",
-        value_labels={
-            "person123": {"cs": "Jan Novák", "en": "Jan Novak"}
-        }
+        value_labels={"person123": {"cs": "Jan Novák", "en": "Jan Novak"}},
     )
 }
 ```
@@ -182,9 +174,9 @@ search_config = {
         "admin": {
             "label": "Admin Facets",
             "facets": ["internal_status", "workflow_state"],
-            "provides_needs": [AdminNeed()]
+            "provides_needs": [AdminNeed()],
         }
-    }
+    },
 }
 ```
 
@@ -197,12 +189,12 @@ Deterministic ordering of service components with dependency resolution:
 ```python
 class ComponentOrderingMixin:
     """Mixin that ensures service components execute in the correct order."""
-    
+
     @property
     def components(self):
         # Components are automatically ordered based on:
         # - depends_on declarations
-        # - affects declarations  
+        # - affects declarations
         # - wildcard semantics (*)
         # - input order preservation where possible
         return self._ordered_components
@@ -227,18 +219,19 @@ Marshmallow schemas with multilingual field support:
 ```python
 from oarepo_runtime.services.schema.i18n_ui import I18nUISchema, MultilingualUIField
 
+
 class MyUISchema(I18nUISchema):
     title = MultilingualUIField()
-    description = MultilingualUIField(ui_params={
-        "widget": "textarea",
-        "placeholder": {"en": "Enter description", "cs": "Zadejte popis"}
-    })
+    description = MultilingualUIField(
+        ui_params={"widget": "textarea", "placeholder": {"en": "Enter description", "cs": "Zadejte popis"}}
+    )
 ```
 
 #### Locale Handling
 
 ```python
 from oarepo_runtime.services.schema.i18n import LocalizedDateTime
+
 
 class RecordSchema(Schema):
     created = LocalizedDateTime()  # Automatically formats dates per locale
@@ -251,11 +244,7 @@ class RecordSchema(Schema):
 Full implementation of [FAIR Signposting](https://signposting.org/) for machine-readable links:
 
 ```python
-from oarepo_runtime.resources.signposting import (
-    landing_page_signpost_links_list,
-    create_linkset,
-    create_linkset_json
-)
+from oarepo_runtime.resources.signposting import landing_page_signpost_links_list, create_linkset, create_linkset_json
 
 # Generate signposting links for a landing page
 links = landing_page_signpost_links_list(datacite_dict, record_dict, short=False)
@@ -266,7 +255,7 @@ header = list_of_signpost_links_to_http_header(links)
 # Create application/linkset format
 linkset = create_linkset(datacite_dict, record_dict)
 
-# Create application/linkset+json format  
+# Create application/linkset+json format
 linkset_json = create_linkset_json(datacite_dict, record_dict)
 ```
 
@@ -293,19 +282,9 @@ Machine-readable endpoint for repository metadata:
             "code": "my_record",
             "name": "My Record Type",
             "version": "1.0.0",
-            "links": {
-                "search": "/api/my-records/",
-                "ui": "/my-records/"
-            },
-            "jsonschemas": {
-                "record": "https://localhost/schemas/my-records-1.0.0.json"
-            },
-            "exports": [
-                {
-                    "code": "datacite",
-                    "mimetype": "application/vnd.datacite.datacite+json"
-                }
-            ]
+            "links": {"search": "/api/my-records/", "ui": "/my-records/"},
+            "jsonschemas": {"record": "https://localhost/schemas/my-records-1.0.0.json"},
+            "exports": [{"code": "datacite", "mimetype": "application/vnd.datacite.datacite+json"}],
         }
     }
 }
@@ -341,9 +320,7 @@ my_init = "my_app.init:update_custom_mappings"
 Support for updating record mappings with custom fields:
 
 ```python
-from oarepo_runtime.services.records.custom_fields import (
-    update_all_records_mappings_relation_fields
-)
+from oarepo_runtime.services.records.custom_fields import update_all_records_mappings_relation_fields
 
 # Update OpenSearch mappings for all records with relation fields
 update_all_records_mappings_relation_fields()
@@ -357,6 +334,7 @@ Pre-configured permission policy for open access repositories:
 
 ```python
 from oarepo_runtime.services.config.permissions import EveryonePermissionPolicy
+
 
 class MyServiceConfig(RecordServiceConfig):
     permission_policy_cls = EveryonePermissionPolicy

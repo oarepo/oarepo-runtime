@@ -36,7 +36,7 @@ class I18nLabel:
         return self._labels.get(locale, self._labels.get("en", next(iter(self._labels.values()), "")))
 
 
-def get_basic_facet(  # noqa: PLR0913
+def get_basic_facet(  # noqa: PLR0913 PLR0917
     facets: dict,
     facet_def: dict | None,
     facet_name: str,
