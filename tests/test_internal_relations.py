@@ -23,13 +23,7 @@ from oarepo_runtime.records.systemfields.relations import (
 class TestRecord(Record):
     """Test record with internal relations."""
 
-    internal_relations = InternalRelations(target_paths=["proteins", "instruments", "nested.reagents"])
-
-
-def test_internal_relations_class_access():
-    """Accessing the field on the class (not an instance) returns the field itself."""
-    assert isinstance(TestRecord.internal_relations, InternalRelations)
-    assert TestRecord.internal_relations.target_paths == ["proteins", "instruments", "nested.reagents"]
+    internal_relations = InternalRelations()
 
 
 def test_internal_relations_lookup_instance():
@@ -38,7 +32,6 @@ def test_internal_relations_lookup_instance():
     lookup = rec.internal_relations
     assert isinstance(lookup, InternalRelationsLookup)
     assert lookup.record is rec
-    assert lookup.target_paths == ["proteins", "instruments", "nested.reagents"]
 
 
 def test_lookup_table_simple_list():
@@ -51,6 +44,7 @@ def test_lookup_table_simple_list():
             "instruments": [{"id": "i1", "name": "Instrument 1"}],
         }
     )
+    # The lookup table contains all paths where dictionaries with 'id' were found
     assert rec.internal_relations.lookup_table == {
         "proteins": {
             "p1": {"id": "p1", "name": "Protein 1"},
@@ -59,7 +53,6 @@ def test_lookup_table_simple_list():
         "instruments": {
             "i1": {"id": "i1", "name": "Instrument 1"},
         },
-        "nested.reagents": {},
     }
 
 
@@ -90,12 +83,12 @@ def test_lookup_table_nested_lists_are_flattened():
 
 
 def test_lookup_table_missing_path():
-    """A target path absent from the record data collects to an empty mapping."""
+    """A path absent from the record data simply doesn't appear in the lookup table."""
     rec = TestRecord({"instruments": [{"id": "i1"}]})
     table = rec.internal_relations.lookup_table
-    assert table["proteins"] == {}
+    # "proteins" is not in the table because no data was found at that path
+    assert "proteins" not in table
     assert table["instruments"] == {"i1": {"id": "i1"}}
-    assert table["nested.reagents"] == {}
 
 
 def test_lookup_table_dotted_path_through_dict():
@@ -129,6 +122,7 @@ def test_lookup_table_dotted_path_through_list():
 
 
 def test_lookup_table_duplicate_id_raises():
+    """Duplicate ids within the same path raise a ValidationError."""
     rec = TestRecord(
         {
             "proteins": [{"id": "dup", "name": "A"}, {"id": "dup", "name": "B"}],

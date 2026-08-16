@@ -26,7 +26,7 @@ from oarepo_runtime.records.systemfields.relations import InternalRelation, Inte
 class TestRecord(Record):
     """Test record with an internal_relations lookup table and internal relation fields."""
 
-    internal_relations = InternalRelations(target_paths=["proteins", "instruments"])
+    internal_relations = InternalRelations()
 
     relations = MultiRelationsField(
         primary_protein=InternalRelation(
