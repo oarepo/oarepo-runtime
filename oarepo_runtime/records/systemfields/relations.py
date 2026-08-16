@@ -6,7 +6,7 @@
 # oarepo-runtime is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 #
-"""A relation field that allows arbitrarily nested lists of relations."""
+"""A relation field that resolves via an arbitrary path in the record, optionally through nested lists."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from itertools import zip_longest
 from typing import TYPE_CHECKING, Any, override
 
 from invenio_records.dictutils import dict_lookup, dict_set
+from invenio_records.systemfields import SystemField
 from invenio_records.systemfields.relations import (
     InvalidRelationValue,
     ListRelation,
@@ -22,27 +23,36 @@ from invenio_records.systemfields.relations import (
 from invenio_records_resources.records.systemfields.relations import (
     PIDRelation,
 )
+from marshmallow import ValidationError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
+    from collections.abc import Callable, Generator, Iterator
 
     from invenio_records.api import Record
 
 
-class ArbitraryNestedListResult(RelationListResult):
+class ArbitraryPathResult(RelationListResult):
     """Relation access result."""
 
     @override
     def __call__(self, force: bool = True):
         """Resolve the relation."""
         try:
+            levels = len(self.field.path_elements)
+            data = self._lookup_data()
+            if levels == 0:
+                # no array levels: resolve directly to a single object (or None),
+                # not an iterator of objects
+                if data is None:
+                    return None
+                return self.resolve(data[self._value_key_suffix])
             # not as efficient as it could be as we create the list of lists first
             # before returning the iterator, but simpler to implement
             return iter(
                 _for_each_deep(
-                    self._lookup_data(),
+                    data,
                     lambda v: self.resolve(v[self._value_key_suffix]),
-                    levels=len(self.field.path_elements),
+                    levels=levels,
                 )
             )
         except KeyError:
@@ -107,8 +117,12 @@ class ArbitraryNestedListResult(RelationListResult):
         func: Callable,
         keys: list[str] | None = None,
         attrs: list[str] | None = None,
-    ) -> list[Any] | None:
-        """Iterate over the list of objects."""
+    ) -> Any:
+        """Iterate over the list of objects.
+
+        Returns None on KeyError, func's result directly for a scalar (no array
+        levels) relation, or a, possibly nested, list of func's results otherwise.
+        """
         # The attributes we want to get from the related record.
         attrs = attrs or self.attrs
         keys = keys or self.keys
@@ -124,8 +138,8 @@ class ArbitraryNestedListResult(RelationListResult):
             return None
 
 
-class ArbitraryNestedListRelation(ListRelation):
-    """Arbitrary nested relation list type.
+class ArbitraryPathRelation(ListRelation):
+    """Relation type that resolves via an arbitrary path in the record.
 
     self.path_elements contain the segments of the path that are within lists.
     For example:
@@ -134,12 +148,14 @@ class ArbitraryNestedListRelation(ListRelation):
     - For paths like "a.0.b.1.c", path = ["a", "b"], relation_field="c"
     - For paths like "a.1", path = ["a"], relation_field=None
 
-    ids and values are stored as lists that can contain other lists arbitrarily nested.
-    The total depth of nesting is given by the length of self.path_elements + 1 if self.relation_field is not None
+    If path_elements is empty, the relation resolves to a single object (no array
+    levels at all). Otherwise, ids and values are stored as lists that can contain
+    other lists arbitrarily nested. The total depth of nesting is given by the
+    length of self.path_elements + 1 if self.relation_field is not None
     or length of self.path_elements if self.relation_field is None.
     """
 
-    result_cls = ArbitraryNestedListResult
+    result_cls = ArbitraryPathResult
 
     def __init__(
         self,
@@ -149,14 +165,17 @@ class ArbitraryNestedListRelation(ListRelation):
         **kwargs: Any,
     ):
         """Initialize the relation."""
-        if not array_paths:
-            raise ValueError("array_paths are required for ArbitraryNestedListRelation.")
-        self.path_elements = array_paths
+        # None and [] both mean "no array levels" - normalize to [] so that
+        # self.path_elements is always a plain list, never None.
+        self.path_elements: list[str] = array_paths if array_paths is not None else []
         super().__init__(*args, relation_field=relation_field, **kwargs)
 
     @override
     def exists_many(self, ids: Any) -> bool:  # type: ignore[override]
         """Return True if all ids exists."""
+        if not self.path_elements:
+            # no array levels: ids is a single, already-parsed id
+            return bool(self.exists(ids))
 
         # ids is a list that might recursively contain lists that contain ids
         def flatten(nested_list: Any) -> Generator[Any]:
@@ -169,8 +188,15 @@ class ArbitraryNestedListRelation(ListRelation):
         return all(self.exists(i) for i in flatten(ids))
 
     @override
-    def parse_value(self, value: list[Any] | tuple[Any]) -> list[Any]:  # type: ignore[override]
-        """Parse a record (or ID) to the ID to be stored."""
+    def parse_value(self, value: Any) -> Any:  # type: ignore[override]
+        """Parse a record (or ID) to the ID to be stored.
+
+        Returns a single id (no array levels) or a, possibly nested, list of ids.
+        """
+        if not self.path_elements:
+            # no array levels: value is the raw id (or record) directly, not a
+            # list item wrapped via relation_field
+            return super(ListRelation, self).parse_value(value)
         return _for_each_deep(value, self._parse_single_value, levels=len(self.path_elements))
 
     def _parse_single_value(self, value: Any) -> Any:
@@ -283,6 +309,9 @@ class ArbitraryNestedListRelation(ListRelation):
 
 def _deep_enumerate(nested_list: Any, max_depth: int, depth: int = 0) -> Generator[tuple[list[int], Any]]:
     """Enumerate all non-list items in a nested list structure."""
+    if max_depth == 0:
+        yield [], nested_list
+        return
     for index, item in enumerate(nested_list):
         current_path = [index]
         if depth < max_depth - 1 and isinstance(item, (list, tuple)):
@@ -292,8 +321,14 @@ def _deep_enumerate(nested_list: Any, max_depth: int, depth: int = 0) -> Generat
             yield current_path, item
 
 
-def _for_each_deep(nested_list: Any, func: Any, levels: int) -> list[Any]:
-    """Apply a function to each non-list item in a nested list structure."""
+def _for_each_deep(nested_list: Any, func: Any, levels: int) -> Any:
+    """Apply a function to each non-list item in a nested list structure.
+
+    Returns func(nested_list) directly when levels is 0 (no list to iterate over),
+    otherwise a, possibly nested, list of func's results.
+    """
+    if levels == 0:
+        return func(nested_list)
     result = []
     for item in nested_list:
         if isinstance(item, (list, tuple)) and levels > 1:
@@ -303,5 +338,145 @@ def _for_each_deep(nested_list: Any, func: Any, levels: int) -> list[Any]:
     return result
 
 
-class PIDArbitraryNestedListRelation(ArbitraryNestedListRelation, PIDRelation):  # type: ignore[override, misc]
-    """PID list relation type."""
+class PIDArbitraryPathRelation(ArbitraryPathRelation, PIDRelation):  # type: ignore[override, misc]
+    """PID relation type that resolves via an arbitrary path in the record."""
+
+
+class InternalRelations(SystemField):
+    """System field for managing internal relations via target paths."""
+
+    def __init__(self, target_paths: list[str]):
+        """Initialize the field with the target paths."""
+        self.target_paths = target_paths
+
+    @override
+    def __get__(  # type: ignore[override]
+        self, record: Record | None, owner: type | None = None
+    ) -> InternalRelations | InternalRelationsLookup:
+        """Return the lookup table for the record."""
+        if record is None:
+            return self
+        return InternalRelationsLookup(record, self.target_paths)
+
+
+class InternalRecord(dict):
+    """Internal record type that holds the lookup table for internal relations."""
+
+    def __init__(self, data: dict[str, Any], id_: str, revision_id: int | None):
+        """Initialize the internal record with the given data and IDs."""
+        super().__init__(data)
+        self.id = id_
+        self.revision_id = revision_id
+
+
+class InternalRelationsLookup:
+    """Lookup table for internal relations, built from target paths."""
+
+    def __init__(self, record: Record, target_paths: list[str]):
+        """Initialize the lookup table from the target paths."""
+        self.record = record
+        self.target_paths = target_paths
+        self.lookup_table = self._build_lookup_table()
+
+    def _build_lookup_table(self) -> dict[str, dict[str, Any]]:
+        """Build the lookup table from the target paths."""
+        ret = {}
+        for path in self.target_paths:
+            ret[path] = self._collect_lookup_values(path)
+        return ret
+
+    def _deep_search(self, el: Any, path: list[str]) -> Iterator[Any]:
+        """Recursively search for values along the path (given as a list of keys)."""
+        if isinstance(el, list):
+            for item in el:
+                yield from self._deep_search(item, path)
+        elif not path:
+            yield el
+        elif isinstance(el, dict):
+            yield from self._deep_search(el.get(path[0]), path[1:])
+
+    def _collect_lookup_values(self, path: str) -> dict[str, Any]:
+        """Run _deep_search to get values along the path (dot separated).
+
+        The returned values of the lookup should be a dictionary with `id` field,
+        add the `id` field to the result, value is the dictionary. If the result
+        value of the lookup is a list (c was a list in the original record),
+        iterate over it.
+
+        If there is a duplicate `id` field, raise a marshmallow ValidationError.
+
+        Return a dictionary with `id` field as a key and the enclosing dict as a value.
+        """
+        result: dict[str, Any] = {}
+        for value in self._deep_search(self.record, path.split(".")):
+            if value is None:
+                continue
+            id_ = value["id"]
+            if id_ in result:
+                raise ValidationError(f"Duplicate id '{id_}' found for path '{path}'.")
+            result[id_] = InternalRecord(value, id_, self.record.revision_id)
+        return result
+
+    def __contains__(self, id_: tuple[str, str]) -> bool:
+        """Check if the id is in the lookup table."""
+        return id_[0] in self.lookup_table and id_[1] in self.lookup_table[id_[0]]
+
+    def __getitem__(self, id_: tuple[str, str]) -> Any:
+        """Get the value for the id from the lookup table."""
+        return self.lookup_table[id_[0]][id_[1]]
+
+
+class InternalRelationResult(ArbitraryPathResult):
+    """Result of an internal relation."""
+
+    def resolve(self, id_: str) -> Record | None:
+        """Resolve the relation by looking up the id in the internal relations lookup table."""
+        internal_relations: InternalRelationsLookup = self.record.internal_relations
+        for pth in self.target_paths:
+            if (pth, id_) in internal_relations:
+                return internal_relations[(pth, id_)]
+        return None
+
+    def exists(self, id_: str) -> bool:
+        """Check existence via this result's own resolve (which has record context).
+
+        RelationBase.exists() would call the field's resolve() instead (it has no
+        record context and is a deliberate NotImplementedError stub), since exists()
+        is never defined on any Result class and so is proxied to the field via
+        RelationResult.__getattr__.
+        """
+        return self.resolve(id_) is not None
+
+
+class InternalRelation(ArbitraryPathRelation):
+    """A relation that resolves to a part of the same record.
+
+    Note: there needs to be an internal_relations field on the record class
+    for this relation to work and our target_paths must match a target path
+    in the internal_relations field.
+
+    ```
+        internal_relations = InternalRelations(target_paths=["...", "..."])
+    ```
+    """
+
+    result_cls = InternalRelationResult
+
+    def __init__(self, *args: Any, target_paths: list[str], **kwargs: Any):
+        """Initialize the relation with the target paths."""
+        self.target_paths = target_paths
+        super().__init__(*args, **kwargs)
+
+    def resolve(self, id_: str) -> Record | None:
+        """Raise - resolution needs record context, only available on InternalRelationResult.resolve."""
+        raise NotImplementedError("This method should never be called, use InternalRelationResult.resolve instead.")
+
+    def set_value(self, record: Record, value: list[Any] | tuple[Any]) -> None:
+        """Raise - setting internal relation values is not supported."""
+        raise NotImplementedError("InternalRelation.set_value is not supported for internal relations.")
+
+
+# Deprecated aliases kept for backward compatibility - prefer the ArbitraryPath* names above.
+ArbitraryNestedListResult = ArbitraryPathResult
+ArbitraryNestedListRelation = ArbitraryPathRelation
+PIDArbitraryNestedListRelation = PIDArbitraryPathRelation
