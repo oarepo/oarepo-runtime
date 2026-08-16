@@ -345,10 +345,6 @@ class PIDArbitraryPathRelation(ArbitraryPathRelation, PIDRelation):  # type: ign
 class InternalRelations(SystemField):
     """System field for managing internal relations via target paths."""
 
-    def __init__(self, target_paths: list[str]):
-        """Initialize the field with the target paths."""
-        self.target_paths = target_paths
-
     @override
     def __get__(  # type: ignore[override]
         self, record: Record | None, owner: type | None = None
@@ -356,7 +352,7 @@ class InternalRelations(SystemField):
         """Return the lookup table for the record."""
         if record is None:
             return self
-        return InternalRelationsLookup(record, self.target_paths)
+        return InternalRelationsLookup(record)
 
 
 class InternalRecord(dict):
@@ -372,50 +368,36 @@ class InternalRecord(dict):
 class InternalRelationsLookup:
     """Lookup table for internal relations, built from target paths."""
 
-    def __init__(self, record: Record, target_paths: list[str]):
-        """Initialize the lookup table from the target paths."""
+    def __init__(self, record: Record):
+        """Initialize the lookup table from record parts identified by `id` fields."""
         self.record = record
-        self.target_paths = target_paths
         self.lookup_table = self._build_lookup_table()
+
+    def _lookup_paths(self, data: Any, path: list[str]) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Lookup all dictionaries that have an `id` field.
+
+        Return a generator of (path, value) pairs,
+        where the path is the dot-separated key path to the value (excluding array indices).
+        """
+        if isinstance(data, (list, tuple)):
+            for d in data:
+                yield from self._lookup_paths(d, path)
+        elif isinstance(data, dict):
+            for key, value in data.items():
+                yield from self._lookup_paths(value, [*path, key])
+            if "id" in data:
+                yield (".".join(path), data)
 
     def _build_lookup_table(self) -> dict[str, dict[str, Any]]:
         """Build the lookup table from the target paths."""
-        ret = {}
-        for path in self.target_paths:
-            ret[path] = self._collect_lookup_values(path)
-        return ret
-
-    def _deep_search(self, el: Any, path: list[str]) -> Iterator[Any]:
-        """Recursively search for values along the path (given as a list of keys)."""
-        if isinstance(el, list):
-            for item in el:
-                yield from self._deep_search(item, path)
-        elif not path:
-            yield el
-        elif isinstance(el, dict):
-            yield from self._deep_search(el.get(path[0]), path[1:])
-
-    def _collect_lookup_values(self, path: str) -> dict[str, Any]:
-        """Run _deep_search to get values along the path (dot separated).
-
-        The returned values of the lookup should be a dictionary with `id` field,
-        add the `id` field to the result, value is the dictionary. If the result
-        value of the lookup is a list (c was a list in the original record),
-        iterate over it.
-
-        If there is a duplicate `id` field, raise a marshmallow ValidationError.
-
-        Return a dictionary with `id` field as a key and the enclosing dict as a value.
-        """
-        result: dict[str, Any] = {}
-        for value in self._deep_search(self.record, path.split(".")):
-            if value is None:
-                continue
-            id_ = value["id"]
-            if id_ in result:
-                raise ValidationError(f"Duplicate id '{id_}' found for path '{path}'.")
-            result[id_] = InternalRecord(value, id_, self.record.revision_id)
-        return result
+        lookup_table: dict[str, dict[str, Any]] = {}
+        for pth, value in self._lookup_paths(self.record, []):
+            value_id = value["id"]
+            path_rec = lookup_table.setdefault(pth, {})
+            if value_id in path_rec:
+                raise ValidationError(f"Duplicate id '{value_id}' found in path '{pth}'", field_name=pth)
+            path_rec[value_id] = InternalRecord(value, value_id, self.record.revision_id)
+        return lookup_table
 
     def __contains__(self, id_: tuple[str, str]) -> bool:
         """Check if the id is in the lookup table."""
