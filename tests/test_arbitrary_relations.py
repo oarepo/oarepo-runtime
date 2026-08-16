@@ -19,7 +19,12 @@ from invenio_records.systemfields import MultiRelationsField
 from invenio_records.systemfields.relations.errors import InvalidRelationValue
 from invenio_vocabularies.records.api import Vocabulary
 
-from oarepo_runtime.records.systemfields.relations import PIDArbitraryNestedListRelation
+from oarepo_runtime.records.systemfields import relations as relations_module
+from oarepo_runtime.records.systemfields.relations import (
+    ArbitraryPathRelation,
+    ArbitraryPathResult,
+    PIDArbitraryPathRelation,
+)
 
 log = logging.getLogger(__name__)
 
@@ -30,46 +35,53 @@ class TestRecord(Record):
     """Test record with arbitrary relations."""
 
     relations = MultiRelationsField(
-        single_array_no_field=PIDArbitraryNestedListRelation(
+        no_array=PIDArbitraryPathRelation(
+            array_paths=[],
+            relation_field="no_array",
+            keys=["title"],
+            pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
+            cache_key="test-vocab",
+        ),
+        single_array_no_field=PIDArbitraryPathRelation(
             array_paths=["single_array"],
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        single_array_with_field=PIDArbitraryNestedListRelation(
+        single_array_with_field=PIDArbitraryPathRelation(
             array_paths=["with_field"],
             relation_field="fld",
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        two_arrays_no_field=PIDArbitraryNestedListRelation(
+        two_arrays_no_field=PIDArbitraryPathRelation(
             array_paths=["two_arrays", "no_field"],
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        two_arrays_with_field=PIDArbitraryNestedListRelation(
+        two_arrays_with_field=PIDArbitraryPathRelation(
             array_paths=["two_arrays", "with_field"],
             relation_field="fld",
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        three_arrays_no_field=PIDArbitraryNestedListRelation(
+        three_arrays_no_field=PIDArbitraryPathRelation(
             array_paths=["three_arrays", "inner_array", "no_field"],
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        three_arrays_with_field=PIDArbitraryNestedListRelation(
+        three_arrays_with_field=PIDArbitraryPathRelation(
             array_paths=["three_arrays", "inner_array", "with_field"],
             relation_field="fld",
             keys=["title"],
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        three_arrays_no_field_nested_path=PIDArbitraryNestedListRelation(
+        three_arrays_no_field_nested_path=PIDArbitraryPathRelation(
             array_paths=[
                 "three_arrays_with_subfield.a",
                 "inner_array.b",
@@ -79,7 +91,7 @@ class TestRecord(Record):
             pid_field=Vocabulary.pid.with_type_ctx("test-vocab"),  # type: ignore[attr-defined]
             cache_key="test-vocab",
         ),
-        three_arrays_with_field_nested_path=PIDArbitraryNestedListRelation(
+        three_arrays_with_field_nested_path=PIDArbitraryPathRelation(
             array_paths=[
                 "three_arrays_with_subfield.b",
                 "inner_array.c",
@@ -96,6 +108,7 @@ class TestRecord(Record):
 @pytest.fixture
 def ok_data():
     return {
+        "no_array": {"id": "a"},
         "single_array": [{"id": "a"}, {"id": "b"}],
         "with_field": [{"fld": {"id": "a"}}, {"fld": {"id": "b"}}],
         "two_arrays": [
@@ -126,6 +139,7 @@ def ok_data():
 def bad_data():
     # all ids invalid
     return {
+        "no_array": {"id": "bad_id"},
         "single_array": [{"id": "bad_id"}],
         "with_field": [{"fld": {"id": "bad_id"}}],
         "two_arrays": [
@@ -161,6 +175,20 @@ def validation_data():
         msg: str
 
     return [
+        VD(
+            "no_array",
+            "bad_id",
+            True,  # noqa: FBT003 # boolean operator ok here
+            InvalidRelationValue,
+            r"Invalid value \[{'id': 'non-existing-id'}\], should not be list.",
+        ),
+        VD(
+            "no_array",
+            "bad_id",
+            False,  # noqa: FBT003 # boolean operator ok here
+            InvalidRelationValue,
+            "Invalid value non-existing-id",
+        ),
         VD(
             "single_array",
             "bad_id",
@@ -295,6 +323,10 @@ def create_invalid_record(error_pos, error_type, wrap_if_error):
 
     return TestRecord(
         {
+            "no_array": get_id(
+                "no_array",
+                False,  # noqa: FBT003 # boolean operator ok here
+            ),
             "single_array": get_id(
                 "single_array",
                 True,  # noqa: FBT003 # boolean operator ok here
@@ -411,6 +443,10 @@ def test_dereference(app, db, search_clear, vocab_records, ok_data):
     rec1.relations.dereference()
     assert remove_version(dict(rec1)) == remove_version(
         {
+            "no_array": {
+                "id": "a",
+                "title": {"en": "Test A", "cs": "Test A CS"},
+            },
             "single_array": [
                 {
                     "id": "a",
@@ -565,15 +601,22 @@ def remove_version(data):
 
 
 def test_no_array_paths():
-    with pytest.raises(ValueError, match=r"array_paths are required for ArbitraryNestedListRelation."):
-        PIDArbitraryNestedListRelation()
-    with pytest.raises(ValueError, match=r"array_paths are required for ArbitraryNestedListRelation."):
-        PIDArbitraryNestedListRelation(array_paths=[])
+    # array_paths=[] is valid: it means "no array level", i.e. a plain scalar
+    # relation located directly via relation_field (see the "no_array" field).
+    PIDArbitraryPathRelation(array_paths=[], relation_field="no_array")
+
+
+def test_backward_compatible_aliases():
+    """The pre-rename names must keep working for external consumers (e.g. oarepo-model)."""
+    assert relations_module.ArbitraryNestedListRelation is ArbitraryPathRelation
+    assert relations_module.ArbitraryNestedListResult is ArbitraryPathResult
+    assert relations_module.PIDArbitraryNestedListRelation is PIDArbitraryPathRelation
 
 
 @pytest.mark.parametrize(
     ("fld", "value"),
     [
+        ("no_array", "a"),
         ("single_array_no_field", ["a"]),
         ("single_array_with_field", [{"fld": "a"}]),
         ("two_arrays_no_field", [["a"]]),
@@ -613,6 +656,7 @@ def to_ids(values):
 
 def test_resolve_with_call(app, db, search_clear, vocab_records, ok_data):
     rec1 = TestRecord(ok_data)
+    assert to_ids(rec1.relations.no_array()) == "a"
     assert to_ids(list(rec1.relations.single_array_no_field())) == ["a", "b"]
     assert to_ids(list(rec1.relations.single_array_with_field())) == ["a", "b"]
     assert to_ids(list(rec1.relations.two_arrays_no_field())) == [["a", "b"], []]
@@ -625,6 +669,7 @@ def test_resolve_with_call(app, db, search_clear, vocab_records, ok_data):
 
 def test_resolve_incorrect_data_structure(app, db, search_clear, vocab_records, bad_data):
     rec1 = TestRecord(bad_data)
+    assert to_ids(rec1.relations.no_array()) is None
     assert to_ids(list(rec1.relations.single_array_no_field())) == [None]
     assert to_ids(list(rec1.relations.single_array_with_field())) == [None]
     assert to_ids(list(rec1.relations.two_arrays_no_field())) == [[None], []]
