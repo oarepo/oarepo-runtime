@@ -150,3 +150,73 @@ def test_create_topo_graph_ignores_non_present_dependencies():
     # X is not present, so B has no concrete dependency edge.
     assert m[A] == set()
     assert m[BDependsOnX] == set()
+
+
+def test_topo_sort_with_multiple_zero_indegree_items():
+    """Test topo sort when multiple items have indegree 0 after decrementing.
+
+    This covers line 315->313 where v.indeg becomes 0 and is pushed to heap.
+    """
+
+    class A(ServiceComponent):
+        pass
+
+    class B(ServiceComponent):
+        depends_on = (A,)
+
+    class C(ServiceComponent):
+        depends_on = (A,)
+
+    class D(ServiceComponent):
+        depends_on = (B, C)
+
+    cfg = TestService(None)
+    comps = [
+        ComponentData(A, service=mock_service),
+        ComponentData(B, service=mock_service),
+        ComponentData(C, service=mock_service),
+        ComponentData(D, service=mock_service),
+    ]
+
+    result = cfg._topo_sort(comps)  # noqa: SLF001
+    result_classes = [c.component_class for c in result]
+
+    # A must come first, then B and C (order between them preserved by input order),
+    # then D
+    assert result_classes[0] is A
+    assert D in result_classes
+    assert result_classes.index(D) > result_classes.index(B)
+    assert result_classes.index(D) > result_classes.index(C)
+
+
+def test_get_dependencies_from_potentials_matches_via_mro():
+    """Test _get_dependencies_from_potentials with MRO matching.
+
+    Covers line 438->437 where the condition matches.
+
+    The logic: if p.affects contains something in s.component_mro, add p.
+    """
+
+    class BaseService(ServiceComponent):
+        pass
+
+    class Consumer(BaseService):
+        # Consumer is a subclass of BaseService
+        pass
+
+    class AffectsBase(ServiceComponent):
+        affects = (BaseService,)
+
+    cfg = TestService(None)
+    # Consumer is selected (it's a BaseService subclass)
+    selected = [ComponentData(Consumer, service=mock_service)]
+    # AffectsBase affects BaseService, and Consumer is in BaseService's MRO
+    potentials = [ComponentData(AffectsBase, service=mock_service)]
+
+    result = cfg._get_dependencies_from_potentials(  # noqa: SLF001
+        selected,
+        potentials,
+        potential_dependency_getter=lambda x: x.affects,
+    )
+
+    assert 0 in result  # AffectsBase should be added
