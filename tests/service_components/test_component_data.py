@@ -220,3 +220,29 @@ def test_component_data_str(test_depends_on, test_affects, test_expected):
 
     cd = ComponentData(Local, service=mock_service)
     assert str(cd) == test_expected
+
+
+def test_convert_to_classes_rejects_non_list_tuple():
+    """Test that _convert_to_classes raises TypeError for non-list/tuple input."""
+
+    class BadType(ServiceComponent):
+        pass
+
+    # Set affects to a single string (not list/tuple) - this triggers line 168
+    BadType.affects = "some_string"
+
+    with pytest.raises(TypeError, match="Expected list or tuple"):
+        ComponentData(BadType, service=mock_service)
+
+
+def test_convert_to_classes_rejects_non_class_in_list():
+    """Test that _convert_to_classes raises TypeError for non-class items."""
+
+    class BadItem(ServiceComponent):
+        pass
+
+    # Set affects to contain a non-class item - this triggers lines 178-180
+    BadItem.affects = [42]
+
+    with pytest.raises(TypeError, match="is not a class"):
+        ComponentData(BadItem, service=mock_service)

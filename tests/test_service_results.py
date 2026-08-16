@@ -320,3 +320,166 @@ def test_record_list_aggregations_attribute_error():
         result = record_list.aggregations
 
         assert result is None
+
+
+def test_record_item_postprocess_error_messages_only_non_string():
+    """Test postprocessing when only non-string messages exist.
+
+    This covers lines 102-103 where _iter_errors_dict is called.
+    """
+    item = RecordItem(Mock(), Identity(1), Mock(), Mock())
+
+    # Only non-string messages (dict), no strings
+    messages = [{"nested": "error"}, {"another": "field"}]
+
+    result = list(item.postprocess_error_messages("field1", messages))
+
+    # Should iterate over non-string messages and yield from _iter_errors_dict
+    assert len(result) == 2
+    # _iter_errors_dict wraps messages in a list
+    assert result[0] == {"field": "field1.nested", "messages": ["error"]}
+    assert result[1] == {"field": "field1.another", "messages": ["field"]}
+
+
+def test_record_item_postprocess_errors_without_messages_key():
+    """Test postprocess_errors when error has no 'messages' key.
+
+    This covers line 112 where the error is appended directly.
+    """
+    item = RecordItem(Mock(), Identity(1), Mock(), Mock())
+
+    errors = [
+        {"field": "title", "messages": ["Required"]},
+        {"field": "id", "code": "invalid"},  # No 'messages' key
+    ]
+
+    result = item.postprocess_errors(errors)
+
+    assert len(result) == 2
+    assert result[0] == {"field": "title", "messages": ["Required"]}
+    assert result[1] == {"field": "id", "code": "invalid"}
+
+
+def test_record_list_hits_with_links_search_item():
+    """Test RecordList hits when links_search_item and links_search_item_tpl are set.
+
+    This covers line 173 where custom links template is used.
+    """
+    # Use Mock without spec to allow to_dict
+    mock_record = Mock()
+    mock_record.to_dict.return_value = {"id": "123", "versions": {}}
+    mock_results = [mock_record]
+    mock_service = Mock()
+    mock_schema = Mock()
+    mock_schema.dump.return_value = {"id": "123"}
+
+    # Custom links templates
+    mock_links_search_item = "items/{id}"
+    mock_links_item_template = Mock(expand=Mock(return_value={"self": "/items/123"}))
+    mock_links_search_item_tpl = Mock(return_value=mock_links_item_template)
+    mock_service.config.links_search_item = mock_links_search_item
+    mock_service.config.search_item_links_template = mock_links_search_item_tpl
+    mock_service.record_cls = Mock()
+    mock_service.record_cls.loads = Mock(return_value=mock_record)
+
+    # Use MockRecordList which has components defined
+    record_list = MockRecordList(
+        service=mock_service,
+        identity=Identity(1),
+        results=mock_results,
+        params={},
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=mock_schema,
+    )
+
+    hits = list(record_list.hits)
+
+    assert len(hits) == 1
+    assert hits[0]["links"] == {"self": "/items/123"}
+    assert hits[0].get("result_component") is True  # Component was called
+    mock_links_search_item_tpl.assert_called_once_with(mock_links_search_item)
+
+
+def test_record_list_hits_without_links_tpl():
+    """Test RecordList hits when links_tpl is None.
+
+    This covers line 177->181 where links are not added.
+    """
+    # Use Mock without spec to allow to_dict
+    mock_record = Mock()
+    mock_record.to_dict.return_value = {"id": "123", "versions": {}}
+    mock_results = [mock_record]
+    mock_service = Mock()
+    mock_schema = Mock()
+    mock_schema.dump.return_value = {"id": "123"}
+
+    mock_service.config = Mock()
+    mock_service.config.links_search_item = None
+    mock_service.config.search_item_links_template = None
+    mock_service.record_cls = Mock()
+    mock_service.record_cls.loads = Mock(return_value=mock_record)
+
+    # Use MockRecordList which has components defined
+    record_list = MockRecordList(
+        service=mock_service,
+        identity=Identity(1),
+        results=mock_results,
+        params={},
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=mock_schema,
+    )
+
+    hits = list(record_list.hits)
+
+    assert len(hits) == 1
+    assert "links" not in hits[0]
+    assert hits[0].get("result_component") is True  # Component was called
+
+
+def test_record_list_hits_with_draft_record():
+    """Test RecordList hits when processing a draft record.
+
+    This covers lines 156-159 where draft_class.loads is used.
+    """
+    mock_record = Mock()
+    # Trigger the draft branch with is_latest_draft=True and is_latest=False
+    mock_record.to_dict.return_value = {
+        "id": "123",
+        "versions": {"is_latest_draft": True, "is_latest": False},
+    }
+    mock_results = [mock_record]
+    mock_service = Mock()
+    mock_schema = Mock()
+    mock_schema.dump.return_value = {"id": "123"}
+
+    mock_service.config = Mock()
+    mock_service.config.links_search_item = None
+    mock_service.config.search_item_links_template = None
+
+    # Setup both record_cls and draft_cls
+    mock_service.record_cls = Mock()
+    mock_service.record_cls.loads = Mock(return_value=mock_record)
+
+    mock_draft_cls = Mock()
+    mock_service.draft_cls = mock_draft_cls
+    mock_draft_cls.loads = Mock(return_value=mock_record)
+
+    # Use MockRecordList which has components defined
+    record_list = MockRecordList(
+        service=mock_service,
+        identity=Identity(1),
+        results=mock_results,
+        params={},
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=mock_schema,
+    )
+
+    hits = list(record_list.hits)
+
+    assert len(hits) == 1
+    # draft_cls.loads should have been called, not record_cls.loads
+    mock_draft_cls.loads.assert_called_once_with(mock_record.to_dict())
+    assert hits[0].get("result_component") is True
