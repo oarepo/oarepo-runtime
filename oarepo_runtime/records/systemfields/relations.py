@@ -9,6 +9,7 @@
 """A relation field that resolves via an arbitrary path in the record, optionally through nested lists."""
 
 from __future__ import annotations
+from functools import cached_property
 
 from itertools import zip_longest
 from typing import TYPE_CHECKING, Any, override
@@ -371,7 +372,6 @@ class InternalRelationsLookup:
     def __init__(self, record: Record):
         """Initialize the lookup table from record parts identified by `id` fields."""
         self.record = record
-        self.lookup_table = self._build_lookup_table()
 
     def _lookup_paths(self, data: Any, path: list[str]) -> Iterator[tuple[str, dict[str, Any]]]:
         """Lookup all dictionaries that have an `id` field.
@@ -388,8 +388,9 @@ class InternalRelationsLookup:
             if "id" in data:
                 yield (".".join(path), data)
 
-    def _build_lookup_table(self) -> dict[str, dict[str, Any]]:
-        """Build the lookup table from the target paths."""
+    @cached_property
+    def lookup_table(self) -> dict[str, dict[str, Any]]:
+        """Return the lookup table."""
         lookup_table: dict[str, dict[str, Any]] = {}
         for pth, value in self._lookup_paths(self.record, []):
             value_id = value["id"]
