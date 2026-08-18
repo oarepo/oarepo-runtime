@@ -9,10 +9,10 @@
 """A relation field that resolves via an arbitrary path in the record, optionally through nested lists."""
 
 from __future__ import annotations
-from functools import cached_property
 
+from functools import cached_property
 from itertools import zip_longest
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, Any, cast, override
 
 from invenio_records.dictutils import dict_lookup, dict_set
 from invenio_records.systemfields import SystemField
@@ -357,7 +357,7 @@ class InternalRelations(SystemField):
         if record is None:
             return self
         # Check cache first
-        cached = self._get_cache(record)
+        cached = cast("InternalRelationsLookup | None", self._get_cache(record))
         if cached is not None:
             return cached
         # Build and cache the lookup table
@@ -425,9 +425,9 @@ class InternalRelationResult(ArbitraryPathResult):
     def resolve(self, id_: str) -> Record | None:
         """Resolve the relation by looking up the id in the internal relations lookup table."""
         internal_relations: InternalRelationsLookup = self.record.internal_relations
-        for pth in self.target_paths:
-            if (pth, id_) in internal_relations:
-                return internal_relations[(pth, id_)]
+        pth = self.field.target_path
+        if (pth, id_) in internal_relations:
+            return internal_relations[(pth, id_)]
         return None
 
     def exists(self, id_: str) -> bool:
@@ -445,19 +445,26 @@ class InternalRelation(ArbitraryPathRelation):
     """A relation that resolves to a part of the same record.
 
     Note: there needs to be an internal_relations field on the record class
-    for this relation to work and our target_paths must match a target path
-    in the internal_relations field.
+    for this relation to work and our target_path must match a path
+    in the internal_relations lookup table.
 
-    ```
-        internal_relations = InternalRelations(target_paths=["...", "..."])
-    ```
+    .. example::
+        internal_relations = InternalRelations()
+        relations = MultiRelationsField(
+            my_relation=InternalRelation(
+                array_paths=[],
+                relation_field="my_relation",
+                target_path="metadata.items",
+                keys=["name"],
+            ),
+        )
     """
 
     result_cls = InternalRelationResult
 
-    def __init__(self, *args: Any, target_paths: list[str], **kwargs: Any):
-        """Initialize the relation with the target paths."""
-        self.target_paths = target_paths
+    def __init__(self, *args: Any, target_path: str, **kwargs: Any):
+        """Initialize the relation with a single target path."""
+        self.target_path = target_path
         super().__init__(*args, **kwargs)
 
     def resolve(self, id_: str) -> Record | None:

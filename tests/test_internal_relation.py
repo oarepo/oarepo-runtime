@@ -32,12 +32,12 @@ class TestRecord(Record):
         primary_protein=InternalRelation(
             array_paths=[],
             relation_field="primary_protein",
-            target_paths=["proteins", "instruments"],
+            target_path="proteins",
             keys=["name"],
         ),
         used_instruments=InternalRelation(
             array_paths=["used_instruments"],
-            target_paths=["proteins", "instruments"],
+            target_path="instruments",
             keys=["name"],
         ),
     )
@@ -86,19 +86,6 @@ def test_resolve_scalar_unknown_id_returns_none(bad_data):
 def test_resolve_list_unknown_id_returns_none_item(bad_data):
     rec = TestRecord(bad_data)
     assert list(rec.relations.used_instruments()) == [None]
-
-
-def test_resolve_looks_up_across_all_target_paths():
-    """An id is found no matter which target_paths entry it actually lives under."""
-    rec = TestRecord(
-        {
-            "proteins": [],
-            "instruments": [{"id": "i1", "name": "Instrument One"}],
-            "primary_protein": {"id": "i1"},
-            "used_instruments": [],
-        }
-    )
-    assert rec.relations.primary_protein() == {"id": "i1", "name": "Instrument One"}
 
 
 def test_validate_ok(ok_data):
