@@ -344,16 +344,26 @@ class PIDArbitraryPathRelation(ArbitraryPathRelation, PIDRelation):  # type: ign
 
 
 class InternalRelations(SystemField):
-    """System field for managing internal relations via target paths."""
+    """System field for managing internal relations.
+
+    Returns a cached InternalRelationsLookup instance.
+    """
 
     @override
     def __get__(  # type: ignore[override]
         self, record: Record | None, owner: type | None = None
     ) -> InternalRelations | InternalRelationsLookup:
-        """Return the lookup table for the record."""
+        """Return the cached lookup table for the record."""
         if record is None:
             return self
-        return InternalRelationsLookup(record)
+        # Check cache first
+        cached = self._get_cache(record)
+        if cached is not None:
+            return cached
+        # Build and cache the lookup table
+        lookup = InternalRelationsLookup(record)
+        self._set_cache(record, lookup)
+        return lookup
 
 
 class InternalRecord(dict):

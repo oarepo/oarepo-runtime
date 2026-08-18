@@ -129,16 +129,28 @@ def test_lookup_table_duplicate_id_raises():
             "instruments": [],
         }
     )
+    # Accessing lookup_table triggers the build and validation
     with pytest.raises(ValidationError, match="Duplicate id 'dup'"):
-        _ = rec.internal_relations
+        _ = rec.internal_relations.lookup_table
 
 
 def test_lookup_table_reflects_current_record_state():
-    """The lookup table is rebuilt on every access - it is not cached on the record."""
+    """The lookup table is cached, but cleared on record reinitialization.
+
+    Note: Direct mutations to record data (like append) don't clear the cache.
+    To get an updated lookup table after modifying data, the record must be
+    reinitialized or the cache manually cleared.
+    """
     rec = TestRecord({"proteins": [{"id": "p1"}], "instruments": []})
     assert rec.internal_relations.lookup_table["proteins"] == {"p1": {"id": "p1"}}
 
+    # After appending, the cached lookup table still shows the old state
     rec["proteins"].append({"id": "p2"})
+    # Cache is not invalidated by direct dict mutation
+    assert rec.internal_relations.lookup_table["proteins"] == {"p1": {"id": "p1"}}
+
+    # Reinitialize the record to get fresh data
+    rec = TestRecord({"proteins": [{"id": "p1"}, {"id": "p2"}], "instruments": []})
     assert rec.internal_relations.lookup_table["proteins"] == {
         "p1": {"id": "p1"},
         "p2": {"id": "p2"},
