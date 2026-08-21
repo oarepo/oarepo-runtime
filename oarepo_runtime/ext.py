@@ -30,6 +30,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
 from lxml.etree import fromstring
+from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 from werkzeug.exceptions import HTTPException
 
@@ -417,20 +418,20 @@ class OARepoRuntime:
 
     @cached_property
     def _installed_packages(self) -> list[tuple[str, Version]]:
-
-        packages = []
+        packages: dict[str, Version] = {}
         for dist in distributions():
             name = dist.metadata.get("Name")
             version = dist.metadata.get("Version")
             if name is None or version is None:  # incomplete dist-info directory
                 continue
             try:
-                version = Version(version)
+                parsed_version = Version(version)
             except InvalidVersion:
                 log.warning("skipping %s: non-PEP440 version %r", name, version)
                 continue
-            packages.append((name, version))
-        return packages
+            # distributions() is not deduplicated; keep the first on sys.path, as import resolution does
+            packages.setdefault(canonicalize_name(name), parsed_version)
+        return list(packages.items())
 
     @cached_property
     def fingerprint(self) -> tuple[str, str, str, str]:
@@ -438,6 +439,8 @@ class OARepoRuntime:
         packages = self._installed_packages
         fingerprint_regex = current_app.config.get("FINGERPRINT_PACKAGES", [])
         fingerprint_regex_excludes = current_app.config.get("FINGERPRINT_EXCLUDED_PACKAGES", [])
+        if not fingerprint_regex:
+            log.info("Fingerprint regex not configured")
         packages = [
             pcg
             for pcg in packages
@@ -446,12 +449,12 @@ class OARepoRuntime:
         ]
         packages = sorted(packages, key=lambda pcg: pcg[0])
 
-        major = "".join([f"{pcg[0]}_{pcg[1].major}" for pcg in packages])
-        minor = "".join(
+        major = ";".join([f"{pcg[0]}_{pcg[1].major}" for pcg in packages])
+        minor = ";".join(
             [f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].dev}_{pcg[1].pre}_{pcg[1].post}" for pcg in packages]
         )
-        patch = "".join([f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].micro}" for pcg in packages])
-        full = "".join([f"{pcg[0]}_{pcg[1]}" for pcg in packages])
+        patch = ";".join([f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].micro}" for pcg in packages])
+        full = ";".join([f"{pcg[0]}_{pcg[1]}" for pcg in packages])
 
         def _str_to_fingerprint(str_: str) -> str:
             return hashlib.sha512(str_.encode("utf-8")).hexdigest()
