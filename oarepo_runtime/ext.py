@@ -11,9 +11,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import re
 from functools import cached_property
+from importlib.metadata import distributions
 from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
 from flask import Response, current_app
@@ -27,6 +30,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record as RecordBase
 from invenio_records_resources.proxies import current_service_registry
 from lxml.etree import fromstring
+from packaging.version import InvalidVersion, Version
 from werkzeug.exceptions import HTTPException
 
 from . import config
@@ -410,6 +414,54 @@ class OARepoRuntime:
             if result is not None:
                 return result
         return response
+
+    @cached_property
+    def _installed_packages(self) -> list[tuple[str, Version]]:
+
+        packages = []
+        for dist in distributions():
+            name = dist.metadata.get("Name")
+            version = dist.metadata.get("Version")
+            if name is None or version is None:  # incomplete dist-info directory
+                continue
+            try:
+                version = Version(version)
+            except InvalidVersion:
+                log.warning("skipping %s: non-PEP440 version %r", name, version)
+                continue
+            packages.append((name, version))
+        return packages
+
+    @cached_property
+    def fingerprint(self) -> tuple[str, str, str, str]:
+        """Create fingerprint of installed packages."""
+        packages = self._installed_packages
+        fingerprint_regex = current_app.config.get("FINGERPRINT_PACKAGES", [])
+        fingerprint_regex_excludes = current_app.config.get("FINGERPRINT_EXCLUDED_PACKAGES", [])
+        packages = [
+            pcg
+            for pcg in packages
+            if any(re.match(regex, pcg[0]) for regex in fingerprint_regex)
+            and not any(re.match(regex, pcg[0]) for regex in fingerprint_regex_excludes)
+        ]
+        packages = sorted(packages, key=lambda pcg: pcg[0])
+
+        major = "".join([f"{pcg[0]}_{pcg[1].major}" for pcg in packages])
+        minor = "".join(
+            [f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].dev}_{pcg[1].pre}_{pcg[1].post}" for pcg in packages]
+        )
+        patch = "".join([f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].micro}" for pcg in packages])
+        full = "".join([f"{pcg[0]}_{pcg[1]}" for pcg in packages])
+
+        def _str_to_fingerprint(str_: str) -> str:
+            return hashlib.sha512(str_.encode("utf-8")).hexdigest()
+
+        return (
+            _str_to_fingerprint(major),
+            _str_to_fingerprint(minor),
+            _str_to_fingerprint(patch),
+            _str_to_fingerprint(full),
+        )
 
 
 def _is_runtime_auth_before_after_request(func: Any) -> bool:
