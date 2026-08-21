@@ -14,12 +14,16 @@ from importlib.metadata import entry_points
 
 import click
 
+from .fingerprint import fingerprint
 from .search import init as search_init  # noqa just to register it
 
 
 @click.group
 def oarepo() -> None:
     """OARepo commands. See invenio oarepo --help for details."""
+
+
+oarepo.add_command(fingerprint)
 
 
 # register additional commands to the oarepo group

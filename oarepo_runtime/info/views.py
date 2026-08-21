@@ -396,7 +396,7 @@ class InfoResource(BaseResource):
             links["requests"] = invenio_url_for("requests.search")
         except ImportError:  # pragma: no cover
             pass
-
+        fingerprint = current_runtime.fingerprint
         ret = {
             "schema": "local://introspection-v1.0.0",
             "name": current_app.config.get("THEME_SITENAME", ""),
@@ -405,6 +405,12 @@ class InfoResource(BaseResource):
             "invenio_version": get_package_version("oarepo"),
             "transfers": list(current_transfer_registry.get_transfer_types()),
             "links": links,
+            "fingerprint": {
+                "major": fingerprint[0],
+                "minor": fingerprint[1],
+                "patch": fingerprint[2],
+                "full": fingerprint[3],
+            },
             "features": [
                 *_add_feature_if_can_import("drafts", "invenio_drafts_resources"),
                 *_add_feature_if_can_import("workflows", "oarepo_workflows"),
