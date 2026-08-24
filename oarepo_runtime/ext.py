@@ -434,13 +434,14 @@ class OARepoRuntime:
         return list(packages.items())
 
     @cached_property
-    def fingerprint(self) -> tuple[str, str, str, str]:
+    def fingerprint(self) -> dict[str, str] | None:
         """Create fingerprint of installed packages."""
         packages = self._installed_packages
         fingerprint_regex = current_app.config.get("FINGERPRINT_PACKAGES", [])
         fingerprint_regex_excludes = current_app.config.get("FINGERPRINT_EXCLUDED_PACKAGES", [])
         if not fingerprint_regex:
-            log.info("Fingerprint regex not configured")
+            log.warning("Packages fingerprinting is not configured.")
+            return None
         packages = [
             pcg
             for pcg in packages
@@ -450,21 +451,19 @@ class OARepoRuntime:
         packages = sorted(packages, key=lambda pcg: pcg[0])
 
         major = ";".join([f"{pcg[0]}_{pcg[1].major}" for pcg in packages])
-        minor = ";".join(
-            [f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].dev}_{pcg[1].pre}_{pcg[1].post}" for pcg in packages]
-        )
+        minor = ";".join([f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].dev}_{pcg[1].pre}" for pcg in packages])
         patch = ";".join([f"{pcg[0]}_{pcg[1].major}_{pcg[1].minor}_{pcg[1].micro}" for pcg in packages])
         full = ";".join([f"{pcg[0]}_{pcg[1]}" for pcg in packages])
 
         def _str_to_fingerprint(str_: str) -> str:
             return hashlib.sha512(str_.encode("utf-8")).hexdigest()
 
-        return (
-            _str_to_fingerprint(major),
-            _str_to_fingerprint(minor),
-            _str_to_fingerprint(patch),
-            _str_to_fingerprint(full),
-        )
+        return {
+            "major": _str_to_fingerprint(major),
+            "minor": _str_to_fingerprint(minor),
+            "patch": _str_to_fingerprint(patch),
+            "full": _str_to_fingerprint(full),
+        }
 
 
 def _is_runtime_auth_before_after_request(func: Any) -> bool:

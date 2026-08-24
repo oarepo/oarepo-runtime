@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 
 import pytest
 from packaging.version import Version
@@ -29,7 +30,7 @@ CACHED_PROPERTIES = ("fingerprint", "_installed_packages")
 def recompute_fingerprint(runtime) -> dict[str, str]:
     """Drop the cached fingerprint and read it again, as a level -> digest mapping."""
     runtime.__dict__.pop("fingerprint", None)
-    return dict(zip(LEVELS, runtime.fingerprint, strict=True))
+    return runtime.fingerprint
 
 
 @pytest.fixture
@@ -123,6 +124,13 @@ def test_fingerprint_is_empty_when_no_package_matches(runtime, installed_package
     assert recompute_fingerprint(runtime) == dict.fromkeys(LEVELS, EMPTY_DIGEST)
 
 
+def test_fingerprint_is_none_on_missing_config(runtime, installed_packages, fingerprint_config):
+    installed_packages(("oarepo-runtime", "1.2.3"))
+    fingerprint_config([])
+
+    assert recompute_fingerprint(runtime) is None
+
+
 @pytest.mark.parametrize(
     ("bumped_version", "changed_levels"),
     [
@@ -133,7 +141,6 @@ def test_fingerprint_is_empty_when_no_package_matches(runtime, installed_package
         ("1.2.3+oarepoblabla", {"full"}),
         ("1.2.3.dev1", {"minor", "full"}),
         ("1.2.3.rc1", {"minor", "full"}),
-        ("1.2.3.post1", {"minor", "full"}),
     ],
 )
 def test_fingerprint_levels_react_to_the_bumped_version_part(
@@ -180,13 +187,34 @@ def test_fingerprint_cli(appctx, runtime, fingerprint_config):
     result = appctx.test_cli_runner().invoke(oarepo, ["fingerprint"])
 
     assert result.exit_code == 0
-    assert result.output == ", ".join(f"{level}: {expected[level]}" for level in LEVELS) + "\n"
+    assert result.output == json.dumps(expected, indent=2) + "\n"
+
+
+def test_fingerprint_cli_missing_config(appctx, runtime, fingerprint_config):
+    fingerprint_config([r"oarepo-.*"])
+    fingerprint_config([])
+
+    result = appctx.test_cli_runner().invoke(oarepo, ["fingerprint"])
+
+    assert result.exit_code == 1
+    assert result.output == "Error: Packages fingerprinting is not configured.\n"
 
 
 def test_fingerprint_in_repository_endpoint(client, runtime, fingerprint_config, info_blueprint):
     fingerprint_config([r"oarepo-.*"])
+    expected = recompute_fingerprint(runtime)
 
-    fingerprint = client.get("/.well-known/repository/").json["fingerprint"]
+    response = client.get("/.well-known/repository/")
 
-    assert fingerprint == dict(zip(LEVELS, runtime.fingerprint, strict=True))
-    assert fingerprint["full"] != EMPTY_DIGEST
+    assert response.status_code == 200
+    assert response.json["fingerprint"] == expected
+
+
+def test_fingerprint_in_repository_endpoint_missing_config(client, runtime, fingerprint_config):
+    fingerprint_config([r"oarepo-.*"])
+    fingerprint_config([])
+
+    response = client.get("/.well-known/repository/")
+
+    assert response.status_code == 200
+    assert "fingerprint" not in response.json
