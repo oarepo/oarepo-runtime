@@ -15,6 +15,7 @@ from importlib.metadata import entry_points
 import click
 
 from .fingerprint import fingerprint
+from .permissions import list_permissions
 from .search import init as search_init  # noqa just to register it
 
 
@@ -25,6 +26,13 @@ def oarepo() -> None:
 
 oarepo.add_command(fingerprint)
 
+
+@oarepo.group
+def permissions() -> None:
+    """Permission commands."""
+
+
+permissions.add_command(list_permissions, name="list")
 
 # register additional commands to the oarepo group
 for ep in entry_points(group="oarepo.cli"):
