@@ -59,6 +59,11 @@ oarepo_runtime = "oarepo_runtime.ext:finalize_app"
 [project.entry-points."invenio_base.api_finalize_app"]
 oarepo_runtime = "oarepo_runtime.ext:api_finalize_app"
 
+[project.entry-points."oarepo.explainers"]
+000-default = "oarepo_runtime.services.permission_explainer:DefaultExplainer"
+100-conditional = "oarepo_runtime.services.permission_explainer:ConditionalExplainer"
+200-sameas = "oarepo_runtime.services.permission_explainer:SameAsExplainer"
+
 [tool.hatch.version]
 path = "oarepo_runtime/__init__.py"
 

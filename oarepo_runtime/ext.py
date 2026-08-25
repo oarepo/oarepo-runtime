@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -19,10 +20,11 @@ from functools import cached_property
 from importlib.metadata import distributions
 from typing import TYPE_CHECKING, Any, Literal, Protocol, cast, overload
 
-from flask import Response, current_app
+from flask import Response, current_app, has_request_context
 from flask_principal import PermissionDenied
 from flask_resources import HTTPJSONException, create_error_handler
-from flask_security.utils import login_user
+from flask_security.utils import login_user, logout_user
+from invenio_accounts.proxies import current_datastore
 from invenio_base.utils import entry_points
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -39,7 +41,7 @@ from .api import ExportRepresentation
 from .errors import AuthExceptionGroup
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
     from uuid import UUID
 
     from flask import Flask
@@ -51,6 +53,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from invenio_records_resources.services.files.service import FileService
     from invenio_records_resources.services.records import RecordService
     from lxml.etree import Element
+
+    from oarepo_runtime.services.permission_explainer import PermissionExplainer
 
     from .api import Model
 
@@ -464,6 +468,42 @@ class OARepoRuntime:
             "patch": _str_to_fingerprint(patch),
             "full": _str_to_fingerprint(full),
         }
+
+    @contextlib.contextmanager
+    def login_user(self, user_email: str) -> Iterator[User]:
+        """Log a user in by email for the duration of the context.
+
+        Flask-Login/Flask-Principal need an active request context to store
+        the identity, so one is pushed here when called outside of a request
+        (e.g. from a CLI command). The user is logged out and the pushed
+        context, if any, is popped again on exit.
+        """
+        user = current_datastore.get_user_by_email(user_email)
+        if user is None:
+            raise LookupError(f"No user found with email {user_email!r}")
+
+        ctx = None if has_request_context() else current_app.test_request_context()
+        if ctx is not None:
+            ctx.push()
+        try:
+            login_user(user)
+            yield user
+        finally:
+            logout_user()
+            if ctx is not None:
+                ctx.pop()
+
+    @cached_property
+    def explainers(self) -> list[type[PermissionExplainer]]:
+        """Return the list of permission explainer classes."""
+        return [
+            ep.load()
+            for ep in sorted(
+                entry_points(group="oarepo.explainers"),
+                key=lambda ep: ep.name,
+                reverse=True,
+            )
+        ]
 
 
 def _is_runtime_auth_before_after_request(func: Any) -> bool:

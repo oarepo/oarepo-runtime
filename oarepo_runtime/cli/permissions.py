@@ -1,0 +1,107 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
+#
+# oarepo-runtime is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+"""OARepo extensions to list user permissions."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
+import click
+from flask import g
+from flask.cli import with_appcontext
+from flask_login import current_user
+from invenio_access.permissions import system_identity
+
+from oarepo_runtime import current_runtime
+from oarepo_runtime.services.permission_explainer import explain, format_explanation
+from oarepo_runtime.typing import record_from_result
+
+if TYPE_CHECKING:
+    from invenio_drafts_resources.services.records.service import RecordService
+    from invenio_records_permissions import RecordPermissionPolicy
+    from invenio_records_resources.records import Record
+
+
+@click.command()
+@click.argument("model_name", required=True)
+@click.argument("user_email", required=True)
+@click.argument("record_id", required=True)
+@click.option("--detailed", is_flag=True, help="Show detailed permission information")
+@click.option("--action", required=False, help="Filter by action (for example, create or read)")
+@with_appcontext
+def list_permissions(
+    model_name: str,
+    user_email: str,
+    record_id: str,
+    detailed: bool,
+    action: str | None,
+) -> None:
+    """Check permissions for a given user and record.
+
+    MODEL_NAME: the name of the model to check permissions for
+    USER_EMAIL: the email of the user to check permissions for
+    RECORD_ID: the ID of the record to check permissions for
+    """
+    with current_runtime.login_user(user_email):
+        click.secho()
+        click.secho("User identity:", fg="cyan", bold=True)
+        click.secho(f"  - {g.identity.id}")
+        for provide in g.identity.provides:
+            click.secho(f"  - {provide}")
+
+        click.secho()
+        click.secho("Global roles:", fg="cyan", bold=True)
+        if current_user.roles:
+            for role in current_user.roles:
+                click.secho(f"  - {role}")
+        else:
+            click.secho("  - No roles assigned")
+        svc = cast("RecordService", current_runtime.models[model_name].service)
+        try:
+            rec = record_from_result(svc.read_draft(system_identity, record_id))
+        except Exception:  # noqa BLE001
+            rec = record_from_result(svc.read(system_identity, record_id))
+
+        click.secho()
+        click.secho("Permissions:", fg="cyan", bold=True)
+        click.secho()
+        print_permission_policy(svc.config.permission_policy_cls, rec, detailed, action)
+
+
+def print_permission_policy(
+    permission_policy_cls: type[RecordPermissionPolicy],
+    rec: Record,
+    detailed: bool,
+    restrict_to_action: str | None = None,
+    indent: str = "",
+) -> None:
+    """Print the permission policy for the given record."""
+    for member in dir(permission_policy_cls):
+        if not member.startswith("can_"):
+            continue
+        if restrict_to_action and member[4:] != restrict_to_action:
+            continue
+        policy = permission_policy_cls(member[4:], record=rec)
+        generators = [type(x).__name__ for x in getattr(policy, member)]
+        try:
+            allows = policy.allows(g.identity)
+            icon = "✅" if allows else "❌"
+            click.secho(
+                f"{indent}{icon} {member[4:]:<30}: {', '.join(generators)}",
+                fg="green" if allows else "red",
+            )
+        except Exception as exc:  # noqa: BLE001
+            click.secho(
+                f"{indent}⚠️  {member[4:]:<30}: {', '.join(generators)}: {type(exc).__name__}: {exc}", fg="yellow"
+            )
+        if detailed:
+            for permission_generator in getattr(policy, member):
+                click.secho(
+                    format_explanation(explain(g.identity, policy, permission_generator), indent=indent + "    ")
+                )
