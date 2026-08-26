@@ -91,7 +91,12 @@ class ConditionalExplainer(PermissionExplainer):
         """Explain the permission generator."""
         generator = cast("ConditionalGenerator", self.generator)
         ret = list(super().explain(identity))
-        condition_result = generator._condition(**self.permission_policy.over)  # noqa: SLF001
+        try:
+            condition_result = generator._condition(**self.permission_policy.over)  # noqa: SLF001
+        except Exception as e:  # noqa: BLE001
+            ret.append([f"⚠️ Condition could not be evaluated: {e}"])
+            return ret
+
         sub_result: ExplainerResult = []
         if condition_result:
             sub_result.append("Then branch:")

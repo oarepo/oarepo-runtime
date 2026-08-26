@@ -58,6 +58,14 @@ class FlagCondition(ConditionalGenerator):
         return flag
 
 
+class BrokenCondition(ConditionalGenerator):
+    """Conditional generator whose condition always raises (e.g. missing record)."""
+
+    @override
+    def _condition(self, **kwargs: Any) -> bool:
+        raise AttributeError("'NoneType' object has no attribute 'get'")
+
+
 class SamplePolicy(RecordPermissionPolicy):
     """Permission policy exercising every generator type the explainers support."""
 
@@ -66,6 +74,7 @@ class SamplePolicy(RecordPermissionPolicy):
     can_delete = SameAs("can_update")
     can_broken = (BrokenGenerator(),)
     can_conditional = (FlagCondition(then_=[AllowNeed(need_a)], else_=[AllowNeed(need_b)]),)
+    can_broken_conditional = (BrokenCondition(then_=[AllowNeed(need_a)], else_=[AllowNeed(need_b)]),)
 
 
 @pytest.fixture
@@ -196,6 +205,23 @@ def test_conditional_explainer_else_branch(app, db, identity_b):
     assert branch[0] == "Else branch:"
     sub_explain = branch[1]
     assert sub_explain[0].startswith("✅ AllowNeed")
+
+
+def test_conditional_explainer_survives_broken_condition(app, db, identity_a):
+    """explain() must not raise even if the generator's _condition() always raises.
+
+    This happens in practice e.g. when a generator expects a real record but
+    the CLI is invoked without a record id, ending up with record=None.
+    """
+    policy = SamplePolicy("broken_conditional")
+    generator = SamplePolicy.can_broken_conditional[0]
+
+    result = ConditionalExplainer(policy, generator).explain(identity_a)
+
+    warning = result[-1]
+    assert isinstance(warning, list)
+    assert warning[0].startswith("⚠️ Condition could not be evaluated")
+    assert "NoneType" in warning[0]
 
 
 def test_explain_dispatches_default_explainer(app, db, identity_a):
