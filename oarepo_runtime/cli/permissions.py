@@ -27,20 +27,22 @@ if TYPE_CHECKING:
     from invenio_records_permissions import RecordPermissionPolicy
     from invenio_records_resources.records import Record
 
+# Maybe allow user passing file with data (for cases create permission depends on data)
+
 
 @click.command()
 @click.argument("model_name", required=True)
 @click.argument("user_email", required=True)
-@click.argument("record_id", required=True)
+@click.argument("record_id", required=False)
 @click.option("--detailed", is_flag=True, help="Show detailed permission information")
 @click.option("--action", required=False, help="Filter by action (for example, create or read)")
 @with_appcontext
 def list_permissions(
     model_name: str,
     user_email: str,
-    record_id: str,
-    detailed: bool,
-    action: str | None,
+    record_id: str | None = None,
+    detailed: bool = False,
+    action: str | None = None,
 ) -> None:
     """Check permissions for a given user and record.
 
@@ -63,10 +65,13 @@ def list_permissions(
         else:
             click.secho("  - No roles assigned")
         svc = cast("RecordService", current_runtime.models[model_name].service)
-        try:
-            rec = record_from_result(svc.read_draft(system_identity, record_id))
-        except Exception:  # noqa BLE001
-            rec = record_from_result(svc.read(system_identity, record_id))
+        if record_id is not None:
+            try:
+                rec = record_from_result(svc.read_draft(system_identity, record_id))
+            except Exception:  # noqa BLE001
+                rec = record_from_result(svc.read(system_identity, record_id))
+        else:
+            rec = None
 
         click.secho()
         click.secho("Permissions:", fg="cyan", bold=True)
@@ -76,7 +81,7 @@ def list_permissions(
 
 def print_permission_policy(
     permission_policy_cls: type[RecordPermissionPolicy],
-    rec: Record,
+    rec: Record | None,
     detailed: bool,
     restrict_to_action: str | None = None,
     indent: str = "",
