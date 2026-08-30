@@ -17,17 +17,29 @@ from flask import g
 from flask.cli import with_appcontext
 from flask_login import current_user
 from invenio_access.permissions import system_identity
+from invenio_records_resources.proxies import current_service_registry
 
 from oarepo_runtime import current_runtime
 from oarepo_runtime.services.permission_explainer import explain, format_explanation
 from oarepo_runtime.typing import record_from_result
 
 if TYPE_CHECKING:
+    from invenio_communities.communities.services.service import CommunityService
     from invenio_drafts_resources.services.records.service import RecordService
     from invenio_records_permissions import RecordPermissionPolicy
     from invenio_records_resources.records import Record
 
 # Maybe allow user passing file with data (for cases create permission depends on data)
+
+
+def read_community(svc: CommunityService, slug: str) -> Record:
+    """Read a community record identified by its slug.
+
+    Communities are addressed by a human-readable slug rather than a uuid, and
+    they have no draft variant, so they can not go through the generic
+    read_draft/read fallback used for other models.
+    """
+    return record_from_result(svc.read(system_identity, slug))
 
 
 @click.command()
@@ -64,14 +76,22 @@ def list_permissions(
                 click.secho(f"  - {role}")
         else:
             click.secho("  - No roles assigned")
-        svc = cast("RecordService", current_runtime.models[model_name].service)
-        if record_id is not None:
+        if model_name in current_runtime.models:
+            svc = cast("RecordService", current_runtime.models[model_name].service)
+        else:
+            svc = cast("RecordService", current_service_registry.get(model_name))
+
+        from invenio_communities.communities.services.service import CommunityService
+
+        if record_id is None:
+            rec = None
+        elif isinstance(svc, CommunityService):
+            rec = read_community(svc, record_id)
+        else:
             try:
                 rec = record_from_result(svc.read_draft(system_identity, record_id))
             except Exception:  # noqa BLE001
                 rec = record_from_result(svc.read(system_identity, record_id))
-        else:
-            rec = None
 
         click.secho()
         click.secho("Permissions:", fg="cyan", bold=True)
