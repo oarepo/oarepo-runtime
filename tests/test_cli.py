@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from invenio_access.permissions import system_identity
 from invenio_accounts.proxies import current_datastore
+from invenio_records_resources.proxies import current_service_registry
 from invenio_search.cli import destroy
 
 from oarepo_runtime import current_runtime
@@ -49,4 +50,21 @@ def test_permission_cli_with_existing_record(app, db, search_clear, users):
 
     runner = app.test_cli_runner()
     result = runner.invoke(list_permissions, ["affiliations", users[0].user.email, "cern", "--detailed"])
+    assert result.exit_code == 0
+
+
+def test_permission_cli_with_community_slug(app, db, search_clear, location, users):
+    """Communities are not registered in OAREPO_MODELS and are addressed by slug, not uuid."""
+    communities_service = current_service_registry.get("communities")
+    communities_service.create(
+        system_identity,
+        {
+            "slug": "my-community",
+            "access": {"visibility": "public"},
+            "metadata": {"title": "My Community"},
+        },
+    )
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(list_permissions, ["communities", users[0].user.email, "my-community", "--detailed"])
     assert result.exit_code == 0
