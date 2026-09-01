@@ -114,7 +114,7 @@ class GroupedFacetsParam(FacetsParam):
 
         user_facets = self.identity_facets(identity)
         self_copy = copy.copy(self)
-        self_copy._facets = user_facets  # noqa: SLF001 - TODO: this looks like a hack
+        self_copy._facets = user_facets  # noqa: SLF001 - Align response facets with aggregations.
         search = search.response_class(FacetsResponse.create_response_cls(self_copy))
 
         search = self.aggregate_with_user_facets(search, user_facets)
@@ -130,7 +130,6 @@ class GroupedFacetsParam(FacetsParam):
         if not self.facet_groups:
             user_facets.update(self.facets)  # pragma: no cover
         else:
-            self.facets.clear()  # TODO: why is this needed?
             user_facets.update(self.facet_groups.get("default", {}))
 
         groups = self.identity_facet_groups(identity)
