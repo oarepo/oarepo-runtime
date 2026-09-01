@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Tests for GroupedFacetsParam."""
 
 from __future__ import annotations
@@ -13,7 +8,7 @@ from __future__ import annotations
 import types
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from flask_babel import LazyString
@@ -159,11 +154,11 @@ def test_get_basic_facet_with_i18n_label_in_facet_def(app):
     assert isinstance(result["label"], I18nLabel)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(result["label"]) == "Vlastní"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(result["label"]) == "Custom"
 
 
@@ -195,8 +190,8 @@ def test_build_facet():
         ]
     )
 
-    assert facet._params == {"field": "jej.c"}  # noqa: SLF001
-    assert str(facet._label) == "jej/c.label"  # noqa: SLF001
+    assert facet._params == {"field": "jej.c"}
+    assert str(facet._label) == "jej/c.label"
     facet = build_facet(
         [
             {
@@ -222,11 +217,9 @@ def test_build_facet():
     labelled_values = facet.get_labelled_values({}, [])
     assert "kchchch" in labelled_values.values()
 
-    assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
-    assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
-    assert facet._inner._params == {  # noqa: SLF001
-        "field": "metadata.additionalTitles.title.lang"
-    }
+    assert facet._path == "metadata.additionalTitles.title"
+    assert isinstance(facet._inner, TermsFacet)
+    assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}
     with pytest.raises(ValueError, match=r"Facet class can not be None\."):
         build_facet(
             [
@@ -290,7 +283,7 @@ def test_identity_facets_system_user_or_process_returns_all() -> None:
     assert params_proc.identity_facets(ident_proc) == params_proc.facets
 
 
-def test_filter_user_facets_with_groups_and_side_effect_mutation() -> None:
+def test_filter_user_facets_with_groups_does_not_mutate_facets() -> None:
     all_facets = {
         "publication_status": TermsFacet(field="publication_status"),
         "another": TermsFacet(field="another"),
@@ -308,13 +301,15 @@ def test_filter_user_facets_with_groups_and_side_effect_mutation() -> None:
     # Before: facets contain both
     assert set(params.facets.keys()) == {"publication_status", "another"}
 
-    user_facets = params.identity_facets(ident)
+    with patch(
+        "oarepo_runtime.services.facets.params.current_app",
+        new=SimpleNamespace(config={}),
+    ):
+        user_facets = params.identity_facets(ident)
 
-    # After: user facets should be default + curator
     assert set(user_facets.keys()) == {"publication_status", "another"}
 
-    # Side effect: params.facets was cleared in _filter_user_facets
-    assert params.facets == {}
+    assert set(params.facets.keys()) == {"publication_status", "another"}
 
 
 def test_aggregate_with_user_facets_adds_aggs() -> None:
@@ -413,11 +408,11 @@ def test_get_basic_facet_with_i18n_label(app):
     assert isinstance(result["label"], I18nLabel)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(result["label"]) == "Stav"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(result["label"]) == "Status"
 
 
@@ -430,11 +425,11 @@ def test_i18n_label_resolves_current_locale(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(label) == "Stav"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(label) == "Status"
 
 
@@ -447,7 +442,7 @@ def test_i18n_label_falls_back_to_en(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("de"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("de"))
         assert str(label) == "Status"
 
 
@@ -460,7 +455,7 @@ def test_i18n_label_falls_back_to_first_value(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))
         assert str(label) == "Stav"
 
 

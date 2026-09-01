@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Facet params."""
 
@@ -114,7 +108,7 @@ class GroupedFacetsParam(FacetsParam):
 
         user_facets = self.identity_facets(identity)
         self_copy = copy.copy(self)
-        self_copy._facets = user_facets  # noqa: SLF001 - TODO: this looks like a hack
+        self_copy._facets = user_facets  # noqa: SLF001 - Align response facets with aggregations.
         search = search.response_class(FacetsResponse.create_response_cls(self_copy))
 
         search = self.aggregate_with_user_facets(search, user_facets)
@@ -130,7 +124,6 @@ class GroupedFacetsParam(FacetsParam):
         if not self.facet_groups:
             user_facets.update(self.facets)  # pragma: no cover
         else:
-            self.facets.clear()  # TODO: why is this needed?
             user_facets.update(self.facet_groups.get("default", {}))
 
         groups = self.identity_facet_groups(identity)

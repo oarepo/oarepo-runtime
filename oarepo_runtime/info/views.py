@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Resource for serving machine-readable information about the repository."""
 
 from __future__ import annotations
@@ -178,7 +173,6 @@ class InfoResource(BaseResource):
             feature_keys.append("relations")
         return feature_keys
 
-    # TODO: this should be done differently - we should add this to the model
     def _get_model_html_endpoint(self, model: Model) -> Any:
         base = self._get_model_api_endpoint(model)
         if not base:

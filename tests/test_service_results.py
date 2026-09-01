@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Test service results."""
 
@@ -62,8 +56,8 @@ def test_result_component_initialization():
 
     component = ResultComponent(record_item=mock_item, record_list=mock_list)
 
-    assert component._record_item is mock_item  # noqa: SLF001
-    assert component._record_list is mock_list  # noqa: SLF001
+    assert component._record_item is mock_item
+    assert component._record_list is mock_list
 
 
 def test_record_item_data_with_components():
@@ -85,7 +79,7 @@ def test_record_item_data_with_components():
     )
 
     # Set the _data to None to ensure it's not cached
-    item._data = None  # noqa: SLF001
+    item._data = None
 
     result = item.data
 
@@ -117,7 +111,7 @@ def test_record_item_data_caching():
     result1 = item.data
 
     # Set the _data to simulate caching
-    item._data = result1  # noqa: SLF001
+    item._data = result1
 
     # Second access should return cached data
     result2 = item.data
@@ -183,7 +177,7 @@ def test_record_item_to_dict_no_errors():
         schema=mock_schema,
     )
 
-    assert record_from_result(item) is item._record  # noqa: SLF001
+    assert record_from_result(item) is item._record
 
     with patch.object(RecordItem, "data", new_callable=PropertyMock) as mock_data:
         mock_data.return_value = base_data
@@ -483,3 +477,52 @@ def test_record_list_hits_with_draft_record():
     # draft_cls.loads should have been called, not record_cls.loads
     mock_draft_cls.loads.assert_called_once_with(mock_record.to_dict())
     assert hits[0].get("result_component") is True
+
+
+# zmena
+@pytest.mark.parametrize(
+    ("hit_dict", "expected_loader"),
+    [
+        (
+            {"id": "123", "versions": {"is_latest_draft": True, "is_latest": False}},
+            "draft",
+        ),
+        ({"id": "123", "publication_status": "draft"}, "draft"),
+        ({"id": "123", "versions": {"is_latest": True}}, "record"),
+    ],
+)
+def test_record_list_hits_selects_correct_class(hit_dict, expected_loader):
+    mock_hit = Mock()
+    mock_hit.to_dict.return_value = hit_dict
+    mock_loaded_record = Mock()
+    mock_service = Mock()
+    mock_schema = Mock()
+    mock_schema.dump.return_value = {"id": "123"}
+
+    mock_service.config = Mock()
+    mock_service.config.links_search_item = None
+    mock_service.config.search_item_links_template = None
+    mock_service.record_cls = Mock()
+    mock_service.record_cls.loads = Mock(return_value=mock_loaded_record)
+    mock_service.draft_cls = Mock()
+    mock_service.draft_cls.loads = Mock(return_value=mock_loaded_record)
+
+    record_list = MockRecordList(
+        service=mock_service,
+        identity=Identity(1),
+        results=[mock_hit],
+        params={},
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=mock_schema,
+    )
+
+    hits = list(record_list.hits)
+
+    assert len(hits) == 1
+    if expected_loader == "draft":
+        mock_service.draft_cls.loads.assert_called_once_with(hit_dict)
+        mock_service.record_cls.loads.assert_not_called()
+    else:
+        mock_service.record_cls.loads.assert_called_once_with(hit_dict)
+        mock_service.draft_cls.loads.assert_not_called()

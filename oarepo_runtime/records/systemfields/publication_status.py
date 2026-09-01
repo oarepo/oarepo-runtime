@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Record status module."""
 
 from __future__ import annotations
@@ -53,7 +48,7 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, TypedSystemField[Rec
         data[self.key] = getattr(record, self.attr_name)
 
     @override
-    def __get__(self, instance: Record | None, owner: type[Record]) -> Self | str:  # type: ignore[override]
+    def __get__(self, instance: Record | None, owner: type[Record]) -> Self | str:  # ty: ignore[invalid-method-override]
         """Access the attribute."""
         if instance is None:
             return self

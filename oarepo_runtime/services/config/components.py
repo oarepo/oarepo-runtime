@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Utilities for deterministic ordering of service components.
 
 This module provides a mixin that reorders service components while
@@ -107,7 +102,7 @@ class ComponentData:
         self.original_component = original_component
         self.component_class = self._extract_class_from_component(original_component, service)
 
-        self.component_mro = self._get_service_mro(self.component_class)
+        self.component_mro = self._get_service_mro(self.component_class)  # ty: ignore[invalid-assignment]
 
         self.affects_all = "*" in getattr(self.component_class, "affects", [])
         self.depends_on_all = "*" in getattr(self.component_class, "depends_on", [])

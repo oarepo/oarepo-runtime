@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Tests for the ComponentData class, partially AI generated."""
 
@@ -44,13 +38,13 @@ def comp_classes(result):
 
 def test_class_deduplication_keeps_single_instance_and_order():
     cfg = DummyConfig()
-    res = cfg._deduplicate_components([A, C, A])  # noqa: SLF001
+    res = cfg._deduplicate_components([A, C, A])
     assert comp_classes(res) == [A, C]
 
 
 def test_inheritance_deduplication_keeps_subclass_once():
     cfg = DummyConfig()
-    res = cfg._deduplicate_components([A, B])  # noqa: SLF001
+    res = cfg._deduplicate_components([A, B])
     assert comp_classes(res) == [B]
 
 
@@ -59,7 +53,7 @@ def test_inheritance_multi_level_only_most_specific_kept_and_order_preserved():
         replaces = (A, B)
 
     cfg = DummyConfig()
-    res = cfg._deduplicate_components([A, C, B, D])  # noqa: SLF001
+    res = cfg._deduplicate_components([A, C, B, D])
     # as D is a subclass of both A and B, it replaces A
     assert comp_classes(res) == [D, C]
 
@@ -67,7 +61,7 @@ def test_inheritance_multi_level_only_most_specific_kept_and_order_preserved():
 def test_mixed_class_and_partial_are_deduplicated():
     cfg = DummyConfig()
     pB = partial(B)
-    res = cfg._deduplicate_components([A, pB, B, C])  # noqa: SLF001
+    res = cfg._deduplicate_components([A, pB, B, C])
     assert comp_classes(res) == [B, C]
 
 
@@ -78,7 +72,7 @@ def test_invalid_component_raises_typeerror():
         pass
 
     with pytest.raises(TypeError):
-        cfg._deduplicate_components([NotAComponent])  # noqa: SLF001
+        cfg._deduplicate_components([NotAComponent])
 
 
 def test_skipped_and_removed():
@@ -86,9 +80,9 @@ def test_skipped_and_removed():
         replaces = (B,)
 
     cfg = DummyConfig()
-    res = cfg._deduplicate_components([D, B, D, B, D])  # noqa: SLF001
+    res = cfg._deduplicate_components([D, B, D, B, D])
     assert comp_classes(res) == [D]
-    res = cfg._deduplicate_components([B, D, B, D, B])  # noqa: SLF001
+    res = cfg._deduplicate_components([B, D, B, D, B])
     assert comp_classes(res) == [D]
 
 
@@ -113,7 +107,7 @@ def test_deduplication_replaced_by_scenario():
     # When processing ToBeReplaced (new), Replacer (existing) is checked:
     #   _deduplication_action(ToBeReplaced, Replacer):
     #   Is Replacer in ToBeReplaced.replaced_by? Yes -> return "skip" (line 511)
-    res = cfg._deduplicate_components([Replacer, ToBeReplaced])  # noqa: SLF001
+    res = cfg._deduplicate_components([Replacer, ToBeReplaced])
     assert comp_classes(res) == [Replacer]  # ToBeReplaced is skipped
 
 
@@ -127,7 +121,7 @@ def test_deduplication_ok_scenario():
         pass
 
     cfg = DummyConfig()
-    res = cfg._deduplicate_components([X, Y])  # noqa: SLF001
+    res = cfg._deduplicate_components([X, Y])
     assert comp_classes(res) == [X, Y]
 
 
@@ -144,10 +138,10 @@ def test_remove_indices_from_data():
         pass
 
     cfg = DummyConfig()
-    data = cfg._deduplicate_components([X, Y, Z])  # noqa: SLF001
+    data = cfg._deduplicate_components([X, Y, Z])
 
     # Remove indices [0, 2] (X and Z), keeping only Y
-    cfg._remove_indices_from_data(data, [0, 2])  # noqa: SLF001
+    cfg._remove_indices_from_data(data, [0, 2])
     assert len(data) == 1
     assert data[0].component_class is Y
 
@@ -181,7 +175,7 @@ def test_deduplication_skip_with_replaces_same_time():
     cfg = DummyConfig()
     # Data has [A, B]
     # Add C which triggers both skip (from B) and replace (of A)
-    res = cfg._deduplicate_components([A, B, C])  # noqa: SLF001
+    res = cfg._deduplicate_components([A, B, C])
     # C would replace A, but C is skipped due to B
     # So B stays, A is removed (line 478 removes the replaced index)
     assert comp_classes(res) == [B]

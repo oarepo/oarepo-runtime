@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Test signposting."""
 
 from __future__ import annotations
@@ -576,8 +571,8 @@ def test_model_exports(
 
     model = current_runtime.models_by_schema[record_dict["$schema"]]
     model_exports = model.exports
-    model._exports = []  # noqa: SLF001
-    model._exports = model_exports  # noqa: SLF001
+    model._exports = []
+    model._exports = model_exports
 
 
 def test_signposting_with_incorrect_datacite(

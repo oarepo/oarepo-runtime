@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """A relation field that resolves via an arbitrary path in the record, optionally through nested lists."""
 
 from __future__ import annotations
@@ -350,9 +345,8 @@ class InternalRelations(SystemField):
     """
 
     @override
-    def __get__(  # type: ignore[override]
-        self, record: Record | None, owner: type | None = None
-    ) -> InternalRelations | InternalRelationsLookup:
+    # ty: ignore[invalid-method-override]
+    def __get__(self, record: Record | None, owner: type | None = None) -> InternalRelations | InternalRelationsLookup:
         """Return the cached lookup table for the record."""
         if record is None:
             return self

@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 import pytest
@@ -20,7 +15,7 @@ def assert_matches(record, generator) -> None:
 
     The generator returns system_process needs if matched, otherwise an empty list.
     """
-    assert generator._condition(record=record)  # noqa: SLF001
+    assert generator._condition(record=record)
     needs = generator.needs(record=record)
     assert len(needs) > 0  # SystemProcess should provide needs
 
@@ -30,7 +25,7 @@ def assert_not_matches(record, generator) -> None:
 
     The generator returns an empty list of needs if not matched.
     """
-    assert not generator._condition(record=record)  # noqa: SLF001
+    assert not generator._condition(record=record)
     needs = generator.needs(record=record)
     assert len(needs) == 0  # Disable should provide no needs
 
@@ -180,12 +175,12 @@ def test_single_draft_type_as_list():
     # as list
     generator = IfDraftType(["initial"], then_=[SystemProcess()], else_=[Disable()])
 
-    assert generator._draft_types == ["initial"]  # noqa: SLF001
+    assert generator._draft_types == ["initial"]
 
     # as single value
     generator = IfDraftType("initial", then_=[SystemProcess()], else_=[Disable()])
 
-    assert generator._draft_types == ["initial"]  # noqa: SLF001
+    assert generator._draft_types == ["initial"]
 
 
 def test_single_then_else_branch():

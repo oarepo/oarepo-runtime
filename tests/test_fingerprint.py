@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -177,7 +171,7 @@ def test_installed_packages_skips_distributions_with_broken_metadata(runtime, mo
         ],
     )
 
-    assert runtime._installed_packages == [("good-package", Version("1.2.3"))]  # noqa: SLF001
+    assert runtime._installed_packages == [("good-package", Version("1.2.3"))]
 
 
 def test_fingerprint_cli(appctx, runtime, fingerprint_config):

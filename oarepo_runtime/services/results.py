@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Service results."""
 
@@ -142,13 +136,13 @@ class RecordList(BaseRecordList):
     @property
     def hits(self) -> Any:
         """Iterator over the hits."""
+        components = [c(record_list=self) for c in self.components]  # zmena
         for hit in self._results:
             # Load dump
             hit_dict = hit.to_dict()
 
             try:
                 # Project the record
-                # TODO: check if this logic is correct
                 versions = hit_dict.get("versions", {})
                 if (versions.get("is_latest_draft") and not versions.get("is_latest")) or (
                     "publication_status" in hit_dict and hit_dict["publication_status"] == "draft"
@@ -177,9 +171,8 @@ class RecordList(BaseRecordList):
                 if links_tpl:
                     projection["links"] = links_tpl.expand(self._identity, record)
 
-                # TODO: optimization viz FieldsResolver
-                for c in self.components:
-                    c(record_list=self).update_data(
+                for component in components:
+                    component.update_data(
                         identity=self._identity,
                         record=record,
                         projection=projection,

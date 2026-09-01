@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -188,7 +182,7 @@ def test_find_pid_helpers(app, db, search_with_field_mapping, service, search_cl
 
     # created.id is the PID value (DraftRecordIdProviderV2)
     pid_value = created.id
-    draft = created._record  # noqa: SLF001 - access for test
+    draft = created._record
 
     # find_pid_type_from_pid
     pid_type = current_runtime.find_pid_type_from_pid(pid_value)
@@ -235,7 +229,7 @@ def test_get_file_service_from_api_record(app, service, identity_simple):
         },
     )
 
-    file_service = current_runtime.get_file_service_for_record(created._record)  # noqa: SLF001
+    file_service = current_runtime.get_file_service_for_record(created._record)
     assert isinstance(file_service, FileService)
 
 
@@ -257,8 +251,8 @@ def test_get_file_service_for_published_record(app, service, identity_simple):
         },
     )
     # Simulate published record
-    created._record.is_draft = False  # noqa: SLF001
-    file_service = current_runtime.get_file_service_for_record(created._record)  # noqa: SLF001
+    created._record.is_draft = False
+    file_service = current_runtime.get_file_service_for_record(created._record)
     assert isinstance(file_service, FileService)
 
 
@@ -271,8 +265,8 @@ def test_get_model_for_record(app, service, identity_simple):
         },
     )
     # Simulate published record
-    created._record.is_draft = False  # noqa: SLF001
-    model = current_runtime.get_model_for_record(record=created._record)  # noqa: SLF001
+    created._record.is_draft = False
+    model = current_runtime.get_model_for_record(record=created._record)
     assert isinstance(model, Model)
 
 

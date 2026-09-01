@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Typed invenio generators."""
 
 from __future__ import annotations
@@ -56,15 +51,15 @@ class Generator(InvenioGenerator):
 
     @override
     def needs(self, **kwargs: Any) -> Collection[Need]:
-        return super().needs(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().needs(**kwargs)  # mypy bug
 
     @override
     def excludes(self, **kwargs: Any) -> Collection[Need]:
-        return super().excludes(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().excludes(**kwargs)  # mypy bug
 
     @override
     def query_filter(self, **kwargs: Any) -> dsl.query.Query:
-        return super().query_filter(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().query_filter(**kwargs)  # ty: ignore[invalid-return-type] # mypy bug
 
 
 class ConditionalGenerator(InvenioConditionalGenerator, ABC):

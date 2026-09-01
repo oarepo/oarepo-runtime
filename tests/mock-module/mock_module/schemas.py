@@ -1,11 +1,5 @@
-# type: ignore  # noqa
-#
-# Copyright (C) 2021 CERN.
-# Copyright (C) 2021 Northwestern University.
-#
-# Invenio-Drafts-Resources is free software; you can redistribute it and/or
-# modify it under the terms of the MIT License; see LICENSE file for more
-# details.
+# SPDX-FileCopyrightText: 2021 CERN
+# SPDX-License-Identifier: MIT
 
 """Record schema."""
 

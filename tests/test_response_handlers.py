@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Test export to response handlers conversion."""
 
@@ -53,7 +47,7 @@ def test_exports_to_response_handlers_maps_mimetypes_and_attributes():
 
 
 def test_exports_to_response_handlers_accepts_generators_as_iterable():
-    def gen():  # noqa
+    def gen():
         """Provide a generator of exports."""
         yield _export("g1", "application/x-gen-1")
         yield _export("g2", "application/x-gen-2")
@@ -67,7 +61,7 @@ def test_exports_to_response_handlers_accepts_generators_as_iterable():
 
 
 def test_imports_to_response_handlers_accepts_generators_as_iterable():
-    def gen():  # noqa
+    def gen():
         """Provide a generator of exports."""
         yield _import("g1", "text/csv")
         yield _import("g2", "application/csv")

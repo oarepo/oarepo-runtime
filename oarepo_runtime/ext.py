@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Extension preset for runtime module."""
 
@@ -250,7 +244,7 @@ class OARepoRuntime:
             if t is RecordBase:
                 break
             if t in self.models_by_record_class:
-                return self.models_by_record_class[t]
+                return self.models_by_record_class[t]  # ty: ignore[invalid-argument-type]
         raise KeyError(f"No service found for record class '{record_cls.__name__}'.")
 
     @cached_property
@@ -261,7 +255,7 @@ class OARepoRuntime:
             index_field: IndexField | None = getattr(model.record_cls, "index", None)
             if index_field is not None:
                 indices.add(index_field.search_alias)
-        return indices
+        return indices  # ty: ignore[invalid-return-type]
 
     @cached_property
     def draft_indices(self) -> set[str]:

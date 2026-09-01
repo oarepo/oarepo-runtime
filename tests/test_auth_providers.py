@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2026 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2026 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Tests for pluggable authentication providers."""
 
@@ -106,7 +100,7 @@ def test_auth_providers_sorted_by_entry_point_name(monkeypatch):
 
 
 def test_before_request_stops_after_first_successful_provider(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
     first = RecordingAuthProvider(username=object())
     second = RecordingAuthProvider(username=object())
     app = _make_app(first, second)
@@ -130,7 +124,7 @@ def test_before_request_allows_anonymous_when_no_provider_matches():
 
 
 def test_before_request_failure_followed_by_success_does_not_raise(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
     failing = RecordingAuthProvider(exc=ValueError("bad token"))
     succeeding = RecordingAuthProvider(username=object())
     app = _make_app(failing, succeeding)
@@ -157,7 +151,7 @@ def test_before_request_raises_group_with_all_collected_exceptions():
 
 
 def test_after_request_called_on_first_response_only(monkeypatch):
-    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)  # noqa: ARG005
+    monkeypatch.setattr("oarepo_runtime.ext.login_user", lambda user: True)
     # the second provider is not consulted during authentication ...
     first = RecordingAuthProvider(username=object())
     second = RecordingAuthProvider()

@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Test records mapping functionality."""
 
@@ -108,7 +102,7 @@ def test_update_record_system_fields_mapping_relations(mock_get_fields, mock_pre
         MockRecord.index = mock_index
 
         mock_customfield = Mock()
-        mock_customfield._field_var = "CUSTOM_FIELDS_1"  # noqa: SLF001
+        mock_customfield._field_var = "CUSTOM_FIELDS_1"
 
         mock_field1 = Mock()
         mock_field1.fld = mock_customfield

@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 from oarepo_runtime.records.drafts import get_draft, has_draft
@@ -22,7 +17,7 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     )
     assert rec.id is not None
 
-    draft = rec._record  # noqa: SLF001
+    draft = rec._record
     assert draft.status == "draft"
     assert rec.errors == [{"field": "unknown", "messages": ["Unknown field."]}]
 
@@ -34,7 +29,10 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     assert serialized["result_component"]
     assert rec.to_dict() == serialized
 
-    # TODO: check links & html links
+    links = serialized["links"]
+
+    assert links["self"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["self_html"].endswith(f"/uploads/{rec.id}")
 
     service.config.draft_cls.index.refresh()
 
@@ -43,7 +41,16 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     items = list(hits.hits)
     assert len(items) == 1
     assert items[0]["result_component"]
-    # TODO: check links & html links
+    links = items[0]["links"]
+    assert links["self"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["self_html"].endswith(f"/uploads/{rec.id}")
+    assert links["latest"].endswith(f"/api/mocks/{rec.id}/versions/latest")
+    assert links["latest_html"].endswith(f"/mocks/{rec.id}/latest")
+    assert links["record"].endswith(f"/api/mocks/{rec.id}")
+    assert links["publish"].endswith(f"/api/mocks/{rec.id}/draft/actions/publish")
+    assert links["versions"].endswith(f"/api/mocks/{rec.id}/versions")
+    assert links["files"].endswith(f"/api/mocks/{rec.id}/draft/files")
+    assert "draft" not in links
 
     assert hits.aggregations == {
         "publication_status": {
@@ -60,7 +67,7 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     rec = service.publish(identity_simple, rec.id)
     assert rec.id is not None
 
-    record = rec._record  # noqa: SLF001
+    record = rec._record
     assert record.status == "published"
     assert rec.errors == []
     assert get_draft(record) is None
@@ -78,7 +85,16 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     items = list(hits.hits)
     assert len(items) == 1
     assert items[0]["result_component"]
-    # TODO: check links & html links
+    links = items[0]["links"]
+    assert links["self"].endswith(f"/api/mocks/{rec.id}")
+    assert links["self_html"].endswith(f"/mocks/{rec.id}")
+    assert links["latest"].endswith(f"/api/mocks/{rec.id}/versions/latest")
+    assert links["latest_html"].endswith(f"/mocks/{rec.id}/latest")
+    assert links["draft"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["versions"].endswith(f"/api/mocks/{rec.id}/versions")
+    assert links["files"].endswith(f"/api/mocks/{rec.id}/files")
+    assert "record" not in links
+    assert "publish" not in links
 
     assert hits.aggregations == {
         "publication_status": {

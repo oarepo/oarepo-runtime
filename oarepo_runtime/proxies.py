@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Proxies."""
 
@@ -24,6 +18,6 @@ if TYPE_CHECKING:
 
 # note: mypy does not understand LocalProxy[OARepoRuntime], so we type it as OARepoRuntime
 # and ignore the redeclaration error
-current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
+current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # ty: ignore[invalid-assignment]
 
 current_timezone: ContextVar = ContextVar("timezone")

@@ -1,11 +1,5 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
 
 """Tests for the topological graph."""
 
@@ -178,7 +172,7 @@ def test_topo_sort_with_multiple_zero_indegree_items():
         ComponentData(D, service=mock_service),
     ]
 
-    result = cfg._topo_sort(comps)  # noqa: SLF001
+    result = cfg._topo_sort(comps)
     result_classes = [c.component_class for c in result]
 
     # A must come first, then B and C (order between them preserved by input order),
@@ -213,7 +207,7 @@ def test_get_dependencies_from_potentials_matches_via_mro():
     # AffectsBase affects BaseService, and Consumer is in BaseService's MRO
     potentials = [ComponentData(AffectsBase, service=mock_service)]
 
-    result = cfg._get_dependencies_from_potentials(  # noqa: SLF001
+    result = cfg._get_dependencies_from_potentials(
         selected,
         potentials,
         potential_dependency_getter=lambda x: x.affects,

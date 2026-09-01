@@ -1,15 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
-# Parts of this file are based on tests in Invenio-Records-Resources.
-# https://github.com/inveniosoftware/invenio-records-resources/blob/master/tests/conftest.py
-#
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Pytest configuration.
 
 See https://pytest-invenio.readthedocs.io/ for documentation on which test

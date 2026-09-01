@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 import marshmallow as ma
@@ -79,9 +74,9 @@ def test_default_locale(app):
 
 def test_localized_mixin_uses_context_locale(monkeypatch, app):
     with app.app_context():
-        Dummy = type("Dummy", (LocalizedMixin,), {"__init__": lambda self: None})  # noqa ARG005
+        Dummy = type("Dummy", (LocalizedMixin,), {"__init__": lambda self: None})
         obj = Dummy()
-        obj._locale = None  # noqa SLF001
+        obj._locale = None
         obj.context = {}
         obj.parent = object()
         assert obj.locale in ["en", "cs"]

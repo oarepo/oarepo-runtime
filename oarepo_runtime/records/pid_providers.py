@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """PID providers."""
 
 from __future__ import annotations
@@ -28,7 +23,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
     unpid_default_status = PIDStatus.REGISTERED
 
     @classmethod
-    def create(  # type: ignore[override] # as pid type and value are given
+    def create(  # ty: ignore[invalid-method-override] # as pid type and value are given
         cls,
         object_type: str | None = None,
         object_uuid: str | None = None,
@@ -36,14 +31,11 @@ class UniversalPIDMixin(RecordIdProviderV2):
         **kwargs: Any,
     ) -> Self:
         """Create PID for a given object and store it."""
-        pid = cast(
-            "Self",
-            super().create(
-                object_type=object_type,
-                object_uuid=object_uuid,
-                options=options,
-                **kwargs,
-            ),
+        pid = super().create(
+            object_type=object_type,
+            object_uuid=object_uuid,
+            options=options,
+            **kwargs,
         )
         if pid.pid.pid_value is None:
             raise ValueError("PID value cannot be None.")  # pragma: no cover
