@@ -244,7 +244,7 @@ class OARepoRuntime:
             if t is RecordBase:
                 break
             if t in self.models_by_record_class:
-                return self.models_by_record_class[t]
+                return self.models_by_record_class[t]  # ty: ignore[invalid-argument-type]
         raise KeyError(f"No service found for record class '{record_cls.__name__}'.")
 
     @cached_property
@@ -255,7 +255,7 @@ class OARepoRuntime:
             index_field: IndexField | None = getattr(model.record_cls, "index", None)
             if index_field is not None:
                 indices.add(index_field.search_alias)
-        return indices
+        return indices  # ty: ignore[invalid-return-type]
 
     @cached_property
     def draft_indices(self) -> set[str]:

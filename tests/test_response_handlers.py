@@ -47,7 +47,7 @@ def test_exports_to_response_handlers_maps_mimetypes_and_attributes():
 
 
 def test_exports_to_response_handlers_accepts_generators_as_iterable():
-    def gen():  # noqa
+    def gen():
         """Provide a generator of exports."""
         yield _export("g1", "application/x-gen-1")
         yield _export("g2", "application/x-gen-2")
@@ -61,7 +61,7 @@ def test_exports_to_response_handlers_accepts_generators_as_iterable():
 
 
 def test_imports_to_response_handlers_accepts_generators_as_iterable():
-    def gen():  # noqa
+    def gen():
         """Provide a generator of exports."""
         yield _import("g1", "text/csv")
         yield _import("g2", "application/csv")

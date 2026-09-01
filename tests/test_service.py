@@ -17,7 +17,7 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     )
     assert rec.id is not None
 
-    draft = rec._record  # noqa: SLF001
+    draft = rec._record
     assert draft.status == "draft"
     assert rec.errors == [{"field": "unknown", "messages": ["Unknown field."]}]
 
@@ -67,7 +67,7 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     rec = service.publish(identity_simple, rec.id)
     assert rec.id is not None
 
-    record = rec._record  # noqa: SLF001
+    record = rec._record
     assert record.status == "published"
     assert rec.errors == []
     assert get_draft(record) is None

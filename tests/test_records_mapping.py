@@ -91,7 +91,7 @@ def test_prefixed_index(app):
     """Test prefixed_index function."""
     mock_index = Mock()
     # Set the _name attribute directly on the mock
-    mock_index._name = "test-index"  # noqa: SLF001
+    mock_index._name = "test-index"
 
     with patch("oarepo_runtime.records.mapping.build_alias_name") as mock_build_alias:
         mock_build_alias.return_value = "prefixed-test-index"

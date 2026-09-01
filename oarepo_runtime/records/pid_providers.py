@@ -23,7 +23,7 @@ class UniversalPIDMixin(RecordIdProviderV2):
     unpid_default_status = PIDStatus.REGISTERED
 
     @classmethod
-    def create(  # type: ignore[override] # as pid type and value are given
+    def create(  # ty: ignore[invalid-method-override] # as pid type and value are given
         cls,
         object_type: str | None = None,
         object_uuid: str | None = None,
@@ -31,14 +31,11 @@ class UniversalPIDMixin(RecordIdProviderV2):
         **kwargs: Any,
     ) -> Self:
         """Create PID for a given object and store it."""
-        pid = cast(
-            "Self",
-            super().create(
-                object_type=object_type,
-                object_uuid=object_uuid,
-                options=options,
-                **kwargs,
-            ),
+        pid = super().create(
+            object_type=object_type,
+            object_uuid=object_uuid,
+            options=options,
+            **kwargs,
         )
         if pid.pid.pid_value is None:
             raise ValueError("PID value cannot be None.")  # pragma: no cover

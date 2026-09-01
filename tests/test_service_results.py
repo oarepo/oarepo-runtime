@@ -56,8 +56,8 @@ def test_result_component_initialization():
 
     component = ResultComponent(record_item=mock_item, record_list=mock_list)
 
-    assert component._record_item is mock_item  # noqa: SLF001
-    assert component._record_list is mock_list  # noqa: SLF001
+    assert component._record_item is mock_item
+    assert component._record_list is mock_list
 
 
 def test_record_item_data_with_components():
@@ -79,7 +79,7 @@ def test_record_item_data_with_components():
     )
 
     # Set the _data to None to ensure it's not cached
-    item._data = None  # noqa: SLF001
+    item._data = None
 
     result = item.data
 
@@ -111,7 +111,7 @@ def test_record_item_data_caching():
     result1 = item.data
 
     # Set the _data to simulate caching
-    item._data = result1  # noqa: SLF001
+    item._data = result1
 
     # Second access should return cached data
     result2 = item.data
@@ -177,7 +177,7 @@ def test_record_item_to_dict_no_errors():
         schema=mock_schema,
     )
 
-    assert record_from_result(item) is item._record  # noqa: SLF001
+    assert record_from_result(item) is item._record
 
     with patch.object(RecordItem, "data", new_callable=PropertyMock) as mock_data:
         mock_data.return_value = base_data
@@ -491,7 +491,6 @@ def test_record_list_hits_with_draft_record():
         ({"id": "123", "versions": {"is_latest": True}}, "record"),
     ],
 )
-
 def test_record_list_hits_selects_correct_class(hit_dict, expected_loader):
     mock_hit = Mock()
     mock_hit.to_dict.return_value = hit_dict

@@ -102,7 +102,7 @@ def test_update_record_system_fields_mapping_relations(mock_get_fields, mock_pre
         MockRecord.index = mock_index
 
         mock_customfield = Mock()
-        mock_customfield._field_var = "CUSTOM_FIELDS_1"  # noqa: SLF001
+        mock_customfield._field_var = "CUSTOM_FIELDS_1"
 
         mock_field1 = Mock()
         mock_field1.fld = mock_customfield

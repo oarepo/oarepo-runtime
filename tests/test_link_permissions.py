@@ -25,7 +25,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
             "files": {"enabled": False},
         },
     )
-    draft = rec._record  # noqa: SLF001
+    draft = rec._record
 
     context = {"identity": identity_simple}
 
@@ -44,7 +44,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert (has_draft_permission("read") | has_draft_permission("unknown"))(draft, context)
 
     rec = service.publish(identity_simple, rec.id)
-    record = rec._record  # noqa: SLF001
+    record = rec._record
 
     assert not has_draft_permission("read")(record, context)
     assert has_permission("read")(record, context)
@@ -54,7 +54,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert not has_draft()(record, context)
 
     rec = service.edit(identity_simple, rec.id)
-    draft = rec._record  # noqa: SLF001
+    draft = rec._record
 
     assert has_draft_permission("read")(draft, context)
     assert has_permission("read")(draft, context)
@@ -63,7 +63,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert has_draft()(draft, context)
 
     rec = service.read(identity_simple, record["id"])
-    record = rec._record  # noqa: SLF001
+    record = rec._record
 
     assert has_draft_permission("read")(record, context)
     assert has_permission("read")(record, context)
@@ -77,7 +77,7 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert not (~has_draft_permission("read") & has_permission("read"))(draft, context)
 
 
-def test_link_conditions_with_file_record(app, db, search_with_field_mapping, service, search_clear, identity_simple, location):
+def test_link_with_file_record(app, db, search_with_field_mapping, service, search_clear, identity_simple, location):
     rec = service.create(
         identity=identity_simple,
         data={
@@ -85,12 +85,12 @@ def test_link_conditions_with_file_record(app, db, search_with_field_mapping, se
             "files": {"enabled": True},
         },
     )
-    draft = rec._record  # noqa: SLF001
+    draft = rec._record
     file_service = current_runtime.get_file_service_for_record(draft)
     file_service.init_files(identity_simple, rec.id, data=[{"key": "test.txt"}])
     file_service.set_file_content(identity_simple, rec.id, "test.txt", BytesIO(b"jeej"))
     file_item = file_service.commit_file(identity_simple, rec.id, "test.txt")
-    file_record = file_item._file  # noqa: SLF001
+    file_record = file_item._file
 
     context = {"identity": identity_simple}
 
