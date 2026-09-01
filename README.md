@@ -24,7 +24,7 @@ pip install oarepo-runtime
 
 ### Requirements
 
-- Python 3.13+
+- Python 3.14+
 - Invenio 14.x
 - OpenSearch/Elasticsearch compatible search backend
 
@@ -166,18 +166,21 @@ facets = {
 Permission-based facet grouping for different user roles:
 
 ```python
-from oarepo_runtime.services.facets.params import GroupedFacetsParam
+from invenio_records_resources.services.records.config import SearchOptions
+from invenio_records_resources.services.records.facets import TermsFacet
 
-search_config = {
-    "facets": base_facets,
-    "facet_groups": {
-        "admin": {
-            "label": "Admin Facets",
-            "facets": ["internal_status", "workflow_state"],
-            "provides_needs": [AdminNeed()],
-        }
-    },
-}
+class MySearchOptions(SearchOptions):
+      facets = {
+          "publication_status": TermsFacet(field="publication_status"),
+          "internal_status": TermsFacet(field="internal_status"),
+          "workflow_state": TermsFacet(field="workflow_state"),
+      }
+
+      facet_groups = {
+          "default": ["publication_status"],
+          "admin": ["internal_status", "workflow_state"],
+      }
+
 ```
 
 ### 4. Service Component Ordering
@@ -282,7 +285,12 @@ Machine-readable endpoint for repository metadata:
             "code": "my_record",
             "name": "My Record Type",
             "version": "1.0.0",
-            "links": {"search": "/api/my-records/", "ui": "/my-records/"},
+             "links": {
+                "html": "/my-records/",
+                "records": "/api/my-records/",
+                "deposit": "/api/my-records/",
+                "drafts": "/api/user/my-records/"
+                },
             "jsonschemas": {"record": "https://localhost/schemas/my-records-1.0.0.json"},
             "exports": [{"code": "datacite", "mimetype": "application/vnd.datacite.datacite+json"}],
         }
