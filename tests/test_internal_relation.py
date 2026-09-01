@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see http://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Test cases for the InternalRelation relation field and its result class.
 
 Mirrors the coverage in test_arbitrary_relations.py (validate, dereference, resolve

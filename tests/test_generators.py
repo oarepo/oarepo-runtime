@@ -1,11 +1,6 @@
-#
-# Copyright (c) 2025 CESNET z.s.p.o.
-#
-# This file is a part of oarepo-runtime (see https://github.com/oarepo/oarepo-runtime).
-#
-# oarepo-runtime is free software; you can redistribute it and/or modify it
-# under the terms of the MIT License; see LICENSE file for more details.
-#
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o
+# SPDX-License-Identifier: MIT
+
 """Tests for typed permission generators wrappers.
 
 We verify that our wrappers delegate to Invenio base classes and keep behavior.
