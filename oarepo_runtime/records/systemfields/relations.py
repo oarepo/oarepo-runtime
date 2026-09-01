@@ -345,9 +345,8 @@ class InternalRelations(SystemField):
     """
 
     @override
-    def __get__(  # type: ignore[override]
-        self, record: Record | None, owner: type | None = None
-    ) -> InternalRelations | InternalRelationsLookup:
+    # ty: ignore[invalid-method-override]
+    def __get__(self, record: Record | None, owner: type | None = None) -> InternalRelations | InternalRelationsLookup:
         """Return the cached lookup table for the record."""
         if record is None:
             return self

@@ -102,7 +102,7 @@ class ComponentData:
         self.original_component = original_component
         self.component_class = self._extract_class_from_component(original_component, service)
 
-        self.component_mro = self._get_service_mro(self.component_class)
+        self.component_mro = self._get_service_mro(self.component_class)  # ty: ignore[invalid-assignment]
 
         self.affects_all = "*" in getattr(self.component_class, "affects", [])
         self.depends_on_all = "*" in getattr(self.component_class, "depends_on", [])

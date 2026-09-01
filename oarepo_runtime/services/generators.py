@@ -51,15 +51,15 @@ class Generator(InvenioGenerator):
 
     @override
     def needs(self, **kwargs: Any) -> Collection[Need]:
-        return super().needs(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().needs(**kwargs)  # mypy bug
 
     @override
     def excludes(self, **kwargs: Any) -> Collection[Need]:
-        return super().excludes(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().excludes(**kwargs)  # mypy bug
 
     @override
     def query_filter(self, **kwargs: Any) -> dsl.query.Query:
-        return super().query_filter(**kwargs)  # type: ignore[no-any-return] # mypy bug
+        return super().query_filter(**kwargs)  # ty: ignore[invalid-return-type] # mypy bug
 
 
 class ConditionalGenerator(InvenioConditionalGenerator, ABC):

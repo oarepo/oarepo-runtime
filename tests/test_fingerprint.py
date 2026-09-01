@@ -171,7 +171,7 @@ def test_installed_packages_skips_distributions_with_broken_metadata(runtime, mo
         ],
     )
 
-    assert runtime._installed_packages == [("good-package", Version("1.2.3"))]  # noqa: SLF001
+    assert runtime._installed_packages == [("good-package", Version("1.2.3"))]
 
 
 def test_fingerprint_cli(appctx, runtime, fingerprint_config):

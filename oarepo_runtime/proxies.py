@@ -18,6 +18,6 @@ if TYPE_CHECKING:
 
 # note: mypy does not understand LocalProxy[OARepoRuntime], so we type it as OARepoRuntime
 # and ignore the redeclaration error
-current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # type: ignore[assignment]
+current_runtime = LocalProxy(lambda: current_app.extensions["oarepo-runtime"])  # ty: ignore[invalid-assignment]
 
 current_timezone: ContextVar = ContextVar("timezone")

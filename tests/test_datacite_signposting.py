@@ -571,8 +571,8 @@ def test_model_exports(
 
     model = current_runtime.models_by_schema[record_dict["$schema"]]
     model_exports = model.exports
-    model._exports = []  # noqa: SLF001
-    model._exports = model_exports  # noqa: SLF001
+    model._exports = []
+    model._exports = model_exports
 
 
 def test_signposting_with_incorrect_datacite(

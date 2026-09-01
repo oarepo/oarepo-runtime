@@ -21,7 +21,7 @@ class TypedSystemField[R: Record = Record, V: Any = Any](SystemField, ExtensionM
     @overload
     def __get__(self, instance: R, owner: type[R]) -> V: ...
 
-    def __get__(self, instance: R | None, owner: type[R]) -> Self | V:  # type: ignore[override]
+    def __get__(self, instance: R | None, owner: type[R]) -> Self | V:  # ty: ignore[invalid-method-override]
         """Get the value of the field."""
         if instance is None:  # pragma: no cover
             return self  # pragma: no cover
@@ -33,7 +33,7 @@ class TypedSystemField[R: Record = Record, V: Any = Any](SystemField, ExtensionM
     @overload
     def __set__(self, instance: R, value: V) -> None: ...
 
-    def __set__(self, instance: R | None, value: V | Self) -> None:  # type: ignore[override]
+    def __set__(self, instance: R | None, value: V | Self) -> None:  # ty: ignore[invalid-method-override]
         """Set the value of the field."""
         if instance is None:  # pragma: no cover
             raise ValueError("Cannot set value on class.")  # pragma: no cover

@@ -154,11 +154,11 @@ def test_get_basic_facet_with_i18n_label_in_facet_def(app):
     assert isinstance(result["label"], I18nLabel)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(result["label"]) == "Vlastní"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(result["label"]) == "Custom"
 
 
@@ -190,8 +190,8 @@ def test_build_facet():
         ]
     )
 
-    assert facet._params == {"field": "jej.c"}  # noqa: SLF001
-    assert str(facet._label) == "jej/c.label"  # noqa: SLF001
+    assert facet._params == {"field": "jej.c"}
+    assert str(facet._label) == "jej/c.label"
     facet = build_facet(
         [
             {
@@ -217,11 +217,9 @@ def test_build_facet():
     labelled_values = facet.get_labelled_values({}, [])
     assert "kchchch" in labelled_values.values()
 
-    assert facet._path == "metadata.additionalTitles.title"  # noqa: SLF001
-    assert isinstance(facet._inner, TermsFacet)  # noqa: SLF001
-    assert facet._inner._params == {  # noqa: SLF001
-        "field": "metadata.additionalTitles.title.lang"
-    }
+    assert facet._path == "metadata.additionalTitles.title"
+    assert isinstance(facet._inner, TermsFacet)
+    assert facet._inner._params == {"field": "metadata.additionalTitles.title.lang"}
     with pytest.raises(ValueError, match=r"Facet class can not be None\."):
         build_facet(
             [
@@ -410,11 +408,11 @@ def test_get_basic_facet_with_i18n_label(app):
     assert isinstance(result["label"], I18nLabel)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(result["label"]) == "Stav"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(result["label"]) == "Status"
 
 
@@ -427,11 +425,11 @@ def test_i18n_label_resolves_current_locale(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("cs"))
         assert str(label) == "Stav"
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("en"))
         assert str(label) == "Status"
 
 
@@ -444,7 +442,7 @@ def test_i18n_label_falls_back_to_en(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("de"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("de"))
         assert str(label) == "Status"
 
 
@@ -457,7 +455,7 @@ def test_i18n_label_falls_back_to_first_value(app):
     label = I18nLabel(labels)
 
     with app.test_request_context():
-        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))  # noqa: SLF001
+        g._flask_babel = types.SimpleNamespace(babel_locale=Locale.parse("fr"))
         assert str(label) == "Stav"
 
 

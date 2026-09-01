@@ -38,7 +38,7 @@ class PermissionExplainer:
     @property
     def needs(self) -> Collection[Need]:
         """Return the needs of the generator."""
-        return cast("Collection[Need]", self.generator.needs(**self.permission_policy.over))
+        return self.generator.needs(**self.permission_policy.over)
 
     def explain(self, identity: Identity) -> ExplainerResult:
         """Explain the permission generator."""
@@ -64,7 +64,7 @@ class PermissionExplainer:
     def allows(self, identity: Identity, generator: Generator) -> bool:
         """Check if the identity allows the permission generator."""
 
-        class P(type(self.permission_policy)):  # type: ignore[misc]
+        class P(type(self.permission_policy)):  # ty: ignore
             can_blah = (generator,)
 
         return cast("bool", P("blah", **self.permission_policy.over).allows(identity))
@@ -116,7 +116,7 @@ class SameAsExplainer(PermissionExplainer):
     @override
     def name(self) -> str:
         generator = cast("SameAs", self.generator)
-        return f"SameAs({generator._delegated_permission_name})"  # noqa: SLF001 # type: ignore[reportAttributeAccessIssue]
+        return f"SameAs({generator._delegated_permission_name})"  # noqa: SLF001 # ty: ignore[unresolved-attribute]
 
     @override
     def explain(self, identity: Identity) -> ExplainerResult:
