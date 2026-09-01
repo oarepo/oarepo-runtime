@@ -13,7 +13,7 @@ from __future__ import annotations
 import types
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from flask_babel import LazyString
@@ -290,7 +290,7 @@ def test_identity_facets_system_user_or_process_returns_all() -> None:
     assert params_proc.identity_facets(ident_proc) == params_proc.facets
 
 
-def test_filter_user_facets_with_groups_and_side_effect_mutation() -> None:
+def test_filter_user_facets_with_groups_does_not_mutate_facets() -> None:
     all_facets = {
         "publication_status": TermsFacet(field="publication_status"),
         "another": TermsFacet(field="another"),
@@ -308,13 +308,15 @@ def test_filter_user_facets_with_groups_and_side_effect_mutation() -> None:
     # Before: facets contain both
     assert set(params.facets.keys()) == {"publication_status", "another"}
 
-    user_facets = params.identity_facets(ident)
+    with patch(
+        "oarepo_runtime.services.facets.params.current_app",
+        new=SimpleNamespace(config={}),
+    ):
+        user_facets = params.identity_facets(ident)
 
-    # After: user facets should be default + curator
     assert set(user_facets.keys()) == {"publication_status", "another"}
 
-    # Side effect: params.facets was cleared in _filter_user_facets
-    assert params.facets == {}
+    assert set(params.facets.keys()) == {"publication_status", "another"}
 
 
 def test_aggregate_with_user_facets_adds_aggs() -> None:
