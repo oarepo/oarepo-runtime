@@ -173,7 +173,6 @@ class InfoResource(BaseResource):
             feature_keys.append("relations")
         return feature_keys
 
-    # TODO: this should be done differently - we should add this to the model
     def _get_model_html_endpoint(self, model: Model) -> Any:
         base = self._get_model_api_endpoint(model)
         if not base:

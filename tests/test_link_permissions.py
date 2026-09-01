@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+from io import BytesIO
+
+from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.services.config.link_conditions import (
     Condition,
     has_draft,
@@ -74,4 +77,21 @@ def test_link_conditions(app, db, search_with_field_mapping, service, search_cle
     assert not (~has_draft_permission("read") & has_permission("read"))(draft, context)
 
 
-# TODO: test link conditions with file record
+def test_link_conditions_with_file_record(app, db, search_with_field_mapping, service, search_clear, identity_simple, location):
+    rec = service.create(
+        identity=identity_simple,
+        data={
+            "metadata": {"title": "Test Record"},
+            "files": {"enabled": True},
+        },
+    )
+    draft = rec._record  # noqa: SLF001
+    file_service = current_runtime.get_file_service_for_record(draft)
+    file_service.init_files(identity_simple, rec.id, data=[{"key": "test.txt"}])
+    file_service.set_file_content(identity_simple, rec.id, "test.txt", BytesIO(b"jeej"))
+    file_item = file_service.commit_file(identity_simple, rec.id, "test.txt")
+    file_record = file_item._file  # noqa: SLF001
+
+    context = {"identity": identity_simple}
+
+    assert has_permission("read")(file_record, context)

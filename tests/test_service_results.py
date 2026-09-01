@@ -477,3 +477,53 @@ def test_record_list_hits_with_draft_record():
     # draft_cls.loads should have been called, not record_cls.loads
     mock_draft_cls.loads.assert_called_once_with(mock_record.to_dict())
     assert hits[0].get("result_component") is True
+
+
+# zmena
+@pytest.mark.parametrize(
+    ("hit_dict", "expected_loader"),
+    [
+        (
+            {"id": "123", "versions": {"is_latest_draft": True, "is_latest": False}},
+            "draft",
+        ),
+        ({"id": "123", "publication_status": "draft"}, "draft"),
+        ({"id": "123", "versions": {"is_latest": True}}, "record"),
+    ],
+)
+
+def test_record_list_hits_selects_correct_class(hit_dict, expected_loader):
+    mock_hit = Mock()
+    mock_hit.to_dict.return_value = hit_dict
+    mock_loaded_record = Mock()
+    mock_service = Mock()
+    mock_schema = Mock()
+    mock_schema.dump.return_value = {"id": "123"}
+
+    mock_service.config = Mock()
+    mock_service.config.links_search_item = None
+    mock_service.config.search_item_links_template = None
+    mock_service.record_cls = Mock()
+    mock_service.record_cls.loads = Mock(return_value=mock_loaded_record)
+    mock_service.draft_cls = Mock()
+    mock_service.draft_cls.loads = Mock(return_value=mock_loaded_record)
+
+    record_list = MockRecordList(
+        service=mock_service,
+        identity=Identity(1),
+        results=[mock_hit],
+        params={},
+        links_tpl=None,
+        links_item_tpl=None,
+        schema=mock_schema,
+    )
+
+    hits = list(record_list.hits)
+
+    assert len(hits) == 1
+    if expected_loader == "draft":
+        mock_service.draft_cls.loads.assert_called_once_with(hit_dict)
+        mock_service.record_cls.loads.assert_not_called()
+    else:
+        mock_service.record_cls.loads.assert_called_once_with(hit_dict)
+        mock_service.draft_cls.loads.assert_not_called()

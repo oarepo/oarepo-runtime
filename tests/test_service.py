@@ -29,7 +29,10 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     assert serialized["result_component"]
     assert rec.to_dict() == serialized
 
-    # TODO: check links & html links
+    links = serialized["links"]
+
+    assert links["self"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["self_html"].endswith(f"/uploads/{rec.id}")
 
     service.config.draft_cls.index.refresh()
 
@@ -38,7 +41,16 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     items = list(hits.hits)
     assert len(items) == 1
     assert items[0]["result_component"]
-    # TODO: check links & html links
+    links = items[0]["links"]
+    assert links["self"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["self_html"].endswith(f"/uploads/{rec.id}")
+    assert links["latest"].endswith(f"/api/mocks/{rec.id}/versions/latest")
+    assert links["latest_html"].endswith(f"/mocks/{rec.id}/latest")
+    assert links["record"].endswith(f"/api/mocks/{rec.id}")
+    assert links["publish"].endswith(f"/api/mocks/{rec.id}/draft/actions/publish")
+    assert links["versions"].endswith(f"/api/mocks/{rec.id}/versions")
+    assert links["files"].endswith(f"/api/mocks/{rec.id}/draft/files")
+    assert "draft" not in links
 
     assert hits.aggregations == {
         "publication_status": {
@@ -73,7 +85,16 @@ def test_service_flow(app, db, search_with_field_mapping, service, search_clear,
     items = list(hits.hits)
     assert len(items) == 1
     assert items[0]["result_component"]
-    # TODO: check links & html links
+    links = items[0]["links"]
+    assert links["self"].endswith(f"/api/mocks/{rec.id}")
+    assert links["self_html"].endswith(f"/mocks/{rec.id}")
+    assert links["latest"].endswith(f"/api/mocks/{rec.id}/versions/latest")
+    assert links["latest_html"].endswith(f"/mocks/{rec.id}/latest")
+    assert links["draft"].endswith(f"/api/mocks/{rec.id}/draft")
+    assert links["versions"].endswith(f"/api/mocks/{rec.id}/versions")
+    assert links["files"].endswith(f"/api/mocks/{rec.id}/files")
+    assert "record" not in links
+    assert "publish" not in links
 
     assert hits.aggregations == {
         "publication_status": {
