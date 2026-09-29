@@ -382,6 +382,7 @@ class InternalRelationsLookup:
     def __init__(self, record: Record):
         """Initialize the lookup table from record parts identified by `id` fields."""
         self.record = record
+        self.duplicates: set[tuple[str, str]] = set()
 
     def _lookup_paths(self, data: Any, path: list[str]) -> Iterator[tuple[str, dict[str, Any]]]:
         """Lookup all dictionaries that have an `id` field.
@@ -400,22 +401,35 @@ class InternalRelationsLookup:
 
     @cached_property
     def lookup_table(self) -> dict[str, dict[str, Any]]:
-        """Return the lookup table."""
+        """Return the lookup table.
+
+        Duplicate ids are not an error here - dicts with an `id` that are not
+        targets of any internal relation (e.g. affiliations) may legitimately repeat.
+        They are recorded in `duplicates` and only raise when actually looked up.
+        """
         lookup_table: dict[str, dict[str, Any]] = {}
         for pth, value in self._lookup_paths(self.record, []):
             value_id = value["id"]
             path_rec = lookup_table.setdefault(pth, {})
             if value_id in path_rec:
-                raise ValidationError(f"Duplicate id '{value_id}' found in path '{pth}'", field_name=pth)
+                self.duplicates.add((pth, value_id))
             path_rec[value_id] = InternalRecord(value, value_id, self.record.revision_id)
         return lookup_table
 
+    def _check_duplicate(self, id_: tuple[str, str]) -> None:
+        """Raise if the (path, id) pair is ambiguous."""
+        _ = self.lookup_table  # make sure duplicates are collected
+        if id_ in self.duplicates:
+            raise ValidationError(f"Duplicate id '{id_[1]}' found in path '{id_[0]}'", field_name=id_[0])
+
     def __contains__(self, id_: tuple[str, str]) -> bool:
         """Check if the id is in the lookup table."""
+        self._check_duplicate(id_)
         return id_[0] in self.lookup_table and id_[1] in self.lookup_table[id_[0]]
 
     def __getitem__(self, id_: tuple[str, str]) -> Any:
         """Get the value for the id from the lookup table."""
+        self._check_duplicate(id_)
         return self.lookup_table[id_[0]][id_[1]]
 
 

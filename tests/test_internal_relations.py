@@ -121,17 +121,34 @@ def test_lookup_table_dotted_path_through_list():
     }
 
 
-def test_lookup_table_duplicate_id_raises():
-    """Duplicate ids within the same path raise a ValidationError."""
+def test_lookup_duplicate_id_raises_on_lookup():
+    """Duplicate ids within the same path raise a ValidationError when looked up."""
     rec = TestRecord(
         {
             "proteins": [{"id": "dup", "name": "A"}, {"id": "dup", "name": "B"}],
             "instruments": [],
         }
     )
-    # Accessing lookup_table triggers the build and validation
     with pytest.raises(ValidationError, match="Duplicate id 'dup'"):
-        _ = rec.internal_relations.lookup_table
+        _ = ("proteins", "dup") in rec.internal_relations
+    with pytest.raises(ValidationError, match="Duplicate id 'dup'"):
+        _ = rec.internal_relations[("proteins", "dup")]
+
+
+def test_lookup_duplicate_id_in_unrelated_path_is_ok():
+    """Duplicate ids in paths that are not looked up (e.g. affiliations) do not raise."""
+    rec = TestRecord(
+        {
+            "proteins": [{"id": "p1"}],
+            "creators": [
+                {"name": "A", "affiliations": [{"id": "aff1"}]},
+                {"name": "B", "affiliations": [{"id": "aff1"}]},
+            ],
+        }
+    )
+    assert "aff1" in rec.internal_relations.lookup_table["creators.affiliations"]
+    assert ("proteins", "p1") in rec.internal_relations
+    assert rec.internal_relations[("proteins", "p1")] == {"id": "p1"}
 
 
 def test_lookup_table_reflects_current_record_state():
