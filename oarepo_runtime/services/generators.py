@@ -19,8 +19,8 @@ from invenio_administration.generators import (
     Administration,
     administration_access_action,
 )
-from invenio_records_permissions.generators import (  # type: ignore[attr-defined]
-    CompositeGenerator,
+from invenio_records_permissions.generators import (
+    CompositeGenerator,  # type: ignore[attr-defined]
     Disable,
 )
 from invenio_records_permissions.generators import (

@@ -12,7 +12,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, cast, override
 
-from invenio_records_permissions.generators import ConditionalGenerator, Generator, SameAs
+from invenio_records_permissions.generators import (
+    ConditionalGenerator,
+    Generator,
+    SameAs,  # type: ignore[reportAttributeAccessIssue]
+)
 
 from oarepo_runtime import current_runtime
 
