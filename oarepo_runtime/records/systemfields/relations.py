@@ -132,7 +132,11 @@ class ArbitraryPathResult(RelationListResult):
             values = self._lookup_data()
             return _for_each_deep(
                 values,
-                lambda v: func(v, keys, attrs),
+                lambda v: (
+                    func(v, keys, attrs)
+                    if self.field._value_key_suffix in v
+                    else v
+                ),
                 levels=len(self.field.path_elements),
             )
         except KeyError:  # pragma: no cover
