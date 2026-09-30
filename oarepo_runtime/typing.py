@@ -11,12 +11,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
+
+from invenio_records_resources.records.api import Record
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from invenio_records_resources.records.api import Record
     from invenio_records_resources.services.records.results import RecordItem
 
 
@@ -63,6 +64,6 @@ def require_kwargs(*kwargs_names: str) -> Any:
     return wrapper
 
 
-def record_from_result(result: RecordItem) -> Record:
+def record_from_result[T: Record = Record](result: RecordItem, record_cls: type[T] = Record) -> T:  # noqa ARG001
     """Convert a RecordItem to a Record."""
-    return result._record  # noqa: SLF001
+    return cast("T", result._record)  # noqa: SLF001
