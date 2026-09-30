@@ -134,7 +134,7 @@ class ArbitraryPathResult(RelationListResult):
                 values,
                 lambda v: (
                     func(v, keys, attrs)
-                    if self.field._value_key_suffix in v
+                    if self.field._value_key_suffix in v  # noqa: SLF001
                     else v
                 ),
                 levels=len(self.field.path_elements),
