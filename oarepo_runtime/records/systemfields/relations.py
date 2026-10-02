@@ -130,6 +130,8 @@ class ArbitraryPathResult(RelationListResult):
         try:
             # Get the list of objects we have to dereference/clean.
             values = self._lookup_data()
+            # Keep dict items without an ID (e.g. affiliation names) unchanged
+            # so they do not interrupt iteration, matching Invenio's behavior.
             return _for_each_deep(
                 values,
                 lambda v: (
