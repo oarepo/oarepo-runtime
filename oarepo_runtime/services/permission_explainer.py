@@ -120,7 +120,7 @@ class SameAsExplainer(PermissionExplainer):
     @override
     def name(self) -> str:
         generator = cast("SameAs", self.generator)
-        return f"SameAs({generator._delegated_permission_name})"  # noqa: SLF001 # ty: ignore[unresolved-attribute]
+        return f"SameAs({generator._delegated_permission_name})"  # noqa: SLF001
 
     @override
     def explain(self, identity: Identity) -> ExplainerResult:
