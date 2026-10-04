@@ -12,6 +12,7 @@ in ``test_fixtures_drafts.py``.
 from __future__ import annotations
 
 import logging
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -233,3 +234,31 @@ def test_model_fixtures_read_from_configured_folder(monkeypatch, tmp_path, confi
     built = fixtures._model_fixtures()
 
     assert built["book"]._app_data_folder == Path(expected)
+
+
+def test_pid_provider_swapped_once_for_concurrent_loads():
+    """Overlapping loads in parallel threads share one swap: installed by the first, restored by the last."""
+    field = FakeRecord.pid.field
+    entered, release_first = threading.Event(), threading.Event()
+    seen = {}
+
+    def first():
+        with loader._fixture_id_provider_installed(field):
+            seen["first"] = field._provider
+            entered.set()
+            release_first.wait(5)
+
+    thread = threading.Thread(target=first)
+    thread.start()
+    entered.wait(5)
+    with loader._fixture_id_provider_installed(field):
+        seen["second"] = field._provider
+    seen["after_second"] = field._provider
+    release_first.set()
+    thread.join(5)
+
+    assert seen["first"] is seen["second"] is seen["after_second"]
+    assert issubclass(seen["first"], RecordIdProviderV2)
+    assert seen["first"] is not RecordIdProviderV2
+    assert field._provider is RecordIdProviderV2
+    assert loader._provider_users == {}

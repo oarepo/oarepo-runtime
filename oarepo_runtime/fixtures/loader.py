@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
+from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import cache
 from typing import TYPE_CHECKING, Any
@@ -22,7 +24,7 @@ from invenio_records_resources.services.files.transfer.constants import FETCH_TR
 from oarepo_runtime.proxies import current_runtime
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
     from flask_principal import Identity
@@ -47,21 +49,17 @@ class RecordLoader:
 
         The pid is minted in ``PIDField.post_create`` via the field's provider
         (``RecordIdProviderV2.create`` calls ``generate_id``), not via the
-        class-level context, so the provider is swapped for the duration of the
-        call to honour an entry's ``id``. Publishing a draft reuses the draft's
+        class-level context, so the provider is swapped while entries are being
+        loaded to honour an entry's ``id``. Publishing a draft reuses the draft's
         pid, so only the class used by ``service.create`` needs patching.
         """
         service = self._model.service
         record_cls = service.draft_cls if isinstance(service, DraftRecordService) else service.record_cls
-        field: Any = record_cls.pid.field
-        original = field._provider  # noqa: SLF001
-        field._provider = _fixture_id_provider(original)  # noqa: SLF001
-        try:
-            self._create_or_update(entry)
-        except Exception:
-            log.exception("Failed to load %s fixture entry %s", self._model.code, entry.get("id", "<new>"))
-        finally:
-            field._provider = original  # noqa: SLF001
+        with _fixture_id_provider_installed(record_cls.pid.field):
+            try:
+                self._create_or_update(entry)
+            except Exception:
+                log.exception("Failed to load %s fixture entry %s", self._model.code, entry.get("id", "<new>"))
 
     def _create_or_update(self, entry: dict[str, Any]) -> None:
         """Create or update a single record and publish it when the service supports drafts.
@@ -182,3 +180,33 @@ def _fixture_id_provider(provider: Any) -> type:
             return _fixture_pid_value.get() or super().generate_id(options)
 
     return FixtureIdProvider
+
+
+_provider_lock = threading.Lock()
+# id(pid field) -> (original provider, number of loads currently using the swapped one)
+_provider_users: dict[int, tuple[Any, int]] = {}
+
+
+@contextmanager
+def _fixture_id_provider_installed(field: Any) -> Iterator[None]:
+    """Swap the pid field's provider for the fixture one while any thread is inside.
+
+    The first caller installs it and the last one restores the original. Callers
+    in between share it, which is safe as the fixture ``id`` is read from a
+    ``ContextVar`` (per thread) and the original ``generate_id`` is used when unset.
+    """
+    key = id(field)
+    with _provider_lock:
+        original, users = _provider_users.get(key, (field._provider, 0))  # noqa: SLF001
+        if not users:
+            field._provider = _fixture_id_provider(original)  # noqa: SLF001
+        _provider_users[key] = (original, users + 1)
+    try:
+        yield
+    finally:
+        with _provider_lock:
+            original, users = _provider_users.pop(key)
+            if users == 1:
+                field._provider = original  # noqa: SLF001
+            else:
+                _provider_users[key] = (original, users - 1)
