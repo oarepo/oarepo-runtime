@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -57,6 +57,24 @@ def require_kwargs(*kwargs_names: str) -> Any:
     return wrapper
 
 
-def record_from_result(result: RecordItem) -> Record:
-    """Convert a RecordItem to a Record."""
-    return result._record  # noqa: SLF001
+@overload
+def record_from_result(result: RecordItem) -> Record: ...
+
+
+@overload
+def record_from_result[T: Record](result: RecordItem, record_cls: type[T]) -> T: ...
+
+
+def record_from_result(
+    result: RecordItem,
+    record_cls: type[Record] | None = None,  # noqa: ARG001  only used by type checkers
+) -> Record:
+    """Convert a RecordItem to a Record.
+
+    By default the record is returned as a plain ``Record``. Pass the concrete
+    record class as the second argument to have the result typed as that
+    subclass:
+
+        record = record_from_result(result, RDMRecord)
+    """
+    return result._record  # noqa: SLF001 access protected member ok here
