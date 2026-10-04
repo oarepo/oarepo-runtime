@@ -169,18 +169,18 @@ Permission-based facet grouping for different user roles:
 from invenio_records_resources.services.records.config import SearchOptions
 from invenio_records_resources.services.records.facets import TermsFacet
 
+
 class MySearchOptions(SearchOptions):
-      facets = {
-          "publication_status": TermsFacet(field="publication_status"),
-          "internal_status": TermsFacet(field="internal_status"),
-          "workflow_state": TermsFacet(field="workflow_state"),
-      }
+    facets = {
+        "publication_status": TermsFacet(field="publication_status"),
+        "internal_status": TermsFacet(field="internal_status"),
+        "workflow_state": TermsFacet(field="workflow_state"),
+    }
 
-      facet_groups = {
-          "default": ["publication_status"],
-          "admin": ["internal_status", "workflow_state"],
-      }
-
+    facet_groups = {
+        "default": ["publication_status"],
+        "admin": ["internal_status", "workflow_state"],
+    }
 ```
 
 ### 4. Service Component Ordering
@@ -285,12 +285,12 @@ Machine-readable endpoint for repository metadata:
             "code": "my_record",
             "name": "My Record Type",
             "version": "1.0.0",
-             "links": {
+            "links": {
                 "html": "/my-records/",
                 "records": "/api/my-records/",
                 "deposit": "/api/my-records/",
-                "drafts": "/api/user/my-records/"
-                },
+                "drafts": "/api/user/my-records/",
+            },
             "jsonschemas": {"record": "https://localhost/schemas/my-records-1.0.0.json"},
             "exports": [{"code": "datacite", "mimetype": "application/vnd.datacite.datacite+json"}],
         }
