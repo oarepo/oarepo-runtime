@@ -12,7 +12,7 @@ dependencies = [
     "setuptools<82.0.0",
     "oarepo>=14.2.1b11.dev1,<15",
     "langcodes>=3.5.0",
-    "oarepo-invenio-typing-stubs>=0.1.0",   # dependency on Descriptor for typed system fields
+    "oarepo-invenio-typing-stubs>=0.1.40",  # dependency on Descriptor for typed system fields
     "signposting>=0.9.9",    # signposting support
 
     # invenio dependencies for tracking major version
@@ -58,6 +58,9 @@ oarepo_runtime = "oarepo_runtime.ext:finalize_app"
 
 [project.entry-points."invenio_base.api_finalize_app"]
 oarepo_runtime = "oarepo_runtime.ext:api_finalize_app"
+
+[project.entry-points."invenio_celery.tasks"]
+oarepo_runtime_fixtures = "oarepo_runtime.fixtures.tasks"
 
 [project.entry-points."oarepo.explainers"]
 000-default = "oarepo_runtime.services.permission_explainer:DefaultExplainer"

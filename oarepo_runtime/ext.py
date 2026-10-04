@@ -538,3 +538,7 @@ def finalize_app(app: Flask) -> None:
             app.before_request_funcs[None],
             key=lambda func: 0 if _is_runtime_auth_before_after_request(func) else 1,
         )
+
+    from oarepo_runtime.fixtures import setup_fixtures
+
+    setup_fixtures(app)
