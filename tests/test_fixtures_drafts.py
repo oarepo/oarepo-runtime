@@ -5,10 +5,11 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import logging
-from contextlib import contextmanager
-from io import BytesIO
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
 
 import pytest
@@ -18,7 +19,6 @@ from invenio_rdm_records.fixtures import FixturesEngine
 from mock_module.api import PIDProvider
 
 from oarepo_runtime import fixtures
-from oarepo_runtime.fixtures import loader
 
 
 @pytest.fixture
@@ -119,18 +119,36 @@ def test_deletes_files_missing_from_fixture(mock_fixtures, service, tmp_path):
     assert set(_files(service.files, "fil-1")) == {"1.txt"}
 
 
-def test_downloads_fetch_files_before_publishing(mock_fixtures, service, monkeypatch):
-    """A fetch file is downloaded by the fixture, so the record is published without waiting for a worker."""
+@pytest.fixture
+def http_server():
+    """Serve ``b"fetched"`` on a local HTTP server, gzip-compressed when the request path ends with ``.gz``."""
 
-    @contextmanager
-    def fake_get(url, **kwargs):
-        assert url == "https://example.org/f.txt"
-        yield SimpleNamespace(raise_for_status=lambda: None, raw=BytesIO(b"fetched"))
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = gzip.compress(b"fetched") if self.path.endswith(".gz") else b"fetched"
+            self.send_response(200)
+            if self.path.endswith(".gz"):
+                self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
-    monkeypatch.setattr(loader.requests, "get", fake_get)
+        def log_message(self, *args):
+            pass
 
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}"
+    server.shutdown()
+    thread.join()
+
+
+@pytest.mark.parametrize(("id_", "path"), [("fet-1", "/f.txt"), ("fet-2", "/f.txt.gz")], ids=["plain", "gzip-encoded"])
+def test_downloads_fetch_files_before_publishing(mock_fixtures, service, http_server, id_, path):
+    """A fetch file is downloaded (and transport-decoded) by the fixture, so the record is published right away."""
     mock_fixtures(
-        "- id: fet-1\n"
+        f"- id: {id_}\n"
         "  metadata:\n"
         "    title: Fetched\n"
         "  files:\n"
@@ -140,12 +158,14 @@ def test_downloads_fetch_files_before_publishing(mock_fixtures, service, monkeyp
         f"        checksum: {_md5(b'fetched')}\n"
         "        transfer:\n"
         "          type: F\n"
-        "          url: https://example.org/f.txt\n"
+        f"          url: {http_server}{path}\n"
     )
 
-    record_file = _files(service.files, "fet-1")["f.txt"]
+    record_file = _files(service.files, id_)["f.txt"]
     assert (record_file["size"], record_file["checksum"]) == (7, _md5(b"fetched"))
     assert record_file["transfer"]["type"] == "L"
+    with service.files.get_file_content(system_identity, id_, "f.txt").get_stream("rb") as stream:
+        assert stream.read() == b"fetched"
 
 
 def test_logs_failed_entry_and_continues(mock_fixtures, service, caplog):
