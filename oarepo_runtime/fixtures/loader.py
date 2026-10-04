@@ -122,6 +122,8 @@ class RecordLoader:
                 # Fetched here rather than by the async fetch task, so the draft can be published right away.
                 with requests.get(f["transfer"]["url"], stream=True, timeout=FETCH_TIMEOUT) as response:
                     response.raise_for_status()
+                    # requests does not decode transport compression (gzip, ...) on the raw stream
+                    response.raw.decode_content = True
                     file_service.set_file_content(identity, record_id, f["key"], response.raw, f.get("size"))
             else:
                 continue
