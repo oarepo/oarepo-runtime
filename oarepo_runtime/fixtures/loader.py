@@ -17,11 +17,15 @@ from functools import cache
 from typing import TYPE_CHECKING, Any
 
 import requests
+from invenio_communities.proxies import current_communities
 from invenio_drafts_resources.services.records.service import RecordService as DraftRecordService
 from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_rdm_records.proxies import current_rdm_records
+from invenio_rdm_records.records.api import RDMRecord
 from invenio_records_resources.services.files.transfer.constants import FETCH_TRANSFER_TYPE
 
 from oarepo_runtime.proxies import current_runtime
+from oarepo_runtime.typing import record_from_result
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -66,16 +70,18 @@ class RecordLoader:
 
         An existing draft is updated in place; a published record without a draft
         is ``edit``-ed first. Files go through the model's (draft) file service
-        before publishing.
+        before publishing; the record is added to its community afterwards.
         """
         service = self._model.service
         identity = self._identity
         entry = dict(entry)
         pid_value = entry.pop("id", None)
+        community = entry.pop("community", None)
         files = entry.pop("files", None)
         file_entries = (files or {}).get("entries", [])
         if files is not None:
             entry["files"] = {"enabled": files.get("enabled", bool(file_entries))}
+        created = False
         if isinstance(service, DraftRecordService):
             if pid_value and _exists(service.read_draft, identity, pid_value):
                 item = service.update_draft(identity, pid_value, entry)
@@ -83,15 +89,32 @@ class RecordLoader:
                 service.edit(identity, pid_value)
                 item = service.update_draft(identity, pid_value, entry)
             else:
-                item = self._create(pid_value, entry)
+                item, created = self._create(pid_value, entry), True
             self._upload_files(self._model.draft_file_service, item.id, file_entries)
-            service.publish(identity, item.id)
+            item = service.publish(identity, item.id)
         else:
             if pid_value and _exists(service.read, identity, pid_value):
                 item = service.update(identity, pid_value, entry)
             else:
-                item = self._create(pid_value, entry)
+                item, created = self._create(pid_value, entry), True
             self._upload_files(self._model.file_service, item.id, file_entries)
+        if community and (created or not self._in_community(record_from_result(item, RDMRecord), community)):
+            self._add_to_community(item.id, community)
+
+    def _in_community(self, record: RDMRecord, community: str) -> bool:
+        """Return whether the record is already in the community with the given slug (or id)."""
+        return current_communities.service.record_cls.pid.resolve(community) in record.parent.communities
+
+    def _add_to_community(self, record_id: str, community: str) -> None:
+        """Add the record to the community with the given slug (or id), without an inclusion request.
+
+        ``bulk_add`` adds the record directly (it is allowed for system processes
+        only), also adds a subcommunity's parent and makes the community the
+        default one when the record has none.
+        """
+        errors = current_rdm_records.record_communities_service.bulk_add(self._identity, community, [record_id])
+        if errors:
+            raise ValueError(f"Can not add record {record_id} to community {community}: {errors[0]['message']}")
 
     def _upload_files(self, file_service: Any, record_id: str, file_entries: list[dict[str, Any]]) -> None:
         """Sync the record's files with ``file_entries``, re-transferring only the changed ones."""
