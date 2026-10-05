@@ -262,3 +262,43 @@ def test_pid_provider_swapped_once_for_concurrent_loads():
     assert seen["first"] is not RecordIdProviderV2
     assert field._provider is RecordIdProviderV2
     assert loader._provider_users == {}
+
+
+@pytest.mark.parametrize(
+    ("records", "members", "errors", "added", "logged"),
+    [
+        pytest.param(set(), set(), [], True, False, id="created-added-without-check"),
+        pytest.param({"abc"}, {"com-uuid"}, [], False, False, id="updated-already-member"),
+        pytest.param({"abc"}, set(), [], True, False, id="updated-not-member"),
+        pytest.param(set(), set(), [{"message": "boom"}], True, True, id="bulk-add-failed"),
+    ],
+)
+def test_model_record_fixtures_adds_record_to_community(
+    monkeypatch, tmp_path, caplog, records, members, errors, added, logged
+):
+    """A created record is added to the community; an updated one only if it is not already a member."""
+    service = FakePlainService(records=records)
+    record = SimpleNamespace(parent=SimpleNamespace(communities=members))
+    item = SimpleNamespace(id="abc", _record=record)
+    service.create = lambda identity, data: item
+    service.update = lambda identity, id_, data: item
+    _install(monkeypatch, [_model("article", service)])
+    community_cls = SimpleNamespace(pid=SimpleNamespace(resolve=lambda slug: "com-uuid"))
+    communities_service = SimpleNamespace(record_cls=community_cls)
+    monkeypatch.setattr(loader, "current_communities", SimpleNamespace(service=communities_service))
+    calls = []
+
+    def bulk_add(identity, community_id, record_ids):
+        calls.append((community_id, record_ids))
+        return errors
+
+    monkeypatch.setattr(
+        loader, "current_rdm_records", SimpleNamespace(record_communities_service=SimpleNamespace(bulk_add=bulk_add))
+    )
+    (tmp_path / "article.yaml").write_text("- id: abc\n  community: my-community\n  metadata:\n    title: A\n")
+
+    with caplog.at_level(logging.ERROR, logger="oarepo_runtime.fixtures"):
+        fixtures.ModelRecordFixtures("article", tmp_path).load()
+
+    assert calls == ([("my-community", ["abc"])] if added else [])
+    assert bool(caplog.records) == logged

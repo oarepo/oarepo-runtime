@@ -19,6 +19,7 @@ from invenio_rdm_records.fixtures import FixturesEngine
 from mock_module.api import PIDProvider
 
 from oarepo_runtime import fixtures
+from oarepo_runtime.fixtures import loader
 
 
 @pytest.fixture
@@ -194,3 +195,23 @@ def test_add_to_loads_model_fixture(mock_fixtures, service, monkeypatch, tmp_pat
     fixtures._add_to(FixturesEngine(system_identity), "mock")
 
     assert _read(service, "add-1")["metadata"] == {"title": "Added"}
+
+
+def test_adds_published_record_to_community(mock_fixtures, service, monkeypatch):
+    """A ``community`` entry adds the record to that community once it is published, without passing it as data."""
+    added = []
+
+    def bulk_add(identity, community_id, record_ids):
+        # the record must already be published, bulk_add resolves published records only
+        added.append((community_id, record_ids, _read(service, record_ids[0])["metadata"]))
+        return []
+
+    monkeypatch.setattr(
+        loader, "current_rdm_records", SimpleNamespace(record_communities_service=SimpleNamespace(bulk_add=bulk_add))
+    )
+
+    mock_fixtures(
+        "- id: com-1\n  community: my-community\n  metadata:\n    title: In community\n  files:\n    enabled: false\n"
+    )
+
+    assert added == [("my-community", ["com-1"], {"title": "In community"})]

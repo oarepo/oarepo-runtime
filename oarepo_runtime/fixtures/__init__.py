@@ -32,6 +32,7 @@ input (``datasets.json`` with the same content as JSON works too):
       files:
         enabled: false           # a metadata-only record
     - id: fghij-67890
+      community: my-community    # optional, slug of the community
       metadata:
         title: A dataset with files
       files:
@@ -66,6 +67,11 @@ Records
   generated pid is created on every run.
 * Records of draft-enabled models are published after they are created or
   updated.
+* ``community`` (optional) is the slug (or id) of a community the record is
+  added to after it is published. It is added directly, without a community
+  inclusion request, and becomes the record's default community if it has
+  none. A record already in the community is left as is. The model's records
+  must be RDM-based (have ``parent.communities``).
 * ``files.enabled`` defaults to ``true`` when ``files.entries`` are given. A
   draft-enabled model with files enabled by default needs ``enabled: false``
   for records without files, otherwise they can not be published.
