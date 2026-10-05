@@ -215,3 +215,29 @@ def test_adds_published_record_to_community(mock_fixtures, service, monkeypatch)
     )
 
     assert added == [("my-community", ["com-1"], {"title": "In community"})]
+
+
+def test_remote_file_is_only_initialized_and_kept_on_rerun(app, mock_fixtures, service, monkeypatch):
+    """A remote (R) file is registered without uploading content; with size/checksum given it is kept on re-run."""
+    monkeypatch.setitem(app.config, "RECORDS_RESOURCES_FILES_ALLOWED_REMOTE_DOMAINS", ["example.org"])
+    yaml = (
+        "- id: rem-1\n"
+        "  metadata:\n"
+        "    title: Remote\n"
+        "  files:\n"
+        "    entries:\n"
+        "      - key: r.txt\n"
+        "        size: 5\n"
+        f"        checksum: {_md5(b'hello')}\n"
+        "        transfer:\n"
+        "          type: R\n"
+        "          url: https://example.org/r.txt\n"
+    )
+    mock_fixtures(yaml)
+    file_id = _files(service.files, "rem-1")["r.txt"]["file_id"]
+
+    mock_fixtures(yaml)
+
+    record_file = _files(service.files, "rem-1")["r.txt"]
+    assert record_file["transfer"]["type"] == "R"
+    assert record_file["file_id"] == file_id
