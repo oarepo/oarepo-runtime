@@ -312,7 +312,16 @@ def _engine_env(monkeypatch, tmp_path, eps):
 def test_add_to_runs_custom_loader_instead_of_model_fixture(monkeypatch, tmp_path):
     """An ``oarepo.fixtures`` entry point named after the fixture is called with the identity and fixtures folder."""
     called = []
-    loader_ep = SimpleNamespace(name="book", load=lambda: lambda identity, folder: called.append((identity, folder)))
+
+    class Loader:
+        def __init__(self, search_paths, filename):
+            self.search_paths = search_paths
+            self.filename = filename
+
+        def load(self):
+            called.append((self.search_paths, self.filename))
+
+    loader_ep = SimpleNamespace(name="book", load=lambda: Loader)
     _engine_env(monkeypatch, tmp_path, [loader_ep])
     _install(monkeypatch, [_model("book", FakePlainService())])
     monkeypatch.setattr(fixtures, "_original_add_to", lambda self, fixture: pytest.fail("RDM fallback used"))
@@ -320,13 +329,22 @@ def test_add_to_runs_custom_loader_instead_of_model_fixture(monkeypatch, tmp_pat
 
     fixtures._add_to(FixturesEngine(identity), "book")
 
-    assert called == [(identity, tmp_path / "app_data")]
+    assert called == [([tmp_path / "app_data"], "book.yaml")]
 
 
 def test_run_loads_rdm_fixtures_custom_loaders_and_model_fixtures(monkeypatch, tmp_path):
     """``rdm-records fixtures`` runs the RDM fixtures, every custom loader and the remaining model fixtures."""
     calls = []
-    loader_ep = SimpleNamespace(name="book", load=lambda: lambda identity, folder: calls.append("custom book"))
+
+    class Loader:
+        def __init__(self, search_paths, filename):
+            self.search_paths = search_paths
+            self.filename = filename
+
+        def load(self):
+            calls.append("custom book")
+
+    loader_ep = SimpleNamespace(name="book", load=lambda: Loader)
     _engine_env(monkeypatch, tmp_path, [loader_ep])
     article = FakePlainService()
     _install(monkeypatch, [_model("book", FakePlainService()), _model("article", article)])

@@ -28,7 +28,7 @@ from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.typing import record_from_result
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Generator
     from pathlib import Path
 
     from flask_principal import Identity
@@ -213,7 +213,7 @@ _provider_users: dict[int, tuple[Any, int]] = {}
 
 
 @contextmanager
-def _fixture_id_provider_installed(field: Any) -> Iterator[None]:
+def _fixture_id_provider_installed(field: Any) -> Generator[None]:
     """Swap the pid field's provider for the fixture one while any thread is inside.
 
     The first caller installs it and the last one restores the original. Callers

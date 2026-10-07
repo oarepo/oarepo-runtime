@@ -22,7 +22,7 @@ from invenio_records_resources.proxies import current_service_registry
 from oarepo_runtime.proxies import current_runtime
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping
+    from collections.abc import Callable, Generator, Mapping
     from types import SimpleNamespace
 
     import lxml.etree
@@ -531,7 +531,7 @@ class ExportEngine:
 
     @classmethod
     @contextlib.contextmanager
-    def export_cache(cls) -> Iterator[None]:
+    def export_cache(cls) -> Generator[None]:
         """Create a temporary export cache for the current execution context."""
         reset_token = cls.export_cache_context.set(OrderedDict())
         try:

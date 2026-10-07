@@ -35,7 +35,7 @@ from .api import ExportRepresentation
 from .errors import AuthExceptionGroup
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Generator, Iterable
     from uuid import UUID
 
     from flask import Flask
@@ -464,7 +464,7 @@ class OARepoRuntime:
         }
 
     @contextlib.contextmanager
-    def login_user(self, user_email: str) -> Iterator[User]:
+    def login_user(self, user_email: str) -> Generator[User]:
         """Log a user in by email for the duration of the context.
 
         Flask-Login/Flask-Principal need an active request context to store
