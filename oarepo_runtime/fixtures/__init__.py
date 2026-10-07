@@ -204,8 +204,8 @@ def _fixtures_folder() -> Path:
     return Path(folder) if folder else Path(current_app.instance_path) / "app_data"
 
 
-def _call(engine: FixturesEngine, ep: EntryPoint) -> None:
-    ep.load()(engine._identity, _fixtures_folder())  # noqa: SLF001
+def _call(_engine: FixturesEngine, ep: EntryPoint) -> None:
+    ep.load()(search_paths=[_fixtures_folder()], filename=ep.name + ".yaml").load()
 
 
 def _model_fixtures() -> dict[str, ModelRecordFixtures]:
