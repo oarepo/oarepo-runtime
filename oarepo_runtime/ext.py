@@ -542,3 +542,5 @@ def finalize_app(app: Flask) -> None:
     from oarepo_runtime.fixtures import setup_fixtures
 
     setup_fixtures(app)
+
+    import oarepo_runtime.indexers  # noqa imported to override the indexer
