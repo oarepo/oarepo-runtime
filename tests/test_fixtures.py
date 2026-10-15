@@ -182,52 +182,98 @@ def test_model_record_fixtures_offloads_entries_when_lazy(monkeypatch, tmp_path,
     service = FakePlainService()
     _install(monkeypatch, [_model("article", service)])
     monkeypatch.setenv("INVENIO_LAZY_FIXTURES", env)
+    monkeypatch.setenv("INVENIO_FIXTURES_FOLDER", "data")
+    monkeypatch.setattr(fixtures, "entry_points", lambda **kwargs: [])
     delayed = []
-    monkeypatch.setattr(fixtures.load_fixture_entry, "delay", lambda *args: delayed.append(args))
+    monkeypatch.setattr(fixtures.load_fixture_entry_batch, "delay", lambda *args: delayed.append(args))
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / "article.yaml").write_text("- metadata:\n    title: A\n")
     monkeypatch.chdir(tmp_path)
 
-    fixtures.ModelRecordFixtures("article", Path("data")).load()
+    fixtures._model_fixtures()["article"].load()
 
     if lazy:
-        assert delayed == [("article", str(tmp_path.resolve() / "data"), {"metadata": {"title": "A"}})]
+        assert delayed == [("article", str(tmp_path.resolve() / "data"), [{"metadata": {"title": "A"}}])]
         assert service.created == []
     else:
         assert delayed == []
         assert service.created == [{"metadata": {"title": "A"}}]
 
 
+def test_model_record_fixtures_sends_entries_in_batches(monkeypatch, tmp_path):
+    """Entries go to the worker in batches; the last, partial batch is sent too."""
+    _install(monkeypatch, [_model("article", FakePlainService())])
+    monkeypatch.setattr(fixtures.ModelRecordFixtures, "batch_size", 2)
+    delayed = []
+    monkeypatch.setattr(fixtures.load_fixture_entry_batch, "delay", lambda *args: delayed.append(args[2]))
+    (tmp_path / "article.jsonl").write_text("".join(f'{{"metadata": {{"title": "{i}"}}}}\n' for i in range(5)))
+
+    fixtures.ModelRecordFixtures("article", tmp_path, lazy=True).load()
+
+    assert [[entry["metadata"]["title"] for entry in batch] for batch in delayed] == [["0", "1"], ["2", "3"], ["4"]]
+
+
+def test_model_record_fixtures_sends_entries_read_before_invalid_line(monkeypatch, tmp_path):
+    """An invalid JSONL line stops the load, but the entries read before it are still sent."""
+    _install(monkeypatch, [_model("article", FakePlainService())])
+    delayed = []
+    monkeypatch.setattr(fixtures.load_fixture_entry_batch, "delay", lambda *args: delayed.append(args[2]))
+    (tmp_path / "article.jsonl").write_text('{"metadata": {"title": "A"}}\nnot json\n{"metadata": {"title": "B"}}\n')
+
+    with pytest.raises(ValueError, match="Expecting value"):
+        fixtures.ModelRecordFixtures("article", tmp_path, lazy=True).load()
+
+    assert delayed == [[{"metadata": {"title": "A"}}]]
+
+
 @pytest.mark.parametrize(
     ("files", "title"),
     [
         pytest.param({"article.json": '[{"metadata": {"title": "J"}}]'}, "J", id="json"),
+        pytest.param({"article.json": '[\n\t{"metadata": {"title": 1e5}}\n]'}, 100000.0, id="json-not-yaml"),
         pytest.param(
             {"article.json": '[{"metadata": {"title": "J"}}]', "article.yaml": "- metadata:\n    title: Y\n"},
             "Y",
             id="yaml-wins",
         ),
+        pytest.param(
+            {"article.jsonl": '{"metadata": {"title": "L1"}}\n\n{"metadata": {"title": "L2"}}\n'},
+            ["L1", "L2"],
+            id="jsonl",
+        ),
+        pytest.param(
+            {"article.jsonl": '\ufeff{"metadata":\r{"title": "L1"}}\r\n{"metadata": {"title": "L2"}}\r\n'},
+            ["L1", "L2"],
+            id="jsonl-bom-crlf-and-lone-cr",
+        ),
+        pytest.param(
+            {"article.jsonl": '{"metadata": {"title": "L"}}\n', "article.json": '[{"metadata": {"title": "J"}}]'},
+            "J",
+            id="json-wins-over-jsonl",
+        ),
     ],
 )
 def test_model_record_fixtures_reads_json_file(monkeypatch, tmp_path, files, title):
-    """A JSON fixture file is loaded when there is no YAML one; YAML takes precedence."""
+    """A JSON(L) fixture file is loaded when there is no YAML one; YAML, then JSON take precedence."""
     service = FakePlainService()
     _install(monkeypatch, [_model("article", service)])
     for name, content in files.items():
-        (tmp_path / name).write_text(content)
+        (tmp_path / name).write_text(content, encoding="utf-8", newline="")
 
     fixtures.ModelRecordFixtures("article", tmp_path).load()
 
-    assert service.created == [{"metadata": {"title": title}}]
+    titles = title if isinstance(title, list) else [title]
+    assert service.created == [{"metadata": {"title": t}} for t in titles]
 
 
 @pytest.mark.parametrize(
-    ("config", "expected"),
-    [({}, "instance/app_data"), ({"OAREPO_FIXTURES_FOLDER": "/sample-data"}, "/sample-data")],
+    ("env", "expected"),
+    [("", "instance/app_data"), ("/sample-data", "/sample-data")],
 )
-def test_model_fixtures_read_from_configured_folder(monkeypatch, tmp_path, config, expected):
-    """OAREPO_FIXTURES_FOLDER replaces the instance's app_data folder for model fixtures and custom loaders."""
-    monkeypatch.setattr(fixtures, "current_app", SimpleNamespace(instance_path="instance", config=config))
+def test_model_fixtures_read_from_configured_folder(monkeypatch, tmp_path, env, expected):
+    """INVENIO_FIXTURES_FOLDER replaces the instance's app_data folder for model fixtures and custom loaders."""
+    monkeypatch.setenv("INVENIO_FIXTURES_FOLDER", env)
+    monkeypatch.setattr(fixtures, "current_app", SimpleNamespace(instance_path="instance", config={}))
     monkeypatch.setattr(fixtures, "entry_points", lambda **kwargs: [])
     _install(monkeypatch, [_model("book", FakePlainService())])
 
