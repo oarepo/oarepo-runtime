@@ -5,8 +5,9 @@
 
 A :class:`ModelRecordFixtures` is created automatically for every registered
 model, except the models that invenio handles itself (see :data:`INVENIO_MODELS`),
-reading the records to create from ``<model-code>.yaml`` (or ``<model-code>.json``
-if there is no YAML file) in the instance's ``app_data`` folder.
+reading the records to create from ``<model-code>.yaml`` (or, if there is no
+YAML file, ``<model-code>.json`` or ``<model-code>.jsonl``) in the instance's
+``app_data`` folder.
 
 Usage
 -----
@@ -22,7 +23,8 @@ To ship sample records for a ``datasets`` model, lay out the instance's
             data.csv          # referenced from datasets.yaml
 
 ``datasets.yaml`` is a list of records in the same shape as the model's REST API
-input (``datasets.json`` with the same content as JSON works too):
+input (``datasets.json`` with the same content as JSON works too, see also
+`JSON Lines`_ below):
 
 .. code-block:: yaml
 
@@ -76,6 +78,20 @@ Records
   draft-enabled model with files enabled by default needs ``enabled: false``
   for records without files, otherwise they can not be published.
 
+JSON Lines
+----------
+
+For large fixtures, use ``<model-code>.jsonl`` instead: one record (a JSON
+object) per line, blank lines are skipped. The file is read line by line, so
+it is never loaded into memory as a whole:
+
+.. code-block:: text
+
+    {"id": "abcde-12345", "metadata": {"title": "My first dataset"}, "files": {"enabled": false}}
+    {"id": "fghij-67890", "metadata": {"title": "Another dataset"}, "files": {"enabled": false}}
+
+A ``.yaml`` or ``.json`` file of the same model takes precedence over it.
+
 Referencing files
 -----------------
 
@@ -103,16 +119,17 @@ Loading the data
 * ``invenio rdm-records add-to-fixture <model-code>`` loads just one model's
   fixture; an unknown name falls through to the RDM vocabulary reload.
 
-With ``INVENIO_LAZY_FIXTURES=on`` in the environment, each record is created in
-a celery worker instead (the worker needs the same ``app_data`` folder). A record
+With ``INVENIO_LAZY_FIXTURES=on`` in the environment, the records are created in
+celery workers instead, in batches of 50 records per task (the workers need the
+same ``app_data`` folder). A record
 that fails to load is logged as an error and the remaining records are loaded.
 
 To read the model fixtures (and the files they reference) from another folder,
-set ``OAREPO_FIXTURES_FOLDER`` in ``invenio.cfg`` or the environment, e.g.:
+set ``INVENIO_FIXTURES_FOLDER`` in the environment, e.g.:
 
 .. code-block:: console
 
-    INVENIO_OAREPO_FIXTURES_FOLDER=/path/to/sample-data invenio rdm-records add-to-fixture datasets
+    INVENIO_FIXTURES_FOLDER=/path/to/sample-data invenio rdm-records add-to-fixture datasets
 
 Only the fixtures described here (and custom loaders below) use this folder; the
 RDM vocabulary fixtures are always read from ``<instance_path>/app_data``.
@@ -133,6 +150,7 @@ both commands above in place of the default fixture.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -142,7 +160,7 @@ from invenio_base.utils import entry_points
 from invenio_rdm_records.fixtures import FixturesEngine
 from invenio_rdm_records.fixtures.fixture import FixtureMixin
 
-from oarepo_runtime.fixtures.tasks import load_fixture_entry
+from oarepo_runtime.fixtures.tasks import load_fixture_entry_batch
 from oarepo_runtime.proxies import current_runtime
 
 if TYPE_CHECKING:
@@ -172,35 +190,73 @@ _original_add_to = FixturesEngine.add_to
 
 
 class ModelRecordFixtures(FixtureMixin):
-    """Read ``<model-code>.yaml`` or ``.json`` and hand each entry to :func:`load_fixture_entry`.
+    """Read ``<model-code>.yaml``, ``.json`` or ``.jsonl`` and hand the entries to :func:`load_fixture_entry_batch`.
 
     See the module docstring for the file format.
     """
 
-    def __init__(self, model_code: str, app_data_folder: Path) -> None:
-        """Initialize the fixture for the model with the given code."""
+    batch_size = 50
+
+    def __init__(self, model_code: str, app_data_folder: Path, *, lazy: bool = False) -> None:
+        """Initialize the fixture for the model with the given code; ``lazy`` loads the entries in celery workers."""
         self._model_code = model_code
         self._app_data_folder = app_data_folder
-        # JSON is valid YAML, so FixtureMixin's yaml.safe_load reads both
-        filename = next(
-            (name for name in (f"{model_code}.yaml", f"{model_code}.json") if (app_data_folder / name).exists()),
+        self._lazy = lazy
+        self._data_filename = next(
+            (
+                name
+                for name in (f"{model_code}.yaml", f"{model_code}.json", f"{model_code}.jsonl")
+                if (app_data_folder / name).exists()
+            ),
             f"{model_code}.yaml",
         )
-        super().__init__([app_data_folder], filename)
+        super().__init__([app_data_folder], self._data_filename)
+        self._batch: list[dict[str, Any]] = []
+
+    def load(self) -> None:
+        """Load JSON with :mod:`json`, stream a ``.jsonl`` file line by line, leave YAML to :class:`FixtureMixin`."""
+        path = self._app_data_folder / self._data_filename
+        try:
+            # not yaml.safe_load: YAML 1.1 reads JSON's 1e5 as a string and rejects tab indentation
+            # utf-8-sig skips a leading byte-order mark
+            if path.suffix == ".json":
+                with path.open(encoding="utf-8-sig") as fp:
+                    for entry in json.load(fp):
+                        self.create(entry)
+            elif path.suffix == ".jsonl":
+                # JSON Lines separates records by "\n" only ("\r\n" works, json.loads ignores the "\r")
+                with path.open(encoding="utf-8-sig", newline="\n") as fp:
+                    for line in fp:
+                        if line.strip():
+                            self.create(json.loads(line))
+            else:
+                super().load()
+        finally:
+            # the entries read before a failure are loaded, as they would be without batching
+            self._flush()
 
     def create(self, entry: dict[str, Any]) -> None:
-        """Load the entry in a celery worker if ``INVENIO_LAZY_FIXTURES`` is on, otherwise right away."""
+        """Add the entry to the current batch, loading the batch when it is full."""
+        self._batch.append(entry)
+        if len(self._batch) >= self.batch_size:
+            self._flush()
+
+    def _flush(self) -> None:
+        """Load the batch in a celery worker if lazy, otherwise right away."""
+        if not self._batch:
+            return
         # resolved, so a relative folder does not depend on the worker's working directory
-        args = (self._model_code, str(self._app_data_folder.resolve()), entry)
-        if os.environ.get("INVENIO_LAZY_FIXTURES", "").lower() in {"1", "true", "on", "yes"}:
-            load_fixture_entry.delay(*args)
+        args = (self._model_code, str(self._app_data_folder.resolve()), self._batch)
+        self._batch = []
+        if self._lazy:
+            load_fixture_entry_batch.delay(*args)
         else:
-            load_fixture_entry(*args)
+            load_fixture_entry_batch(*args)
 
 
 def _fixtures_folder() -> Path:
-    """Return ``OAREPO_FIXTURES_FOLDER`` if configured, otherwise the instance's ``app_data`` folder."""
-    folder = current_app.config.get("OAREPO_FIXTURES_FOLDER")
+    """Return ``INVENIO_FIXTURES_FOLDER`` from the environment if set, otherwise the instance's ``app_data`` folder."""
+    folder = os.environ.get("INVENIO_FIXTURES_FOLDER")
     return Path(folder) if folder else Path(current_app.instance_path) / "app_data"
 
 
@@ -212,8 +268,9 @@ def _model_fixtures() -> dict[str, ModelRecordFixtures]:
     """Build the default fixtures for every model not overridden by an entry point."""
     overridden = {ep.name for ep in entry_points(group=FIXTURES_GROUP)}
     app_data_folder = _fixtures_folder()
+    lazy = os.environ.get("INVENIO_LAZY_FIXTURES", "").lower() in {"1", "true", "on", "yes"}
     return {
-        model.code: ModelRecordFixtures(model.code, app_data_folder)
+        model.code: ModelRecordFixtures(model.code, app_data_folder, lazy=lazy)
         for model in current_runtime.models.values()
         if model.code not in overridden and model.code not in INVENIO_MODELS
     }
