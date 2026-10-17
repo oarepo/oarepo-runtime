@@ -33,6 +33,7 @@ from werkzeug.exceptions import HTTPException
 from . import config
 from .api import ExportRepresentation
 from .errors import AuthExceptionGroup
+from .resources.xml import XMLSerializer
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator, Iterable
@@ -355,6 +356,10 @@ class OARepoRuntime:
 
         if model_export is None:
             raise ValueError("No export found for the given mimetype or code")
+
+        if representation == ExportRepresentation.XML and isinstance(model_export.serializer, XMLSerializer):
+            # skip the string round trip if the serializer can produce an element directly
+            return model_export.serializer.serialize_object_xml(record_dict)
 
         exported_record = model_export.serializer.serialize_object(record_dict)
 
