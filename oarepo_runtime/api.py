@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
     import lxml.etree
     from flask_babel.speaklater import LazyString
+    from flask_principal import Identity
     from flask_resources.deserializers import DeserializerMixin
     from flask_resources.responses import ResponseHandler
     from flask_resources.serializers import BaseSerializer
@@ -84,7 +85,15 @@ class Export:
     """Serializer used to serialize the record's about section into the export format."""
 
     display: bool = True
-    """Whether the export format is displayed in the UI."""
+    """Whether the export format is displayed in the UI. See also `display_if` and `is_displayed`."""
+
+    display_if: Callable[[Identity | None], bool] | None = None
+    """Optional per-request condition for displaying the export in the UI.
+
+    Called with the current identity (``None`` if there is none); the export is displayed
+    only if `display` is true and this condition holds. Use it when the visibility depends
+    on the user, e.g. an export available only to holders of a specific permission.
+    """
 
     oai_metadata_prefix: str | None = None
     """OAI metadata prefix, if applicable. If not set, the export can not be used in OAI-PMH responses."""
@@ -121,6 +130,12 @@ class Export:
             self.extension = extension
         if not self.extension:
             self.extension = ".bin"
+
+    def is_displayed(self, identity: Identity | None) -> bool:
+        """Return whether the export is displayed in the UI for the given identity."""
+        if not self.display:
+            return False
+        return self.display_if is None or self.display_if(identity)
 
 
 @dataclasses.dataclass
