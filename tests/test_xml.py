@@ -72,7 +72,7 @@ def test_protocols():
 
 @pytest.mark.parametrize("serializer", [_ElementSerializer(), _StringSerializer()])
 def test_xml_export_representation(serializer):
-    export = SimpleNamespace(serializer=serializer)
+    export = SimpleNamespace(serializer=serializer, streaming=False)
     model = SimpleNamespace(get_export_by_code=lambda code: export)
     runtime = OARepoRuntime()
     runtime.__dict__["models_by_schema"] = {"local://test.json": model}

@@ -51,7 +51,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from oarepo_runtime.services.permission_explainer import PermissionExplainer
 
-    from .api import Model
+    from .api import Export, Model
 
 log = logging.getLogger(__name__)
 
@@ -269,6 +269,33 @@ class OARepoRuntime:
                     indices.add(draft_index.search_alias)
         return indices
 
+    def get_export(
+        self,
+        record_dict: dict,
+        export_code: str | None = None,
+        export_mimetype: str | None = None,
+    ) -> Export:
+        """Get the export registered on the record's model by either its code or its mimetype.
+
+        Raises:
+            ValueError: Raised if both or none of `export_code` and `export_mimetype` are provided,
+                or if no export is found.
+
+        """
+        model = self.models_by_schema[record_dict["$schema"]]
+        if export_mimetype:
+            if export_code is not None:
+                raise ValueError("Only one of the parameters export_code/export_mimetype must be set, both are set")
+            model_export = model.get_export_by_mimetype(mimetype=export_mimetype)
+        elif export_code:
+            model_export = model.get_export_by_code(code=export_code)
+        else:
+            raise ValueError("One of the parameters export_code/export_mimetype must be set, both are None")
+
+        if model_export is None:
+            raise ValueError("No export found for the given mimetype or code")
+        return model_export
+
     @overload
     def get_export_from_serialized_record(
         self,
@@ -331,6 +358,8 @@ class OARepoRuntime:
                 simultaneously.
             ValueError: Raised if no export is found for the given `export_code` or
                 `export_mimetype`.
+            ValueError: Raised if the export is streaming and `representation` is not
+                `ExportRepresentation.RESPONSE`.
 
         Returns:
             Union[Tuple[str, int, dict], dict, etree._Element]: Depending on the `representation`
@@ -344,18 +373,13 @@ class OARepoRuntime:
                   record.
 
         """
-        model = self.models_by_schema[record_dict["$schema"]]
-        if export_mimetype:
-            if export_code is not None:
-                raise ValueError("Only one of the parameters export_code/export_mimetype must be set, both are set")
-            model_export = model.get_export_by_mimetype(mimetype=export_mimetype)
-        elif export_code:
-            model_export = model.get_export_by_code(code=export_code)
-        else:
-            raise ValueError("One of the parameters export_code/export_mimetype must be set, both are None")
+        model_export = self.get_export(record_dict, export_code=export_code, export_mimetype=export_mimetype)
 
-        if model_export is None:
-            raise ValueError("No export found for the given mimetype or code")
+        if model_export.streaming and representation != ExportRepresentation.RESPONSE:
+            raise ValueError(
+                f"Export '{model_export.code}' is streaming and can only be produced "
+                f"as ExportRepresentation.RESPONSE, not {representation}"
+            )
 
         if representation == ExportRepresentation.XML and isinstance(model_export.serializer, XMLSerializer):
             # skip the string round trip if the serializer can produce an element directly

@@ -363,6 +363,9 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
 
     # describedby
     for model_export in model.exports:
+        if model_export.streaming:
+            # streaming exports (e.g. archives with files) are content, not metadata describing the record
+            continue
         model_export_url = model.ui_url(
             view_name="record_export",
             pid_value=record_dict["id"],

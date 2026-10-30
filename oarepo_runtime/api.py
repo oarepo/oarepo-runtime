@@ -101,6 +101,13 @@ class Export:
     extension: str | None = None
     """Extension of the export format, used in the filename when downloading the export."""
 
+    streaming: bool = False
+    """Whether the serializer returns a single-use streaming body (e.g. a ``flask.Response`` with a generator).
+
+    Streaming exports can only be produced as ``ExportRepresentation.RESPONSE``, are never cached
+    by ``ExportEngine`` and are not advertised as metadata (signposting ``describedby``).
+    """
+
     def __post_init__(self):
         """Post init with extension guessing."""
         if self.extension is None:
@@ -602,7 +609,13 @@ class ExportEngine:
             representation=representation,
         )
 
-        if exports_cache is not None:
+        # a streaming body can be consumed only once, so it must not be served from the cache
+        if (
+            exports_cache is not None
+            and not current_runtime.get_export(
+                record_dict, export_code=export_code, export_mimetype=export_mimetype
+            ).streaming
+        ):
             if len(exports_cache) > cls.CACHE_MAXSIZE:
                 exports_cache.popitem(last=False)
             exports_cache[export_key] = serialized_export
