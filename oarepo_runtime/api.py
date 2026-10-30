@@ -461,6 +461,20 @@ class Model[
         """Get all importable request body parsers."""
         return self._imports
 
+    def get_import(self, code_or_mimetype: str) -> Import | None:
+        """Get an import by code or mimetype, or None if there is none.
+
+        If several imports match, the last one wins - consistent with the REST API, whose request
+        body parsers are a `mimetype -> parser` dict built from the same list
+        (see `oarepo_runtime.resources.config.imports_to_request_body_parsers` and oarepo-model's
+        `RecordResourceConfigPreset`).
+        """
+        found = None
+        for import_ in self._imports:
+            if code_or_mimetype in (import_.code, import_.mimetype):
+                found = import_
+        return found
+
     @property
     def namespace(self) -> SimpleNamespace | None:
         """Get the namespace where the model is being created."""

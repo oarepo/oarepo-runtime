@@ -544,6 +544,42 @@ def test_imports_property_with_value():
     assert model.imports == imports_list
 
 
+def _make_import(code: str, mimetype: str):
+    from oarepo_runtime.api import Import
+
+    return Import(code=code, name=code, mimetype=mimetype, deserializer=MagicMock())
+
+
+def _model_with_imports(*imports):
+    return Model(
+        code="test",
+        name="test",
+        version="1.0.0",
+        service=MockService(),  # type: ignore[arg-type]
+        resource_config=MagicMock(),
+        imports=list(imports),
+    )
+
+
+def test_get_import_by_code_or_mimetype():
+    json, xml = _make_import("json", "application/json"), _make_import("xml", "application/xml")
+    model = _model_with_imports(json, xml)
+
+    assert model.get_import("xml") is xml
+    assert model.get_import("application/json") is json
+    assert model.get_import("csv") is None
+    assert _model_with_imports().get_import("json") is None
+
+
+def test_get_import_last_match_wins_as_in_request_body_parsers():
+    from oarepo_runtime.resources.config import imports_to_request_body_parsers
+
+    first, last = _make_import("ccmm", "application/xml"), _make_import("ccmm-2", "application/xml")
+    assert _model_with_imports(first, last).get_import("application/xml") is last
+    parsers = imports_to_request_body_parsers([first, last])
+    assert parsers["application/xml"].deserializer is last.deserializer
+
+
 def test_namespace_present():
     """Test imports property with custom value."""
     service = MockService()
