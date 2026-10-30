@@ -448,6 +448,33 @@ def test_export_extension():
     assert export_without_extension_2.extension == ".bin"
 
 
+@pytest.mark.parametrize(
+    ("display", "display_if", "identity", "expected"),
+    [
+        (True, None, None, True),
+        (False, None, None, False),
+        (True, lambda identity: identity == "allowed", "allowed", True),
+        (True, lambda identity: identity == "allowed", "denied", False),
+        (True, lambda identity: identity is not None, None, False),
+        # display=False wins over a condition that holds
+        (False, lambda identity: True, "allowed", False),  # noqa: ARG005
+    ],
+)
+def test_export_is_displayed(display, display_if, identity, expected):
+    from oarepo_runtime.api import Export
+
+    export = Export(
+        code="test",
+        name="Test",
+        mimetype="application/json",
+        serializer=DummySerializer(),
+        display=display,
+        display_if=display_if,
+    )
+
+    assert export.is_displayed(identity) is expected
+
+
 def test_model_metadata_property_none():
     """Test model_metadata property when None."""
     service = MockService()
