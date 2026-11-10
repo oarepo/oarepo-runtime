@@ -27,6 +27,7 @@ from oarepo_runtime.resources.signposting import (
     list_of_signpost_links_to_http_header,
     record_dict_to_json_linkset,
     record_dict_to_linkset,
+    signpost_link_to_dict,
     signpost_link_to_str,
 )
 from oarepo_runtime.typing import record_from_result
@@ -658,3 +659,17 @@ def test_signposting_max_number_of_creators(
 def test_media_type_with_parameters(mimetype, expected):
     # signposting rejects media type parameters, so they must be split off
     assert str(Signpost(rel=LinkRel.item, target="https://x.org/f", **_media_type(mimetype))) == f"Link: {expected}"
+
+
+def test_signpost_link_to_dict_preserves_profiles():
+    link = Signpost(
+        rel=LinkRel.item,
+        target="https://x.org/f",
+        **_media_type('application/ld+json; profile="https://b.example https://a.example"'),
+    )
+
+    assert signpost_link_to_dict(link) == {
+        "href": "https://x.org/f",
+        "type": "application/ld+json",
+        "profile": ["https://a.example", "https://b.example"],
+    }
