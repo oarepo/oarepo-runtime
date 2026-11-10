@@ -351,7 +351,7 @@ class InternalRelations(SystemField):
     """
 
     @override
-    # ty: ignore[invalid-method-override]
+    # ty: ignore[incompatible-method-override]
     def __get__(self, record: Record | None, owner: type | None = None) -> InternalRelations | InternalRelationsLookup:
         """Return the cached lookup table for the record."""
         if record is None:
