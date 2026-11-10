@@ -12,11 +12,13 @@ from pathlib import Path
 
 import pytest
 from lxml.etree import Element
+from signposting import LinkRel, Signpost
 
 from oarepo_runtime.api import ExportEngine, ExportRepresentation
 from oarepo_runtime.proxies import current_runtime
 from oarepo_runtime.resources.signposting import (
     MAX_NUMBER_OF_AUTHORS,
+    _media_type,
     create_linkset,
     create_linkset_json,
     export_format_signpost_links_list,
@@ -640,3 +642,19 @@ def test_signposting_max_number_of_creators(
         if signposting_linkset.startswith(author_str, i)
     )
     assert number_of_authors == MAX_NUMBER_OF_AUTHORS
+
+
+@pytest.mark.parametrize(
+    ("mimetype", "expected"),
+    [
+        (
+            'application/ld+json; profile="https://w3id.org/ro/crate"',
+            '<https://x.org/f>; rel=item; type="application/ld+json"; profile="https://w3id.org/ro/crate"',
+        ),
+        ("text/plain; charset=utf-8", '<https://x.org/f>; rel=item; type="text/plain"'),
+        (None, "<https://x.org/f>; rel=item"),
+    ],
+)
+def test_media_type_with_parameters(mimetype, expected):
+    # signposting rejects media type parameters, so they must be split off
+    assert str(Signpost(rel=LinkRel.item, target="https://x.org/f", **_media_type(mimetype))) == f"Link: {expected}"

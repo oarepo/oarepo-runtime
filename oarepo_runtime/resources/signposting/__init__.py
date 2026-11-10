@@ -25,6 +25,7 @@ describedby <-> describes
 from __future__ import annotations
 
 from collections import defaultdict
+from email.message import Message
 from typing import Any, Literal, cast, overload
 from urllib.parse import quote, urljoin, urlparse
 
@@ -301,6 +302,19 @@ def _valid_url(url: str) -> bool:
     return bool(parsed.scheme and parsed.netloc)
 
 
+def _media_type(mimetype: str | None) -> dict[str, Any]:
+    """Split ``type/sub; profile="..."`` into Signpost kwargs, signposting rejects media type parameters."""
+    if not mimetype:
+        return {}
+    msg = Message()
+    msg["content-type"] = mimetype
+
+    ret = {"media_type": msg.get_content_type()}
+    if profiles := msg.get_param("profile"):
+        ret["profiles"] = profiles
+    return ret
+
+
 def _license_signposts(datacite_dict: dict) -> list[Signpost]:
     signposting_links: list[Signpost] = []
     for attribute in datacite_dict.get("rightsList", []):
@@ -378,7 +392,7 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
             Signpost(
                 rel=LinkRel.describedby,
                 target=model_export_url,
-                media_type=model_export.mimetype,
+                **_media_type(model_export.mimetype),
             )
         )
 
@@ -388,8 +402,8 @@ def landing_page_signpost_links_list(datacite_dict: dict, record_dict: dict, sho
         signposting_links.extend(
             Signpost(
                 rel=LinkRel.item,
-                media_type=record_file.get("mimetype"),
                 target=f"{record_files_url}/{quote(record_file.get('key'))}",
+                **_media_type(record_file.get("mimetype")),
             )
             for record_file in record_file_values
         )
