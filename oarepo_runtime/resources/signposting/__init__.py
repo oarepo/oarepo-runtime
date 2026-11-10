@@ -53,6 +53,8 @@ def signpost_link_to_dict(link: Signpost) -> dict[str, Any]:
     link_dict: dict[str, Any] = {"href": link.target}
     if link.type:
         link_dict["type"] = link.type
+    if link.profiles:
+        link_dict["profile"] = sorted(link.profiles)
     return link_dict
 
 
