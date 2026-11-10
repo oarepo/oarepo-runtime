@@ -48,7 +48,7 @@ class PublicationStatusSystemField(MappingSystemFieldMixin, TypedSystemField[Rec
         data[self.key] = getattr(record, self.attr_name)
 
     @override
-    def __get__(self, instance: Record | None, owner: type[Record]) -> Self | str:  # ty: ignore[invalid-method-override]
+    def __get__(self, instance: Record | None, owner: type[Record]) -> Self | str:  # ty: ignore[incompatible-method-override]
         """Access the attribute."""
         if instance is None:
             return self

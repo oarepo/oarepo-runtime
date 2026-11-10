@@ -457,7 +457,7 @@ def test_export_extension():
         (True, lambda identity: identity == "allowed", "denied", False),
         (True, lambda identity: identity is not None, None, False),
         # display=False wins over a condition that holds
-        (False, lambda identity: True, "allowed", False),  # noqa: ARG005
+        (False, lambda identity: True, "allowed", False),
     ],
 )
 def test_export_is_displayed(display, display_if, identity, expected):
