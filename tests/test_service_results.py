@@ -479,7 +479,6 @@ def test_record_list_hits_with_draft_record():
     assert hits[0].get("result_component") is True
 
 
-# zmena
 @pytest.mark.parametrize(
     ("hit_dict", "expected_loader"),
     [
