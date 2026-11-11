@@ -136,7 +136,7 @@ class RecordList(BaseRecordList):
     @property
     def hits(self) -> Any:
         """Iterator over the hits."""
-        components = [c(record_list=self) for c in self.components]  # zmena
+        components = [c(record_list=self) for c in self.components]
         for hit in self._results:
             # Load dump
             hit_dict = hit.to_dict()
